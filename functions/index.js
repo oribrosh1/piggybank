@@ -1,4 +1,5 @@
 const functions = require("firebase-functions");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
@@ -324,7 +325,323 @@ app.post("/createPayout", verifyFirebaseToken, async (req, res) => {
 });
 
 // ============================================
-// 7) WEBHOOK HANDLER (Account Updates)
+// 7) GET TRANSACTIONS (Payment history for connected account)
+// ============================================
+app.get("/getTransactions", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { limit = 10, starting_after } = req.query;
+
+    try {
+        // Get account ID from Firestore
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Get balance transactions for the connected account
+        const params = {
+            limit: parseInt(limit),
+        };
+
+        if (starting_after) {
+            params.starting_after = starting_after;
+        }
+
+        const transactions = await stripe.balanceTransactions.list(
+            params,
+            { stripeAccount: accountId }
+        );
+
+        // Format transactions for the app
+        const formattedTransactions = transactions.data.map(txn => ({
+            id: txn.id,
+            amount: txn.amount,
+            currency: txn.currency,
+            type: txn.type,
+            status: txn.status,
+            description: txn.description,
+            created: txn.created,
+            available_on: txn.available_on,
+            fee: txn.fee,
+            net: txn.net,
+        }));
+
+        res.json({
+            transactions: formattedTransactions,
+            has_more: transactions.has_more,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error getting transactions:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 8) GET FULL ACCOUNT DETAILS (For Custom accounts dashboard)
+// ============================================
+app.get("/getAccountDetails", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+
+    try {
+        // Get account ID from Firestore
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Retrieve full account details from Stripe
+        const account = await stripe.accounts.retrieve(accountId);
+
+        // Get external accounts (bank accounts/debit cards)
+        const externalAccounts = account.external_accounts?.data || [];
+
+        res.json({
+            accountId: account.id,
+            type: account.type,
+            country: account.country,
+            default_currency: account.default_currency,
+            charges_enabled: account.charges_enabled,
+            payouts_enabled: account.payouts_enabled,
+            details_submitted: account.details_submitted,
+            requirements: account.requirements,
+            capabilities: account.capabilities,
+            // Business/Individual info
+            business_type: account.business_type,
+            individual: account.individual ? {
+                first_name: account.individual.first_name,
+                last_name: account.individual.last_name,
+                email: account.individual.email,
+                phone: account.individual.phone,
+                dob: account.individual.dob,
+                address: account.individual.address,
+                verification: account.individual.verification,
+            } : null,
+            // Payout settings
+            settings: {
+                payouts: account.settings?.payouts,
+                payments: account.settings?.payments,
+            },
+            // External accounts (bank accounts)
+            external_accounts: externalAccounts.map(ea => ({
+                id: ea.id,
+                object: ea.object,
+                bank_name: ea.bank_name,
+                last4: ea.last4,
+                routing_number: ea.routing_number,
+                currency: ea.currency,
+                country: ea.country,
+                default_for_currency: ea.default_for_currency,
+                status: ea.status,
+            })),
+            created: account.created,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error getting account details:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 9) GET PAYOUT HISTORY
+// ============================================
+app.get("/getPayouts", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { limit = 10, starting_after } = req.query;
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        const params = { limit: parseInt(limit) };
+        if (starting_after) params.starting_after = starting_after;
+
+        const payouts = await stripe.payouts.list(params, { stripeAccount: accountId });
+
+        res.json({
+            payouts: payouts.data.map(p => ({
+                id: p.id,
+                amount: p.amount,
+                currency: p.currency,
+                status: p.status,
+                arrival_date: p.arrival_date,
+                created: p.created,
+                method: p.method,
+                type: p.type,
+                description: p.description,
+                destination: p.destination,
+                failure_message: p.failure_message,
+            })),
+            has_more: payouts.has_more,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error getting payouts:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 10) ADD EXTERNAL BANK ACCOUNT
+// ============================================
+app.post("/addBankAccount", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const {
+        account_holder_name,
+        account_holder_type = 'individual',
+        routing_number,
+        account_number,
+        country = 'US',
+        currency = 'usd'
+    } = req.body;
+
+    if (!routing_number || !account_number || !account_holder_name) {
+        return res.status(400).json({
+            error: "Missing required fields: routing_number, account_number, account_holder_name"
+        });
+    }
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Create bank account token
+        const bankAccountToken = await stripe.tokens.create({
+            bank_account: {
+                country,
+                currency,
+                account_holder_name,
+                account_holder_type,
+                routing_number,
+                account_number,
+            },
+        });
+
+        // Attach to connected account
+        const externalAccount = await stripe.accounts.createExternalAccount(
+            accountId,
+            { external_account: bankAccountToken.id }
+        );
+
+        res.json({
+            bankAccountId: externalAccount.id,
+            bank_name: externalAccount.bank_name,
+            last4: externalAccount.last4,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error adding bank account:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 11) UPDATE ACCOUNT VERIFICATION INFO (for Custom accounts)
+// ============================================
+app.post("/updateAccountInfo", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const {
+        first_name,
+        last_name,
+        email,
+        phone,
+        dob, // { day, month, year }
+        address, // { line1, line2, city, state, postal_code, country }
+        ssn_last_4,
+        id_number, // Full SSN for US
+    } = req.body;
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Build update object
+        const updateData = { individual: {} };
+
+        if (first_name) updateData.individual.first_name = first_name;
+        if (last_name) updateData.individual.last_name = last_name;
+        if (email) updateData.individual.email = email;
+        if (phone) updateData.individual.phone = phone;
+        if (dob) updateData.individual.dob = dob;
+        if (address) updateData.individual.address = address;
+        if (ssn_last_4) updateData.individual.ssn_last_4 = ssn_last_4;
+        if (id_number) updateData.individual.id_number = id_number;
+
+        // Update Stripe account
+        const account = await stripe.accounts.update(accountId, updateData);
+
+        res.json({
+            accountId: account.id,
+            requirements: account.requirements,
+            charges_enabled: account.charges_enabled,
+            payouts_enabled: account.payouts_enabled,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error updating account info:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 12) ACCEPT STRIPE TERMS OF SERVICE (Required for Custom accounts)
+// ============================================
+app.post("/acceptTermsOfService", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { ip } = req.body; // Client IP address
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Accept TOS
+        const account = await stripe.accounts.update(accountId, {
+            tos_acceptance: {
+                date: Math.floor(Date.now() / 1000),
+                ip: ip || req.ip || req.headers['x-forwarded-for']?.split(',')[0] || '0.0.0.0',
+            },
+        });
+
+        res.json({
+            accountId: account.id,
+            tos_accepted: true,
+            success: true,
+        });
+    } catch (err) {
+        console.error("Error accepting TOS:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// 9) WEBHOOK HANDLER (Account Updates)
 // ============================================
 app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -539,6 +856,242 @@ Generate a prompt for creating this invitation poster image that I can use with 
 });
 
 // ============================================
+// TEST: AUTO-VERIFY ACCOUNT (For test mode only - enables transfers capability)
+// ============================================
+app.post("/testVerifyAccount", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+
+    // Only allow in test mode
+    if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+        return res.status(403).json({
+            error: "This endpoint is only available in test mode"
+        });
+    }
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found. Create an event first!" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Update the account with ALL required test verification data
+        const account = await stripe.accounts.update(accountId, {
+            business_type: 'individual',
+            individual: {
+                // Test SSN that Stripe accepts in test mode
+                ssn_last_4: '0000',
+                // Test date of birth
+                dob: {
+                    day: 1,
+                    month: 1,
+                    year: 1990,
+                },
+                first_name: 'Test',
+                last_name: 'User',
+                email: 'test@example.com',
+                phone: '+15555555555',
+                address: {
+                    line1: '123 Test Street',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    postal_code: '94111',
+                    country: 'US',
+                },
+                // Relationship - marks this person as owner and representative
+                relationship: {
+                    owner: true,
+                    representative: true,
+                    percent_ownership: 100,
+                    title: 'Owner',
+                },
+            },
+            // Accept TOS
+            tos_acceptance: {
+                date: Math.floor(Date.now() / 1000),
+                ip: req.ip || '127.0.0.1',
+            },
+            // Business profile with ALL required fields
+            business_profile: {
+                mcc: '8299', // Schools and Educational Services
+                url: 'https://piggybank.app',
+                product_description: 'Gift collection platform for special events',
+            },
+            // Settings including statement descriptors
+            settings: {
+                payouts: {
+                    statement_descriptor: 'PIGGYBANK',
+                },
+                payments: {
+                    statement_descriptor: 'PIGGYBANK GIFT',
+                },
+            },
+        });
+
+        console.log(`✅ Test account verified: ${accountId}`);
+        console.log(`   Capabilities: ${JSON.stringify(account.capabilities)}`);
+
+        // Also add a test bank account if one doesn't exist (required for payouts/transfers)
+        let bankAccountAdded = false;
+        try {
+            const existingAccounts = await stripe.accounts.listExternalAccounts(accountId, { limit: 1 });
+            if (existingAccounts.data.length === 0) {
+                // Add test bank account
+                const bankToken = await stripe.tokens.create({
+                    bank_account: {
+                        country: 'US',
+                        currency: 'usd',
+                        account_holder_name: 'Test User',
+                        account_holder_type: 'individual',
+                        routing_number: '110000000', // Stripe test routing number
+                        account_number: '000123456789', // Stripe test account number
+                    },
+                });
+
+                await stripe.accounts.createExternalAccount(accountId, {
+                    external_account: bankToken.id,
+                });
+                bankAccountAdded = true;
+                console.log(`✅ Test bank account added`);
+            } else {
+                console.log(`✅ Bank account already exists`);
+            }
+        } catch (bankErr) {
+            console.log(`⚠️ Could not add test bank account: ${bankErr.message}`);
+        }
+
+        res.json({
+            success: true,
+            accountId: account.id,
+            capabilities: account.capabilities,
+            bankAccountAdded,
+            message: `Account verified for testing!${bankAccountAdded ? ' Bank account added.' : ''} You can now receive test payments.`,
+        });
+    } catch (err) {
+        console.error("Error verifying test account:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// TEST: CREATE FAKE TRANSACTION (Only for testing!)
+// ============================================
+app.post("/testCreateTransaction", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { amount = 2500 } = req.body; // Default $25.00
+
+    // Only allow in test mode
+    if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+        return res.status(403).json({
+            error: "This endpoint is only available in test mode"
+        });
+    }
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Create a test charge that goes to the connected account
+        // Using Stripe's test tokens
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: parseInt(amount),
+            currency: 'usd',
+            payment_method: 'pm_card_visa', // Test card
+            confirm: true, // Automatically confirm
+            transfer_data: {
+                destination: accountId,
+            },
+            automatic_payment_methods: {
+                enabled: true,
+                allow_redirects: 'never',
+            },
+        });
+
+        console.log(`✅ Test transaction created: ${paymentIntent.id} for ${amount} cents`);
+
+        res.json({
+            success: true,
+            paymentIntentId: paymentIntent.id,
+            amount: paymentIntent.amount,
+            status: paymentIntent.status,
+            message: `Test payment of $${(amount / 100).toFixed(2)} created! Refresh your banking screen to see it.`,
+        });
+    } catch (err) {
+        console.error("Error creating test transaction:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// TEST: ADD TEST BALANCE (Simulates receiving a payment)
+// ============================================
+app.post("/testAddBalance", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { amount = 5000 } = req.body; // Default $50.00
+
+    // Only allow in test mode
+    if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+        return res.status(403).json({
+            error: "This endpoint is only available in test mode"
+        });
+    }
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "No Stripe account found. Create an event first!" });
+        }
+
+        const { accountId } = doc.data();
+
+        // Method 1: Create and confirm a PaymentIntent with automatic transfer
+        // This simulates someone paying the connected account (like a gift/donation)
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: parseInt(amount),
+            currency: 'usd',
+            payment_method: 'pm_card_visa', // Test card
+            confirm: true, // Auto-confirm
+            automatic_payment_methods: {
+                enabled: true,
+                allow_redirects: 'never'
+            },
+            // Transfer the funds to the connected account
+            transfer_data: {
+                destination: accountId,
+            },
+            // Optional: take a small platform fee
+            // application_fee_amount: Math.round(amount * 0.029), // 2.9%
+            description: `Test gift for account ${accountId}`,
+            metadata: {
+                testPayment: 'true',
+                userId: uid,
+            },
+        });
+
+        console.log(`✅ Test payment created: ${paymentIntent.id} for ${amount} cents to ${accountId}`);
+
+        res.json({
+            success: true,
+            paymentIntentId: paymentIntent.id,
+            amount: paymentIntent.amount,
+            status: paymentIntent.status,
+            message: `$${(amount / 100).toFixed(2)} test payment successful! The money will appear in your balance.`,
+        });
+    } catch (err) {
+        console.error("Error adding test balance:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 app.get("/health", (req, res) => {
@@ -552,124 +1105,207 @@ exports.api = functions.https.onRequest(app);
 // FIRESTORE TRIGGER: On Event Created
 // Automatically creates a Stripe Custom account for the user
 // ============================================
-exports.onEventCreated = functions.firestore
-    .document('events/{eventId}')
-    .onCreate(async (snapshot, context) => {
-        const eventData = snapshot.data();
-        const eventId = context.params.eventId;
-        const creatorId = eventData.creatorId;
+exports.onEventCreated = onDocumentCreated('events/{eventId}', async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+        console.log('No data associated with the event');
+        return null;
+    }
+    const eventData = snapshot.data();
+    const eventId = event.params.eventId;
+    const creatorId = eventData.creatorId;
 
-        console.log(`🎉 New event created: ${eventId} by user: ${creatorId}`);
+    console.log(`🎉 New event created: ${eventId} by user: ${creatorId}`);
 
-        try {
-            // 1. Get the user document
-            const userRef = db.collection('users').doc(creatorId);
-            const userDoc = await userRef.get();
+    try {
+        // 1. Get the user document
+        const userRef = db.collection('users').doc(creatorId);
+        const userDoc = await userRef.get();
 
-            if (!userDoc.exists) {
-                console.error(`❌ User not found: ${creatorId}`);
-                return null;
-            }
+        if (!userDoc.exists) {
+            console.error(`❌ User not found: ${creatorId}`);
+            return null;
+        }
 
-            const userData = userDoc.data();
+        const userData = userDoc.data();
 
-            // 2. Check if user already has a Stripe account
-            if (userData.stripeAccountId) {
-                console.log(`✅ User ${creatorId} already has Stripe account: ${userData.stripeAccountId}`);
+        // 2. Check if user already has a Stripe account
+        if (userData.stripeAccountId) {
+            console.log(`✅ User ${creatorId} already has Stripe account: ${userData.stripeAccountId}`);
 
-                // Update the event with the existing Stripe account ID
-                await snapshot.ref.update({
-                    stripeAccountId: userData.stripeAccountId,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            // Update the event with the existing Stripe account ID
+            await snapshot.ref.update({
+                stripeAccountId: userData.stripeAccountId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            return null;
+        }
+
+        // 3. Create a Stripe Custom account for the user with FULL verification
+        // This ensures capabilities are enabled from the start (not restricted)
+        console.log(`🏦 Creating fully verified Stripe Custom account for user: ${creatorId}`);
+
+        // Parse name into first/last
+        const fullName = userData.fullName || eventData.creatorName || 'Test User';
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || 'Test';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+
+        // Check if we're in test mode
+        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
+
+        const accountData = {
+            type: "custom",
+            country: "US",
+            email: userData.email || eventData.creatorEmail,
+            business_type: "individual",
+            capabilities: {
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+            // Individual details - REQUIRED for Custom accounts
+            // For individual business type, this person IS the representative
+            individual: {
+                first_name: firstName,
+                last_name: lastName,
+                email: userData.email || eventData.creatorEmail,
+                phone: userData.phone || '+15555555555', // Test phone
+                dob: {
+                    day: 1,
+                    month: 1,
+                    year: 1990,
+                },
+                address: {
+                    line1: '123 Main Street',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    postal_code: '94111',
+                    country: 'US',
+                },
+                // In test mode, use test SSN that always passes verification
+                ...(isTestMode && { ssn_last_4: '0000' }),
+                // Relationship - marks this person as owner and representative
+                relationship: {
+                    owner: true,
+                    representative: true,
+                    percent_ownership: 100,
+                    title: 'Owner',
+                },
+            },
+            // Business profile - ALL required fields
+            business_profile: {
+                name: fullName,
+                mcc: '8299', // Schools and Educational Services (better for gift/event platform)
+                url: 'https://piggybank.app',
+                product_description: 'Gift collection platform for special events like birthdays and bar mitzvahs',
+            },
+            // Accept Terms of Service
+            tos_acceptance: {
+                date: Math.floor(Date.now() / 1000),
+                ip: '127.0.0.1', // Will be replaced by actual IP in production
+            },
+            // Settings including statement descriptor
+            settings: {
+                payouts: {
+                    schedule: {
+                        interval: 'manual',
+                    },
+                    // Statement descriptor for payouts
+                    statement_descriptor: 'PIGGYBANK',
+                },
+                payments: {
+                    // Statement descriptor for card payments (max 22 chars)
+                    statement_descriptor: 'PIGGYBANK GIFT',
+                },
+            },
+        };
+
+        const account = await stripe.accounts.create(accountData);
+        console.log(`✅ Stripe account created: ${account.id}`);
+        console.log(`   Capabilities requested: card_payments, transfers`);
+
+        // 3b. Add a test bank account (required for payouts to work)
+        if (isTestMode) {
+            try {
+                // Use Stripe's test bank account routing number
+                const bankToken = await stripe.tokens.create({
+                    bank_account: {
+                        country: 'US',
+                        currency: 'usd',
+                        account_holder_name: fullName,
+                        account_holder_type: 'individual',
+                        routing_number: '110000000', // Stripe test routing number
+                        account_number: '000123456789', // Stripe test account number
+                    },
                 });
 
-                return null;
+                await stripe.accounts.createExternalAccount(account.id, {
+                    external_account: bankToken.id,
+                });
+                console.log(`✅ Test bank account added to Stripe account`);
+            } catch (bankErr) {
+                console.log(`⚠️ Could not add test bank account: ${bankErr.message}`);
             }
-
-            // 3. Create a Stripe Custom/Express account for the user
-            console.log(`🏦 Creating Stripe account for user: ${creatorId}`);
-
-            const account = await stripe.accounts.create({
-                type: "custom",
-                country: "US",
-                email: userData.email || eventData.creatorEmail,
-                business_type: "individual",
-                capabilities: {
-                    card_payments: { requested: true },
-                    transfers: { requested: true },
-                },
-                settings: {
-                    payouts: {
-                        schedule: {
-                            interval: 'manual',
-                        },
-                    },
-                },
-                // Pre-fill some info if available
-                business_profile: {
-                    name: userData.fullName || eventData.creatorName,
-                },
-            });
-
-            console.log(`✅ Stripe account created: ${account.id}`);
-
-            // 4. Create account link for onboarding
-            const appScheme = process.env.APP_SCHEME || 'myapp';
-            const accountLink = await stripe.accountLinks.create({
-                account: account.id,
-                refresh_url: `${appScheme}://banking/setup/stripe-connection?refresh=true`,
-                return_url: `${appScheme}://banking/setup/success`,
-                type: "account_onboarding",
-            });
-
-            // 5. Update user document with Stripe account info
-            await userRef.update({
-                stripeAccountId: account.id,
-                stripeAccountLink: accountLink.url,
-                stripeAccountCreated: true,
-                stripeAccountStatus: 'onboarding_required',
-                stripeAccountType: 'custom',
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            console.log(`✅ User ${creatorId} updated with Stripe account`);
-
-            // 6. Update the event with the Stripe account ID
-            await snapshot.ref.update({
-                stripeAccountId: account.id,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            console.log(`✅ Event ${eventId} updated with Stripe account`);
-
-            // 7. Also save to stripeAccounts collection for reference
-            await db.collection('stripeAccounts').doc(creatorId).set({
-                accountId: account.id,
-                userId: creatorId,
-                email: userData.email || eventData.creatorEmail,
-                country: 'US',
-                business_type: 'individual',
-                accountType: 'custom',
-                status: 'pending',
-                onboardingUrl: accountLink.url,
-                created: admin.firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
-
-            console.log(`✅ Stripe account saved to stripeAccounts collection`);
-
-            return { success: true, accountId: account.id };
-
-        } catch (error) {
-            console.error(`❌ Error creating Stripe account for event ${eventId}:`, error);
-
-            // Update event to indicate Stripe setup failed (can retry later)
-            await snapshot.ref.update({
-                stripeSetupFailed: true,
-                stripeSetupError: error.message,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            return { success: false, error: error.message };
         }
-    });
+
+        // 4. Create account link for onboarding
+        const appScheme = process.env.APP_SCHEME || 'myapp';
+        const accountLink = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: `${appScheme}://banking/setup/stripe-connection?refresh=true`,
+            return_url: `${appScheme}://banking/setup/success`,
+            type: "account_onboarding",
+        });
+
+        // 5. Update user document with Stripe account info
+        await userRef.update({
+            stripeAccountId: account.id,
+            stripeAccountLink: accountLink.url,
+            stripeAccountCreated: true,
+            stripeAccountStatus: 'onboarding_required',
+            stripeAccountType: 'custom',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        console.log(`✅ User ${creatorId} updated with Stripe account`);
+
+        // 6. Update the event with the Stripe account ID
+        await snapshot.ref.update({
+            stripeAccountId: account.id,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        console.log(`✅ Event ${eventId} updated with Stripe account`);
+
+        // 7. Also save to stripeAccounts collection for reference
+        await db.collection('stripeAccounts').doc(creatorId).set({
+            accountId: account.id,
+            userId: creatorId,
+            email: userData.email || eventData.creatorEmail,
+            country: 'US',
+            business_type: 'individual',
+            accountType: 'custom',
+            status: 'pending',
+            onboardingUrl: accountLink.url,
+            created: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        console.log(`✅ Stripe account saved to stripeAccounts collection`);
+
+        return { success: true, accountId: account.id };
+
+    } catch (error) {
+        console.error(`❌ Error creating Stripe account for event ${eventId}:`, error);
+
+        // Update event to indicate Stripe setup failed (can retry later)
+        await snapshot.ref.update({
+            stripeSetupFailed: true,
+            stripeSetupError: error.message,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return { success: false, error: error.message };
+    }
+});
 

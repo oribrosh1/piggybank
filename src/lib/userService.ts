@@ -1,8 +1,8 @@
 /**
  * User Service - Handles user profile and Stripe account creation
+ * Uses React Native Firebase for Firestore to share auth state
  */
-import { collection, doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import firebase from '../firebase';
+import firestore from '@react-native-firebase/firestore';
 import { createExpressAccount } from './api';
 import type {
     UserProfile,
@@ -13,7 +13,6 @@ import type {
     InitializeUserResult,
     OnboardingStep
 } from '../../types/user';
-import { userProfileConverter } from '../../types/user';
 
 /**
  * Initialize user profile and create Stripe Connect account
@@ -28,9 +27,6 @@ export async function initializeUserProfile(
 
     try {
         console.log('🚀 Initializing user profile for:', uid);
-
-        // 1. Get Firestore instance
-        const db = firebase.firestore();
 
         // 2. Create user profile document in Firestore
         const userProfileData: CreateUserProfileData = {
@@ -50,12 +46,12 @@ export async function initializeUserProfile(
             eventsAttended: 0,
             totalReceived: 0,
             totalPaid: 0,
+            // Account type - default to parent for new signups
+            accountType: 'parent',
         };
 
-        // Save user profile to Firestore with type converter
-        const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-        await setDoc(userRef, userProfileData as UserProfile);
-
+        // Save user profile to Firestore using React Native Firebase
+        await firestore().collection('users').doc(uid).set(userProfileData);
 
         console.log('✅ User profile created');
 
@@ -72,13 +68,12 @@ export async function initializeUserProfile(
             console.log('✅ Stripe account created:', stripeResult.accountId);
 
             // Store Stripe account info in user profile
-            const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-            await updateDoc(userRef, {
+            await firestore().collection('users').doc(uid).update({
                 stripeAccountId: stripeResult.accountId,
                 stripeAccountLink: stripeResult.accountLink,
                 stripeAccountCreated: true,
-                stripeAccountStatus: 'onboarding_required' as const,
-                updatedAt: Timestamp.now(),
+                stripeAccountStatus: 'onboarding_required',
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
 
             return {
@@ -91,11 +86,10 @@ export async function initializeUserProfile(
             console.warn('⚠️ Stripe account creation failed (non-critical):', stripeError);
 
             // Mark that Stripe account creation failed but don't block signup
-            const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-            await updateDoc(userRef, {
+            await firestore().collection('users').doc(uid).update({
                 stripeAccountCreated: false,
                 stripeAccountError: stripeError?.message || 'Unknown error',
-                updatedAt: Timestamp.now(),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
 
             // Return success for user profile but note Stripe issue
@@ -118,13 +112,19 @@ export async function initializeUserProfile(
  */
 export async function getUserProfile(uid: string): Promise<UserProfile | undefined> {
     try {
-        const db = firebase.firestore();
+        const docSnap = await firestore().collection('users').doc(uid).get();
 
-        // Use converter for automatic type conversion
-        const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists) {
+            return undefined;
+        }
 
-        return docSnap.exists() ? docSnap.data() : undefined;
+        const data = docSnap.data();
+        return {
+            ...data,
+            uid: docSnap.id,
+            createdAt: data?.createdAt?.toDate?.() || new Date(),
+            updatedAt: data?.updatedAt?.toDate?.() || new Date(),
+        } as UserProfile;
     } catch (error) {
         console.error('Error getting user profile:', error);
         throw error;
@@ -136,15 +136,12 @@ export async function getUserProfile(uid: string): Promise<UserProfile | undefin
  */
 export async function updateUserProfile(uid: string, updates: UpdateUserProfileData): Promise<{ success: boolean }> {
     try {
-        const db = firebase.firestore();
-
         const updateData = {
             ...updates,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         };
 
-        const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-        await updateDoc(userRef, updateData);
+        await firestore().collection('users').doc(uid).update(updateData);
 
         return { success: true };
     } catch (error) {
@@ -226,12 +223,9 @@ export async function needsStripeOnboarding(uid: string): Promise<boolean> {
  */
 export async function updateOnboardingStep(uid: string, step: OnboardingStep): Promise<{ success: boolean }> {
     try {
-        const db = firebase.firestore();
-
-        const userRef = doc(collection(db, 'users'), uid);
-        await updateDoc(userRef, {
+        await firestore().collection('users').doc(uid).update({
             onboardingStep: step,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log(`✅ Onboarding step updated to ${step} for user ${uid}`);
@@ -263,4 +257,3 @@ export async function advanceOnboardingStep(uid: string): Promise<{ success: boo
         throw error;
     }
 }
-

@@ -17,9 +17,9 @@ module.exports = {
                 usesNonExemptEncryption: false,
                 googleMapsApiKey: "AIzaSyBMN7YRo_mlOKjOpZudJxP9lZx_Dm87yso"
             },
-            usesAppleSignIn: true,
+            // usesAppleSignIn: true, // Requires paid Apple Developer account ($99/yr)
             supportsTablet: true,
-            bundleIdentifier: "com.piggybank.app",
+            bundleIdentifier: "com.oribrosh.piggybank",
             googleServicesFile: "./GoogleService-Info.plist"
         },
         android: {
@@ -27,7 +27,7 @@ module.exports = {
                 foregroundImage: "./assets/images/adaptive-icon.png",
                 backgroundColor: "#ffffff"
             },
-            package: "com.piggybank.app",
+            package: "com.oribrosh.piggybank",
             googleServicesFile: "./google-services.json",
             config: {
                 googleMaps: {
@@ -41,7 +41,7 @@ module.exports = {
             favicon: "./assets/images/favicon.png"
         },
         plugins: [
-            ["expo-apple-authentication"],
+            // ["expo-apple-authentication"], // Requires paid Apple Developer account ($99/yr)
             [
                 "expo-local-authentication",
                 {
@@ -64,7 +64,7 @@ module.exports = {
             [
                 "@stripe/stripe-react-native",
                 {
-                    merchantIdentifier: "merchant.com.piggybank.app",
+                    // merchantIdentifier: "merchant.com.oribrosh.piggybank", // Apple Pay requires paid account
                     enableGooglePay: true
                 }
             ],

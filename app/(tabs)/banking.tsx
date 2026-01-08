@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -20,12 +21,32 @@ import {
   Eye,
   EyeOff,
   Copy,
-  Wallet
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
+  TrendingUp,
+  DollarSign,
+  Banknote
 } from "lucide-react-native";
 import { useState, useEffect, useRef } from "react";
 import Svg, { Path } from "react-native-svg";
 import { routes } from "../../types/routes";
-import { AccountStatusResponse, getAccountStatus, getBalance, GetBalanceResponse } from "../../src/lib/api";
+import {
+  AccountStatusResponse,
+  getAccountStatus,
+  getBalance,
+  GetBalanceResponse,
+  getTransactions,
+  Transaction,
+  getAccountDetails,
+  GetAccountDetailsResponse,
+  getPayouts,
+  Payout,
+  createPayout,
+  testCreateTransaction,
+  testAddBalance,
+  testVerifyAccount
+} from "../../src/lib/api";
 import { getUserProfile } from "../../src/lib/userService";
 import { UserProfile } from "../../types/user";
 import firebase from "../../src/firebase";
@@ -36,9 +57,14 @@ export default function BankingScreen() {
 
   // Real Stripe account data
   const [accountData, setAccountData] = useState<AccountStatusResponse | null>(null);
+  const [accountDetails, setAccountDetails] = useState<GetAccountDetailsResponse | null>(null);
   const [balanceData, setBalanceData] = useState<GetBalanceResponse | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [requestingPayout, setRequestingPayout] = useState(false);
 
   // KYC Status: 'no_account' | 'pending' | 'approved' | 'rejected'
   const [kycStatus, setKycStatus] = useState('no_account');
@@ -131,6 +157,33 @@ export default function BankingScreen() {
           setBalanceData(balance);
         } catch (balanceError) {
           console.warn('Could not fetch balance:', balanceError);
+        }
+
+        // Get transactions if approved
+        try {
+          setLoadingTransactions(true);
+          const txnData = await getTransactions(10);
+          setTransactions(txnData.transactions || []);
+        } catch (txnError) {
+          console.warn('Could not fetch transactions:', txnError);
+        } finally {
+          setLoadingTransactions(false);
+        }
+
+        // Get full account details (Custom account)
+        try {
+          const details = await getAccountDetails();
+          setAccountDetails(details);
+        } catch (detailsError) {
+          console.warn('Could not fetch account details:', detailsError);
+        }
+
+        // Get payout history
+        try {
+          const payoutData = await getPayouts(5);
+          setPayouts(payoutData.payouts || []);
+        } catch (payoutError) {
+          console.warn('Could not fetch payouts:', payoutError);
         }
       } else if (accountStatus.details_submitted) {
         setKycStatus('pending');
@@ -364,6 +417,92 @@ export default function BankingScreen() {
                   CREATE PIGGY BANK
                 </Text>
               </TouchableOpacity>
+
+              {/* 🧪 TEST MODE - Available even before setup */}
+              {__DEV__ && (
+                <View
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    borderRadius: 16,
+                    padding: 20,
+                    marginTop: 10,
+                    borderWidth: 2,
+                    borderColor: "#E879F9",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      marginBottom: 12,
+                    }}
+                  >
+                    🧪 TEST MODE (Dev Only)
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "rgba(255,255,255,0.8)",
+                      marginBottom: 16,
+                      fontWeight: "500",
+                    }}
+                  >
+                    1. Tap "CREATE PIGGY BANK" to set up your Stripe account{"\n"}
+                    2. Tap "Verify for Testing" to enable transfers{"\n"}
+                    3. Then add test money!
+                  </Text>
+
+                  <View style={{ gap: 10 }}>
+                    {/* Step 2: Verify Account */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testVerifyAccount();
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'Create an event first to set up your Stripe account');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#059669",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        ✅ Step 2: Verify for Testing
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Step 3: Add Balance */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testAddBalance(5000);
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'First verify your account (step 2)');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#A21CAF",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        💰 Step 3: Add $50 Test Balance
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           )}
 
@@ -768,7 +907,9 @@ export default function BankingScreen() {
                         BALANCE
                       </Text>
                       <Text style={{ fontSize: 15, fontWeight: "700", color: "#6B3AA0" }}>
-                        $0.00
+                        ${balanceData?.available?.[0]
+                          ? (balanceData.available[0].amount / 100).toFixed(2)
+                          : '0.00'}
                       </Text>
                     </View>
                   </View>
@@ -811,6 +952,7 @@ export default function BankingScreen() {
                   padding: 16,
                   borderWidth: 2,
                   borderColor: "rgba(16, 185, 129, 0.3)",
+                  marginBottom: 20,
                 }}
               >
                 <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
@@ -837,6 +979,656 @@ export default function BankingScreen() {
                   Your identity is verified by Stripe. You can now receive payments and use your card anywhere!
                 </Text>
               </View>
+
+              {/* Balance Breakdown */}
+              <View
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 20,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "800",
+                    color: "#6B3AA0",
+                    marginBottom: 16,
+                  }}
+                >
+                  💰 BALANCE BREAKDOWN
+                </Text>
+
+                {/* Available Balance */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingVertical: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#E5E7EB",
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        backgroundColor: "#D1FAE5",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 12,
+                      }}
+                    >
+                      <DollarSign size={18} color="#10B981" strokeWidth={2.5} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
+                        Available
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
+                        Ready to spend or withdraw
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: "800", color: "#10B981" }}>
+                    ${balanceData?.available?.[0]
+                      ? (balanceData.available[0].amount / 100).toFixed(2)
+                      : '0.00'}
+                  </Text>
+                </View>
+
+                {/* Pending Balance */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingVertical: 12,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        backgroundColor: "#FEF3C7",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 12,
+                      }}
+                    >
+                      <Clock size={18} color="#F59E0B" strokeWidth={2.5} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>
+                        Pending
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
+                        Processing (1-2 business days)
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 18, fontWeight: "800", color: "#F59E0B" }}>
+                    ${balanceData?.pending?.[0]
+                      ? (balanceData.pending[0].amount / 100).toFixed(2)
+                      : '0.00'}
+                  </Text>
+                </View>
+
+                {/* Request Payout Button */}
+                {balanceData?.available?.[0]?.amount && balanceData.available[0].amount > 0 && (
+                  <TouchableOpacity
+                    onPress={async () => {
+                      const availableAmount = balanceData?.available?.[0]?.amount || 0;
+                      if (availableAmount <= 0) {
+                        alert('No available balance to withdraw');
+                        return;
+                      }
+                      if (!accountDetails?.external_accounts?.length) {
+                        alert('Please add a bank account first to withdraw funds');
+                        return;
+                      }
+                      try {
+                        setRequestingPayout(true);
+                        const result = await createPayout({
+                          amount: availableAmount,
+                          currency: balanceData?.available?.[0]?.currency || 'usd'
+                        });
+                        alert(`Payout requested! $${(result.amount / 100).toFixed(2)} will arrive in 1-2 business days.`);
+                        onRefresh(); // Refresh data
+                      } catch (error: any) {
+                        alert(error?.response?.data?.error || 'Failed to request payout');
+                      } finally {
+                        setRequestingPayout(false);
+                      }
+                    }}
+                    disabled={requestingPayout}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: requestingPayout ? "#9CA3AF" : "#10B981",
+                      borderRadius: 12,
+                      paddingVertical: 14,
+                      marginTop: 16,
+                    }}
+                  >
+                    {requestingPayout ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <ArrowUpRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 8 }}>
+                          Withdraw to Bank
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Transaction History */}
+              <View
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 16,
+                  padding: 20,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  marginBottom: 20,
+                }}
+              >
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: "#6B3AA0",
+                    }}
+                  >
+                    📊 RECENT TRANSACTIONS
+                  </Text>
+                  <TouchableOpacity onPress={onRefresh}>
+                    <RefreshCw size={16} color="#6B3AA0" strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </View>
+
+                {loadingTransactions ? (
+                  <ActivityIndicator size="small" color="#6B3AA0" style={{ marginVertical: 20 }} />
+                ) : transactions.length === 0 ? (
+                  <View style={{ alignItems: "center", paddingVertical: 24 }}>
+                    <TrendingUp size={40} color="#D1D5DB" strokeWidth={1.5} />
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: "#9CA3AF", marginTop: 12 }}>
+                      No transactions yet
+                    </Text>
+                    <Text style={{ fontSize: 12, color: "#D1D5DB", marginTop: 4 }}>
+                      Transactions will appear here
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    {transactions.slice(0, 5).map((txn, index) => (
+                      <View
+                        key={txn.id}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          paddingVertical: 10,
+                          borderBottomWidth: index < Math.min(transactions.length, 5) - 1 ? 1 : 0,
+                          borderBottomColor: "#F3F4F6",
+                        }}
+                      >
+                        {/* Icon */}
+                        <View
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 20,
+                            backgroundColor: txn.amount >= 0 ? "#D1FAE5" : "#FEE2E2",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 12,
+                          }}
+                        >
+                          {txn.amount >= 0 ? (
+                            <ArrowDownLeft size={18} color="#10B981" strokeWidth={2.5} />
+                          ) : (
+                            <ArrowUpRight size={18} color="#EF4444" strokeWidth={2.5} />
+                          )}
+                        </View>
+
+                        {/* Details */}
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827" }}>
+                            {txn.type === 'charge' ? 'Payment Received' :
+                              txn.type === 'payout' ? 'Withdrawal' :
+                                txn.type === 'transfer' ? 'Transfer' :
+                                  txn.type.charAt(0).toUpperCase() + txn.type.slice(1)}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
+                            {new Date(txn.created * 1000).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                        </View>
+
+                        {/* Amount */}
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontWeight: "800",
+                            color: txn.amount >= 0 ? "#10B981" : "#EF4444",
+                          }}
+                        >
+                          {txn.amount >= 0 ? '+' : ''}${(Math.abs(txn.amount) / 100).toFixed(2)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              {/* Bank Account Section */}
+              <View
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 16,
+                  padding: 20,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  marginBottom: 20,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "800",
+                    color: "#6B3AA0",
+                    marginBottom: 16,
+                  }}
+                >
+                  🏦 LINKED BANK ACCOUNT
+                </Text>
+
+                {accountDetails?.external_accounts && accountDetails.external_accounts.length > 0 ? (
+                  accountDetails.external_accounts.map((bank) => (
+                    <View
+                      key={bank.id}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: "#F9FAFB",
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 24,
+                          backgroundColor: "#E0E7FF",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 14,
+                        }}
+                      >
+                        <CreditCard size={24} color="#6366F1" strokeWidth={2} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>
+                          {bank.bank_name || 'Bank Account'}
+                        </Text>
+                        <Text style={{ fontSize: 13, color: "#6B7280", fontWeight: "500", marginTop: 2 }}>
+                          ••••{bank.last4} • {bank.currency.toUpperCase()}
+                        </Text>
+                      </View>
+                      {bank.default_for_currency && (
+                        <View
+                          style={{
+                            backgroundColor: "#D1FAE5",
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 12,
+                          }}
+                        >
+                          <Text style={{ fontSize: 10, fontWeight: "700", color: "#059669" }}>
+                            DEFAULT
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ))
+                ) : (
+                  <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                    <CreditCard size={36} color="#D1D5DB" strokeWidth={1.5} />
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: "#9CA3AF", marginTop: 10 }}>
+                      No bank account linked
+                    </Text>
+                    <Text style={{ fontSize: 11, color: "#D1D5DB", marginTop: 4, textAlign: "center" }}>
+                      Add a bank account to withdraw funds
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => router.push(routes.banking.setup.personalInfo)}
+                      style={{
+                        backgroundColor: "#6B3AA0",
+                        borderRadius: 10,
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        marginTop: 14,
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        Add Bank Account
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+
+              {/* Account Requirements (if any) */}
+              {accountDetails?.requirements?.currently_due && accountDetails.requirements.currently_due.length > 0 && (
+                <View
+                  style={{
+                    backgroundColor: "#FEF3C7",
+                    borderRadius: 16,
+                    padding: 20,
+                    marginBottom: 20,
+                    borderWidth: 2,
+                    borderColor: "#FCD34D",
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                    <AlertCircle size={20} color="#F59E0B" strokeWidth={2.5} />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "800",
+                        color: "#92400E",
+                        marginLeft: 10,
+                      }}
+                    >
+                      Action Required
+                    </Text>
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#92400E",
+                      lineHeight: 18,
+                      fontWeight: "500",
+                      marginBottom: 12,
+                    }}
+                  >
+                    Complete the following to enable full account features:
+                  </Text>
+                  {accountDetails.requirements.currently_due.map((req, i) => (
+                    <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+                      <View
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: "#F59E0B",
+                          marginRight: 8,
+                        }}
+                      />
+                      <Text style={{ fontSize: 12, color: "#92400E", fontWeight: "500" }}>
+                        {req.replace(/_/g, ' ').replace(/\./g, ' > ')}
+                      </Text>
+                    </View>
+                  ))}
+                  <TouchableOpacity
+                    onPress={() => router.push(routes.banking.setup.personalInfo)}
+                    style={{
+                      backgroundColor: "#F59E0B",
+                      borderRadius: 10,
+                      paddingVertical: 12,
+                      alignItems: "center",
+                      marginTop: 12,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                      Complete Verification
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Payout History */}
+              {payouts.length > 0 && (
+                <View
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 16,
+                    padding: 20,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.1,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: "#6B3AA0",
+                      marginBottom: 16,
+                    }}
+                  >
+                    💸 PAYOUT HISTORY
+                  </Text>
+
+                  <View style={{ gap: 10 }}>
+                    {payouts.map((payout, index) => (
+                      <View
+                        key={payout.id}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          paddingVertical: 10,
+                          borderBottomWidth: index < payouts.length - 1 ? 1 : 0,
+                          borderBottomColor: "#F3F4F6",
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 18,
+                            backgroundColor: payout.status === 'paid' ? "#D1FAE5" :
+                              payout.status === 'pending' ? "#FEF3C7" :
+                                payout.status === 'failed' ? "#FEE2E2" : "#F3F4F6",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 12,
+                          }}
+                        >
+                          <ArrowUpRight
+                            size={16}
+                            color={payout.status === 'paid' ? "#10B981" :
+                              payout.status === 'pending' ? "#F59E0B" :
+                                payout.status === 'failed' ? "#EF4444" : "#6B7280"}
+                            strokeWidth={2.5}
+                          />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827" }}>
+                            Withdrawal to Bank
+                          </Text>
+                          <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
+                            {payout.status === 'paid' ? 'Completed' :
+                              payout.status === 'pending' ? 'Processing' :
+                                payout.status === 'in_transit' ? 'In Transit' :
+                                  payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
+                            {' • '}
+                            {new Date(payout.created * 1000).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </Text>
+                        </View>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "800",
+                            color: payout.status === 'paid' ? "#10B981" :
+                              payout.status === 'pending' ? "#F59E0B" : "#111827",
+                          }}
+                        >
+                          ${(payout.amount / 100).toFixed(2)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* 🧪 TEST MODE - Development Only */}
+              {__DEV__ && (
+                <View
+                  style={{
+                    backgroundColor: "#FDF4FF",
+                    borderRadius: 16,
+                    padding: 20,
+                    marginTop: 20,
+                    borderWidth: 2,
+                    borderColor: "#E879F9",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: "#A21CAF",
+                      marginBottom: 12,
+                    }}
+                  >
+                    🧪 TEST MODE (Dev Only)
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#86198F",
+                      marginBottom: 16,
+                      fontWeight: "500",
+                    }}
+                  >
+                    If you see "transfers capability" errors, tap "Verify Account" first!
+                  </Text>
+
+                  <View style={{ gap: 10 }}>
+                    {/* Verify Account for Testing */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testVerifyAccount();
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'Failed to verify account');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#059669",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        ✅ Verify Account for Testing
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Add $25 Payment */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testCreateTransaction(2500);
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'Failed to create test transaction - try verifying first!');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#A21CAF",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        + Add $25 Test Payment
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Add $50 Balance */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testAddBalance(5000);
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'Failed to add test balance - try verifying first!');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#7C3AED",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        + Add $50 Test Balance
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Add $100 Balance */}
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await testAddBalance(10000);
+                          alert(result.message);
+                          onRefresh();
+                        } catch (error: any) {
+                          alert(error?.response?.data?.error || 'Failed to add test balance - try verifying first!');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "#6366F1",
+                        borderRadius: 10,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>
+                        + Add $100 Test Balance
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           )}
 

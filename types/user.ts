@@ -118,6 +118,7 @@ export interface CreateUserProfileData {
     eventsAttended: number;
     totalReceived: number;
     totalPaid: number;
+    accountType: AccountType;
 }
 
 /**

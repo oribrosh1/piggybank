@@ -26,7 +26,7 @@ export default function PaymentScreen({ route, navigation }: { route: any, navig
     // Initialize Stripe with publishable key
     initStripe({
       publishableKey: STRIPE_PUBLISHABLE_KEY,
-      merchantIdentifier: 'merchant.com.piggybank.app', // For Apple Pay
+      merchantIdentifier: 'merchant.com.oribrosh.piggybank', // For Apple Pay
     });
   }, []);
 

@@ -1,13 +1,13 @@
 /**
  * Event Service
  * Handles event creation and database updates
- * Note: Stripe account creation is handled by a Firebase Cloud Function trigger
+ * Uses React Native Firebase for Firestore to share auth state
  */
 
-import firebase from '../firebase';
-import { collection, doc, setDoc, getDoc, updateDoc, increment, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { Event, EventSummary, CreateEventData, GuestStats, Guest, eventConverter, eventSummaryConverter, calculateGuestStats } from '../../types/events';
-import { userProfileConverter, UserProfile } from '../../types/user';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { Event, EventSummary, CreateEventData, Guest, calculateGuestStats } from '../../types/events';
+import { UserProfile } from '../../types/user';
 
 export interface CreateEventResult {
     success: boolean;
@@ -21,29 +21,27 @@ export interface CreateEventResult {
  */
 export async function createEvent(eventData: CreateEventData): Promise<CreateEventResult> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) {
             throw new Error('User must be authenticated to create an event');
         }
 
-        const db = firebase.firestore();
         const uid = user.uid;
 
         console.log('📅 Creating event for user:', uid);
 
-        // Get user data with converter (may not exist yet)
-        const userRef = doc(collection(db, 'users'), uid).withConverter(userProfileConverter);
-        const userDoc = await getDoc(userRef);
+        // Get user data (may not exist yet)
+        const userDoc = await firestore().collection('users').doc(uid).get();
         const userExists = userDoc.exists();
-        const userData = userExists ? userDoc.data() : null;
+        const userData = userDoc.data() as UserProfile | undefined;
 
         // Generate unique event ID
-        const eventId = doc(collection(db, 'events')).id;
+        const eventId = firestore().collection('events').doc().id;
 
         // Calculate guest stats
         const guestStats = calculateGuestStats(eventData.guests);
 
-        // Build typed event object - converter handles undefined removal
+        // Build typed event object
         const event: Event = {
             id: eventId,
             // Creator info
@@ -84,18 +82,20 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
             updatedAt: new Date(),
         };
 
-        // Save event to Firestore using converter
-        const eventRef = doc(collection(db, 'events'), eventId).withConverter(eventConverter);
-        await setDoc(eventRef, event);
+        // Remove undefined values before saving
+        const cleanEvent = removeUndefined(event);
+
+        // Save event to Firestore
+        await firestore().collection('events').doc(eventId).set(cleanEvent);
 
         console.log('✅ Event saved to Firestore:', eventId);
 
         // Update or create user document
         if (userExists) {
             // User exists - update eventsCreated counter
-            await updateDoc(userRef, {
-                eventsCreated: increment(1),
-                updatedAt: Timestamp.now(),
+            await firestore().collection('users').doc(uid).update({
+                eventsCreated: firestore.FieldValue.increment(1),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
         } else {
             // User doesn't exist - create user document
@@ -115,16 +115,15 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
                 updatedAt: new Date(),
                 accountType: 'parent',
             };
-            await setDoc(userRef, newUserProfile);
+            await firestore().collection('users').doc(uid).set(newUserProfile);
         }
 
         console.log('✅ User document updated');
 
         // Update onboarding step to 1 (created event + added guests) if not already past it
-        // Step 1: Create & manage your child's birthday event (invite guests from contacts)
         const currentStep = userData?.onboardingStep || 0;
         if (currentStep < 1) {
-            await updateDoc(userRef, {
+            await firestore().collection('users').doc(uid).update({
                 onboardingStep: 1,
             });
             console.log('✅ Onboarding step advanced to 1 (event created)');
@@ -144,28 +143,78 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
 }
 
 /**
+ * Helper to remove undefined values from an object
+ */
+function removeUndefined(obj: any): any {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+            if (Array.isArray(value)) {
+                result[key] = value.map(item =>
+                    typeof item === 'object' && item !== null ? removeUndefined(item) : item
+                );
+            } else if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
+                result[key] = removeUndefined(value);
+            } else {
+                result[key] = value;
+            }
+        }
+    }
+    return result;
+}
+
+/**
  * Get event summaries (without full guest data) for the current user
  * Use this for listing events - it only fetches stats, not individual guests
  */
 export async function getUserEventsStats(): Promise<EventSummary[]> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) {
             throw new Error('User must be authenticated');
         }
 
-        const db = firebase.firestore();
-
-        // Use summary converter - doesn't fetch guests array
-        const eventsRef = collection(db, 'events').withConverter(eventSummaryConverter);
-
         // Query events where creatorId matches current user
-        const snapshot = await getDocs(
-            query(eventsRef, where('creatorId', '==', user.uid))
-        );
+        const snapshot = await firestore()
+            .collection('events')
+            .where('creatorId', '==', user.uid)
+            .get();
 
-        // Data is automatically typed as EventSummary[] (no guests array)
-        return snapshot.docs.map(doc => doc.data());
+        // Map documents to EventSummary (without guests array)
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                creatorId: data.creatorId,
+                creatorName: data.creatorName,
+                creatorEmail: data.creatorEmail,
+                eventType: data.eventType,
+                eventName: data.eventName,
+                eventCategory: data.eventCategory,
+                partyType: data.partyType,
+                otherPartyType: data.otherPartyType,
+                attireType: data.attireType,
+                footwearType: data.footwearType,
+                theme: data.theme,
+                parking: data.parking,
+                kosherType: data.kosherType,
+                mealType: data.mealType,
+                vegetarianType: data.vegetarianType,
+                age: data.age,
+                date: data.date,
+                time: data.time,
+                address1: data.address1,
+                address2: data.address2,
+                totalGuests: data.totalGuests || 0,
+                guestStats: data.guestStats || { pending: 0, invited: 0, confirmed: 0, declined: 0, paid: 0, totalPaid: 0 },
+                status: data.status,
+                stripeAccountId: data.stripeAccountId,
+                posterUrl: data.posterUrl,
+                posterPrompt: data.posterPrompt,
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+                updatedAt: data.updatedAt?.toDate?.() || new Date(),
+            } as EventSummary;
+        });
     } catch (error) {
         console.error('Error fetching user events:', error);
         return [];
@@ -177,18 +226,19 @@ export async function getUserEventsStats(): Promise<EventSummary[]> {
  */
 export async function getEvent(eventId: string): Promise<Event | null> {
     try {
-        const db = firebase.firestore();
+        const eventDoc = await firestore().collection('events').doc(eventId).get();
 
-        // Use converter for automatic type conversion
-        const eventRef = doc(collection(db, 'events'), eventId).withConverter(eventConverter);
-        const eventDoc = await getDoc(eventRef);
-
-        if (!eventDoc.exists()) {
+        if (!eventDoc.exists) {
             return null;
         }
 
-        // Data is automatically typed as Event
-        return eventDoc.data();
+        const data = eventDoc.data()!;
+        return {
+            ...data,
+            id: eventDoc.id,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date(),
+        } as Event;
     } catch (error) {
         console.error('Error fetching event:', error);
         return null;
@@ -200,9 +250,6 @@ export async function getEvent(eventId: string): Promise<Event | null> {
  */
 export async function updateEvent(eventId: string, updates: Partial<Event>): Promise<{ success: boolean; error?: string }> {
     try {
-        const db = firebase.firestore();
-        const eventRef = doc(collection(db, 'events'), eventId);
-
         // Filter out undefined values (Firebase doesn't accept them)
         const cleanUpdates: Record<string, any> = {};
         for (const [key, value] of Object.entries(updates)) {
@@ -211,9 +258,9 @@ export async function updateEvent(eventId: string, updates: Partial<Event>): Pro
             }
         }
 
-        await updateDoc(eventRef, {
+        await firestore().collection('events').doc(eventId).update({
             ...cleanUpdates,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         return { success: true };
@@ -234,10 +281,10 @@ function guestToFirestoreData(guest: Guest): Record<string, any> {
         status: guest.status,
     };
     // Only add optional fields if they have values
-    if (guest.addedAt) data.addedAt = guest.addedAt instanceof Date ? Timestamp.fromDate(guest.addedAt) : guest.addedAt;
-    if (guest.invitedAt) data.invitedAt = guest.invitedAt instanceof Date ? Timestamp.fromDate(guest.invitedAt) : guest.invitedAt;
-    if (guest.confirmedAt) data.confirmedAt = guest.confirmedAt instanceof Date ? Timestamp.fromDate(guest.confirmedAt) : guest.confirmedAt;
-    if (guest.paidAt) data.paidAt = guest.paidAt instanceof Date ? Timestamp.fromDate(guest.paidAt) : guest.paidAt;
+    if (guest.addedAt) data.addedAt = guest.addedAt;
+    if (guest.invitedAt) data.invitedAt = guest.invitedAt;
+    if (guest.confirmedAt) data.confirmedAt = guest.confirmedAt;
+    if (guest.paidAt) data.paidAt = guest.paidAt;
     if (guest.paymentAmount !== undefined) data.paymentAmount = guest.paymentAmount;
     if (guest.paymentId) data.paymentId = guest.paymentId;
     return data;
@@ -252,20 +299,17 @@ export async function updateEventGuests(
     guests: Guest[]
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const db = firebase.firestore();
-        const eventRef = doc(collection(db, 'events'), eventId);
-
         // Recalculate stats from the guests array
         const guestStats = calculateGuestStats(guests);
 
         // Convert guests to Firestore-safe format (no undefined values)
         const firestoreGuests = guests.map(guestToFirestoreData);
 
-        await updateDoc(eventRef, {
+        await firestore().collection('events').doc(eventId).update({
             guests: firestoreGuests,
             totalGuests: guests.length,
             guestStats: guestStats,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         return { success: true };
@@ -281,8 +325,6 @@ export async function updateEventGuests(
  */
 export async function refreshEventGuestStats(eventId: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const db = firebase.firestore();
-
         // Get full event with guests
         const event = await getEvent(eventId);
         if (!event) {
@@ -291,12 +333,11 @@ export async function refreshEventGuestStats(eventId: string): Promise<{ success
 
         // Recalculate and update stats
         const guestStats = calculateGuestStats(event.guests);
-        const eventRef = doc(collection(db, 'events'), eventId);
 
-        await updateDoc(eventRef, {
+        await firestore().collection('events').doc(eventId).update({
             guestStats: guestStats,
             totalGuests: event.guests.length,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         return { success: true };
@@ -316,7 +357,7 @@ export async function generateEventPoster(eventId: string): Promise<{
     error?: string;
 }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) {
             throw new Error('User must be authenticated');
         }
@@ -363,18 +404,15 @@ export async function saveEventPoster(
     posterPrompt?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const db = firebase.firestore();
-        const eventRef = doc(collection(db, 'events'), eventId);
-
         const updates: Record<string, any> = {
             posterUrl,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         };
         if (posterPrompt) {
             updates.posterPrompt = posterPrompt;
         }
 
-        await updateDoc(eventRef, updates);
+        await firestore().collection('events').doc(eventId).update(updates);
 
         return { success: true };
     } catch (error: any) {
@@ -382,4 +420,3 @@ export async function saveEventPoster(
         return { success: false, error: error.message };
     }
 }
-

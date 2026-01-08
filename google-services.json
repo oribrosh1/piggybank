@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:507312069438:android:6951604018677d2124ea6f",
         "android_client_info": {
-          "package_name": "com.piggybank.app"
+          "package_name": "com.oribrosh.piggybank"
         }
       },
       "oauth_client": [
@@ -34,7 +34,7 @@
               "client_id": "507312069438-uo78fhuoecsmsr2thd27et2j61iltuq8.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.piggybank.app"
+                "bundle_id": "com.oribrosh.piggybank"
               }
             }
           ]

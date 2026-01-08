@@ -1,10 +1,11 @@
 /**
  * Family Service
  * Handles family management, virtual cards, and spending tracking
+ * Uses React Native Firebase for Firestore to share auth state
  */
 
-import { collection, doc, setDoc, getDoc, updateDoc, getDocs, query, where, Timestamp, arrayUnion } from 'firebase/firestore';
-import firebase from '../firebase';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 import {
     Family,
     VirtualCard,
@@ -12,13 +13,9 @@ import {
     FamilyMember,
     SpendingSummary,
     SpendingLimit,
-    familyConverter,
-    virtualCardConverter,
-    transactionConverter,
     TransactionCategory
 } from '../../types/family';
 import { UserProfile, AccountType } from '../../types/user';
-import { userProfileConverter } from '../../types/user';
 
 // ============================================
 // Family Management
@@ -29,16 +26,14 @@ import { userProfileConverter } from '../../types/user';
  */
 export async function createFamily(familyName: string): Promise<{ success: boolean; familyId?: string; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
 
-        const db = firebase.firestore();
-        const familyId = doc(collection(db, 'families')).id;
+        const familyId = firestore().collection('families').doc().id;
 
         // Get user profile
-        const userRef = doc(collection(db, 'users'), user.uid).withConverter(userProfileConverter);
-        const userDoc = await getDoc(userRef);
-        const userData = userDoc.data();
+        const userDoc = await firestore().collection('users').doc(user.uid).get();
+        const userData = userDoc.data() as UserProfile | undefined;
 
         const member: FamilyMember = {
             uid: user.uid,
@@ -63,14 +58,13 @@ export async function createFamily(familyName: string): Promise<{ success: boole
         };
 
         // Save family
-        const familyRef = doc(collection(db, 'families'), familyId).withConverter(familyConverter);
-        await setDoc(familyRef, family);
+        await firestore().collection('families').doc(familyId).set(family);
 
         // Update user profile with family ID
-        await updateDoc(userRef, {
+        await firestore().collection('users').doc(user.uid).update({
             familyId: familyId,
             accountType: 'parent',
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log('✅ Family created:', familyId);
@@ -86,10 +80,16 @@ export async function createFamily(familyName: string): Promise<{ success: boole
  */
 export async function getFamily(familyId: string): Promise<Family | null> {
     try {
-        const db = firebase.firestore();
-        const familyRef = doc(collection(db, 'families'), familyId).withConverter(familyConverter);
-        const familyDoc = await getDoc(familyRef);
-        return familyDoc.exists() ? familyDoc.data() : null;
+        const familyDoc = await firestore().collection('families').doc(familyId).get();
+        if (!familyDoc.exists) return null;
+
+        const data = familyDoc.data()!;
+        return {
+            ...data,
+            id: familyDoc.id,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date(),
+        } as Family;
     } catch (error) {
         console.error('Error getting family:', error);
         return null;
@@ -104,10 +104,8 @@ export async function addChildToFamily(
     childData: { fullName: string; email?: string }
 ): Promise<{ success: boolean; childId?: string; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
-
-        const db = firebase.firestore();
 
         // Verify user is a parent in this family
         const family = await getFamily(familyId);
@@ -116,7 +114,7 @@ export async function addChildToFamily(
         }
 
         // Generate child ID (they'll link this later when they sign up)
-        const childId = doc(collection(db, 'users')).id;
+        const childId = firestore().collection('users').doc().id;
 
         const childMember: FamilyMember = {
             uid: childId,
@@ -129,18 +127,16 @@ export async function addChildToFamily(
         };
 
         // Update family with new child
-        const familyRef = doc(collection(db, 'families'), familyId);
-        await updateDoc(familyRef, {
-            childIds: arrayUnion(childId),
+        await firestore().collection('families').doc(familyId).update({
+            childIds: firestore.FieldValue.arrayUnion(childId),
             members: [...family.members, childMember],
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Update parent's childIds
-        const userRef = doc(collection(db, 'users'), user.uid);
-        await updateDoc(userRef, {
-            childIds: arrayUnion(childId),
-            updatedAt: Timestamp.now(),
+        await firestore().collection('users').doc(user.uid).update({
+            childIds: firestore.FieldValue.arrayUnion(childId),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log('✅ Child added to family:', childId);
@@ -159,10 +155,8 @@ export async function linkChildAccount(
     childUid: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
-
-        const db = firebase.firestore();
 
         // Verify user is a parent in this family
         const family = await getFamily(familyId);
@@ -171,20 +165,19 @@ export async function linkChildAccount(
         }
 
         // Get child's profile
-        const childRef = doc(collection(db, 'users'), childUid).withConverter(userProfileConverter);
-        const childDoc = await getDoc(childRef);
-        if (!childDoc.exists()) {
+        const childDoc = await firestore().collection('users').doc(childUid).get();
+        if (!childDoc.exists) {
             throw new Error('Child account not found');
         }
 
-        const childData = childDoc.data();
+        const childData = childDoc.data() as UserProfile | undefined;
 
         // Update child's profile
-        await updateDoc(childRef, {
+        await firestore().collection('users').doc(childUid).update({
             familyId: familyId,
             accountType: 'child' as AccountType,
-            parentIds: arrayUnion(user.uid),
-            updatedAt: Timestamp.now(),
+            parentIds: firestore.FieldValue.arrayUnion(user.uid),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Update family
@@ -198,23 +191,21 @@ export async function linkChildAccount(
             joinedAt: new Date(),
         };
 
-        const familyRef = doc(collection(db, 'families'), familyId);
-        await updateDoc(familyRef, {
-            childIds: arrayUnion(childUid),
+        await firestore().collection('families').doc(familyId).update({
+            childIds: firestore.FieldValue.arrayUnion(childUid),
             members: [...family.members, childMember],
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Update parent's childIds and advance onboarding
-        const parentRef = doc(collection(db, 'users'), user.uid).withConverter(userProfileConverter);
-        const parentSnapshot = await getDoc(parentRef);
-        const parentProfile = parentSnapshot.data();
+        const parentDoc = await firestore().collection('users').doc(user.uid).get();
+        const parentProfile = parentDoc.data() as UserProfile | undefined;
         const parentCurrentStep = parentProfile?.onboardingStep || 0;
 
-        await updateDoc(parentRef, {
-            childIds: arrayUnion(childUid),
+        await firestore().collection('users').doc(user.uid).update({
+            childIds: firestore.FieldValue.arrayUnion(childUid),
             onboardingStep: parentCurrentStep < 3 ? 3 : parentCurrentStep,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         if (parentCurrentStep < 3) {
@@ -242,15 +233,12 @@ export async function createVirtualCard(
     spendingLimit?: SpendingLimit
 ): Promise<{ success: boolean; cardId?: string; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
 
-        const db = firebase.firestore();
-
         // Get parent's profile to verify and get family ID
-        const parentRef = doc(collection(db, 'users'), user.uid).withConverter(userProfileConverter);
-        const parentDoc = await getDoc(parentRef);
-        const parentData = parentDoc.data();
+        const parentDoc = await firestore().collection('users').doc(user.uid).get();
+        const parentData = parentDoc.data() as UserProfile | undefined;
 
         if (!parentData?.familyId) {
             throw new Error('You must create a family first');
@@ -261,7 +249,7 @@ export async function createVirtualCard(
         }
 
         // Generate card details (in production, this would come from Stripe Issuing)
-        const cardId = doc(collection(db, 'virtualCards')).id;
+        const cardId = firestore().collection('virtualCards').doc().id;
         const lastFour = Math.floor(1000 + Math.random() * 9000).toString();
 
         const card: VirtualCard = {
@@ -285,22 +273,20 @@ export async function createVirtualCard(
         };
 
         // Save card
-        const cardRef = doc(collection(db, 'virtualCards'), cardId).withConverter(virtualCardConverter);
-        await setDoc(cardRef, card);
+        await firestore().collection('virtualCards').doc(cardId).set(card);
 
         // Update child's profile with card ID
-        const childRef = doc(collection(db, 'users'), childUid);
-        await updateDoc(childRef, {
+        await firestore().collection('users').doc(childUid).update({
             virtualCardId: cardId,
             spendingLimitDaily: spendingLimit?.daily,
             spendingLimitMonthly: spendingLimit?.monthly,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Advance onboarding to step 2 (get virtual card)
         const currentStep = parentData?.onboardingStep || 0;
         if (currentStep < 2) {
-            await updateDoc(parentRef, {
+            await firestore().collection('users').doc(user.uid).update({
                 onboardingStep: 2,
             });
             console.log('✅ Onboarding step advanced to 2 (virtual card created)');
@@ -319,10 +305,16 @@ export async function createVirtualCard(
  */
 export async function getVirtualCard(cardId: string): Promise<VirtualCard | null> {
     try {
-        const db = firebase.firestore();
-        const cardRef = doc(collection(db, 'virtualCards'), cardId).withConverter(virtualCardConverter);
-        const cardDoc = await getDoc(cardRef);
-        return cardDoc.exists() ? cardDoc.data() : null;
+        const cardDoc = await firestore().collection('virtualCards').doc(cardId).get();
+        if (!cardDoc.exists) return null;
+
+        const data = cardDoc.data()!;
+        return {
+            ...data,
+            id: cardDoc.id,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date(),
+        } as VirtualCard;
     } catch (error) {
         console.error('Error getting virtual card:', error);
         return null;
@@ -334,10 +326,20 @@ export async function getVirtualCard(cardId: string): Promise<VirtualCard | null
  */
 export async function getFamilyCards(familyId: string): Promise<VirtualCard[]> {
     try {
-        const db = firebase.firestore();
-        const cardsRef = collection(db, 'virtualCards').withConverter(virtualCardConverter);
-        const snapshot = await getDocs(query(cardsRef, where('familyId', '==', familyId)));
-        return snapshot.docs.map(doc => doc.data());
+        const snapshot = await firestore()
+            .collection('virtualCards')
+            .where('familyId', '==', familyId)
+            .get();
+
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+                updatedAt: data.updatedAt?.toDate?.() || new Date(),
+            } as VirtualCard;
+        });
     } catch (error) {
         console.error('Error getting family cards:', error);
         return [];
@@ -353,25 +355,21 @@ export async function addFundsToCard(
     source: string // e.g., "Birthday Party Gifts"
 ): Promise<{ success: boolean; newBalance?: number; error?: string }> {
     try {
-        const db = firebase.firestore();
-
         const card = await getVirtualCard(cardId);
         if (!card) throw new Error('Card not found');
 
         const newBalance = card.balance + amount;
 
-        const cardRef = doc(collection(db, 'virtualCards'), cardId);
-        await updateDoc(cardRef, {
+        await firestore().collection('virtualCards').doc(cardId).update({
             balance: newBalance,
             status: card.status === 'pending_activation' ? 'active' : card.status,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Update child's totalReceived
-        const childRef = doc(collection(db, 'users'), card.assignedTo);
-        await updateDoc(childRef, {
+        await firestore().collection('users').doc(card.assignedTo).update({
             totalReceived: (card.balance || 0) + amount,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log(`✅ Added $${(amount / 100).toFixed(2)} to card ${cardId}. New balance: $${(newBalance / 100).toFixed(2)}`);
@@ -390,19 +388,16 @@ export async function setCardStatus(
     status: 'active' | 'frozen'
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
-
-        const db = firebase.firestore();
 
         const card = await getVirtualCard(cardId);
         if (!card) throw new Error('Card not found');
         if (card.createdBy !== user.uid) throw new Error('Not authorized');
 
-        const cardRef = doc(collection(db, 'virtualCards'), cardId);
-        await updateDoc(cardRef, {
+        await firestore().collection('virtualCards').doc(cardId).update({
             status: status,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log(`✅ Card ${cardId} status set to: ${status}`);
@@ -421,27 +416,23 @@ export async function updateSpendingLimits(
     limits: SpendingLimit
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        const user = firebase.auth().currentUser;
+        const user = auth().currentUser;
         if (!user) throw new Error('User must be authenticated');
-
-        const db = firebase.firestore();
 
         const card = await getVirtualCard(cardId);
         if (!card) throw new Error('Card not found');
         if (card.createdBy !== user.uid) throw new Error('Not authorized');
 
-        const cardRef = doc(collection(db, 'virtualCards'), cardId);
-        await updateDoc(cardRef, {
+        await firestore().collection('virtualCards').doc(cardId).update({
             spendingLimit: limits,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         // Also update child's profile
-        const childRef = doc(collection(db, 'users'), card.assignedTo);
-        await updateDoc(childRef, {
+        await firestore().collection('users').doc(card.assignedTo).update({
             spendingLimitDaily: limits.daily,
             spendingLimitMonthly: limits.monthly,
-            updatedAt: Timestamp.now(),
+            updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
         console.log(`✅ Spending limits updated for card ${cardId}`);
@@ -464,13 +455,20 @@ export async function getCardTransactions(
     limit: number = 50
 ): Promise<Transaction[]> {
     try {
-        const db = firebase.firestore();
-        const transactionsRef = collection(db, 'transactions').withConverter(transactionConverter);
-        const snapshot = await getDocs(
-            query(transactionsRef, where('cardId', '==', cardId))
-        );
+        const snapshot = await firestore()
+            .collection('transactions')
+            .where('cardId', '==', cardId)
+            .get();
 
-        const transactions = snapshot.docs.map(doc => doc.data());
+        const transactions = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+            } as Transaction;
+        });
+
         // Sort by date descending
         transactions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         return transactions.slice(0, limit);
@@ -488,13 +486,20 @@ export async function getFamilyTransactions(
     limit: number = 100
 ): Promise<Transaction[]> {
     try {
-        const db = firebase.firestore();
-        const transactionsRef = collection(db, 'transactions').withConverter(transactionConverter);
-        const snapshot = await getDocs(
-            query(transactionsRef, where('familyId', '==', familyId))
-        );
+        const snapshot = await firestore()
+            .collection('transactions')
+            .where('familyId', '==', familyId)
+            .get();
 
-        const transactions = snapshot.docs.map(doc => doc.data());
+        const transactions = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+            } as Transaction;
+        });
+
         transactions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         return transactions.slice(0, limit);
     } catch (error) {
@@ -577,4 +582,3 @@ export async function getSpendingSummary(
         return null;
     }
 }
-
