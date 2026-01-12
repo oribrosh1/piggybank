@@ -706,89 +706,93 @@ export default function EventDetailsScreen() {
                         )}
                       </View>
 
-                      {/* Attire Type - Single Select */}
-                      <View style={{ marginBottom: 16 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                          <Text style={{ fontSize: 16 }}>👕</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Attire Type</Text>
-                          <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                      {/* Attire Type - Single Select (hidden for restaurant) */}
+                      {formData.partyType !== "restaurant" && (
+                        <View style={{ marginBottom: 16 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            <Text style={{ fontSize: 16 }}>👕</Text>
+                            <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Attire Type</Text>
+                            <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                          </View>
+                          <View style={{ flexDirection: "row", gap: 10 }}>
+                            {[
+                              { value: "casual", label: "👕 Casual", desc: "Everyday wear" },
+                              { value: "swimwear", label: "🩱 Swimwear", desc: "Pool/Beach" },
+                              { value: "costume", label: "🎭 Costume", desc: "Themed outfit" },
+                            ].map((option) => (
+                              <TouchableOpacity
+                                key={option.value}
+                                onPress={() => handleInputChange("attireType", option.value)}
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: formData.attireType === option.value ? "#06D6A0" : "#F9FAFB",
+                                  borderRadius: 14,
+                                  paddingVertical: 14,
+                                  paddingHorizontal: 10,
+                                  alignItems: "center",
+                                  borderWidth: 2,
+                                  borderColor: formData.attireType === option.value ? "#06D6A0" : "#E5E7EB",
+                                }}
+                              >
+                                <Text style={{ fontSize: 22, marginBottom: 4 }}>{option.label.split(" ")[0]}</Text>
+                                <Text style={{
+                                  fontSize: 12,
+                                  fontWeight: "700",
+                                  color: formData.attireType === option.value ? "#FFFFFF" : "#374151",
+                                  textAlign: "center",
+                                }}>{option.label.split(" ")[1]}</Text>
+                                <Text style={{
+                                  fontSize: 10,
+                                  color: formData.attireType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
+                                  marginTop: 2,
+                                  textAlign: "center",
+                                }}>{option.desc}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
                         </View>
-                        <View style={{ flexDirection: "row", gap: 10 }}>
-                          {[
-                            { value: "casual", label: "👕 Casual", desc: "Everyday wear" },
-                            { value: "swimwear", label: "🩱 Swimwear", desc: "Pool/Beach" },
-                            { value: "costume", label: "🎭 Costume", desc: "Themed outfit" },
-                          ].map((option) => (
-                            <TouchableOpacity
-                              key={option.value}
-                              onPress={() => handleInputChange("attireType", option.value)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: formData.attireType === option.value ? "#06D6A0" : "#F9FAFB",
-                                borderRadius: 14,
-                                paddingVertical: 14,
-                                paddingHorizontal: 10,
-                                alignItems: "center",
-                                borderWidth: 2,
-                                borderColor: formData.attireType === option.value ? "#06D6A0" : "#E5E7EB",
-                              }}
-                            >
-                              <Text style={{ fontSize: 22, marginBottom: 4 }}>{option.label.split(" ")[0]}</Text>
-                              <Text style={{
-                                fontSize: 12,
-                                fontWeight: "700",
-                                color: formData.attireType === option.value ? "#FFFFFF" : "#374151",
-                                textAlign: "center",
-                              }}>{option.label.split(" ")[1]}</Text>
-                              <Text style={{
-                                fontSize: 10,
-                                color: formData.attireType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
-                                marginTop: 2,
-                                textAlign: "center",
-                              }}>{option.desc}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
+                      )}
 
-                      {/* Footwear Type - Single Select */}
-                      <View style={{ marginBottom: 14 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                          <Text style={{ fontSize: 16 }}>👟</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Footwear</Text>
-                          <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                      {/* Footwear Type - Single Select (hidden for restaurant) */}
+                      {formData.partyType !== "restaurant" && (
+                        <View style={{ marginBottom: 14 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                            <Text style={{ fontSize: 16 }}>👟</Text>
+                            <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Footwear</Text>
+                            <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                          </View>
+                          <View style={{ flexDirection: "row", gap: 10 }}>
+                            {[
+                              { value: "sneakers", label: "👟", name: "Sneakers" },
+                              { value: "slides", label: "🩴", name: "Slides" },
+                              { value: "any", label: "✨", name: "Any" },
+                            ].map((option) => (
+                              <TouchableOpacity
+                                key={option.value}
+                                onPress={() => handleInputChange("footwearType", option.value)}
+                                style={{
+                                  flex: 1,
+                                  backgroundColor: formData.footwearType === option.value ? "#06D6A0" : "#F9FAFB",
+                                  borderRadius: 14,
+                                  paddingVertical: 14,
+                                  paddingHorizontal: 10,
+                                  alignItems: "center",
+                                  borderWidth: 2,
+                                  borderColor: formData.footwearType === option.value ? "#06D6A0" : "#E5E7EB",
+                                }}
+                              >
+                                <Text style={{ fontSize: 24, marginBottom: 4 }}>{option.label}</Text>
+                                <Text style={{
+                                  fontSize: 12,
+                                  fontWeight: "700",
+                                  color: formData.footwearType === option.value ? "#FFFFFF" : "#374151",
+                                  textAlign: "center",
+                                }}>{option.name}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
                         </View>
-                        <View style={{ flexDirection: "row", gap: 10 }}>
-                          {[
-                            { value: "sneakers", label: "👟", name: "Sneakers" },
-                            { value: "slides", label: "🩴", name: "Slides" },
-                            { value: "any", label: "✨", name: "Any" },
-                          ].map((option) => (
-                            <TouchableOpacity
-                              key={option.value}
-                              onPress={() => handleInputChange("footwearType", option.value)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: formData.footwearType === option.value ? "#06D6A0" : "#F9FAFB",
-                                borderRadius: 14,
-                                paddingVertical: 14,
-                                paddingHorizontal: 10,
-                                alignItems: "center",
-                                borderWidth: 2,
-                                borderColor: formData.footwearType === option.value ? "#06D6A0" : "#E5E7EB",
-                              }}
-                            >
-                              <Text style={{ fontSize: 24, marginBottom: 4 }}>{option.label}</Text>
-                              <Text style={{
-                                fontSize: 12,
-                                fontWeight: "700",
-                                color: formData.footwearType === option.value ? "#FFFFFF" : "#374151",
-                                textAlign: "center",
-                              }}>{option.name}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
+                      )}
                     </>
                   )}
 
