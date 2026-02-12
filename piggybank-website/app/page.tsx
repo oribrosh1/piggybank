@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Smartphone,
   CreditCard,
@@ -20,9 +20,21 @@ import {
   Apple,
   Play
 } from 'lucide-react'
+import { getAdminDb } from '@/lib/firebase-admin'
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    console.log('mobileMenuOpen', mobileMenuOpen)
+    async function checkConnected() {
+      const db = await getAdminDb();
+      console.log('db', db)
+      const connected =  db.collection('users')
+      console.log('connected', connected)
+    }
+    checkConnected()
+  }, [mobileMenuOpen])
 
   return (
     <main className="min-h-screen bg-slate-50 overflow-x-hidden">
