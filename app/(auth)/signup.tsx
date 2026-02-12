@@ -23,13 +23,18 @@ export default function SignUpScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [fullName, setFullName] = useState('');
+    const [legalFirstName, setLegalFirstName] = useState('');
+    const [legalLastName, setLegalLastName] = useState('');
     const [loading, setLoading] = useState(false);
 
     async function handleSignUp() {
-        // Validation
-        if (!fullName.trim()) {
-            Alert.alert('Error', 'Please enter your full name');
+        // Validation (Legal First/Last for SSN match – Step 0)
+        if (!legalFirstName.trim()) {
+            Alert.alert('Error', 'Please enter your legal first name');
+            return;
+        }
+        if (!legalLastName.trim()) {
+            Alert.alert('Error', 'Please enter your legal last name');
             return;
         }
 
@@ -57,10 +62,11 @@ export default function SignUpScreen() {
             await SecureStore.setItemAsync('userEmail', email);
             await SecureStore.setItemAsync('userPassword', password);
 
-            // Initialize user profile and create Stripe account
-            console.log('🚀 Initializing user profile and Stripe account...');
+            // Initialize user profile (Step 0 – Legal First/Last for SSN match)
+            console.log('🚀 Initializing user profile...');
             const initResult = await initializeUserProfile(userCredential, {
-                fullName: fullName.trim(),
+                legalFirstName: legalFirstName.trim(),
+                legalLastName: legalLastName.trim(),
             });
 
             console.log('✅ User initialization result:', initResult);
@@ -176,7 +182,7 @@ export default function SignUpScreen() {
                             elevation: 12,
                         }}
                     >
-                        {/* Full Name Input */}
+                        {/* Legal First Name (Step 0 – SSN match) */}
                         <View style={{ marginBottom: 16 }}>
                             <Text
                                 style={{
@@ -186,7 +192,7 @@ export default function SignUpScreen() {
                                     marginBottom: 8,
                                 }}
                             >
-                                Full Name
+                                Legal First Name
                             </Text>
                             <TextInput
                                 style={{
@@ -197,11 +203,40 @@ export default function SignUpScreen() {
                                     borderWidth: 1,
                                     borderColor: '#E0E0E0',
                                 }}
-                                placeholder="John Doe"
-                                value={fullName}
-                                onChangeText={setFullName}
+                                placeholder="John"
+                                value={legalFirstName}
+                                onChangeText={setLegalFirstName}
                                 autoCapitalize="words"
-                                autoComplete="name"
+                                autoComplete="given-name"
+                                editable={!loading}
+                            />
+                        </View>
+                        {/* Legal Last Name */}
+                        <View style={{ marginBottom: 16 }}>
+                            <Text
+                                style={{
+                                    fontSize: 14,
+                                    fontWeight: '600',
+                                    color: '#333333',
+                                    marginBottom: 8,
+                                }}
+                            >
+                                Legal Last Name
+                            </Text>
+                            <TextInput
+                                style={{
+                                    backgroundColor: '#F5F5F5',
+                                    borderRadius: 12,
+                                    padding: 16,
+                                    fontSize: 16,
+                                    borderWidth: 1,
+                                    borderColor: '#E0E0E0',
+                                }}
+                                placeholder="Doe"
+                                value={legalLastName}
+                                onChangeText={setLegalLastName}
+                                autoCapitalize="words"
+                                autoComplete="family-name"
                                 editable={!loading}
                             />
                         </View>

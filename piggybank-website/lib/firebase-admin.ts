@@ -21,6 +21,7 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
 
             if (getApps().length === 0) {
                 const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+                console.log('FIREBASE_SERVICE_ACCOUNT_KEY', key);
                 if (key) {
                     let serviceAccount: object;
                     try {

@@ -13,12 +13,16 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
     try {
         const db = await getAdminDb();
         const slugTrim = (slug || '').trim();
-        if (!slugTrim) return null;
+        if (!slugTrim) {
+            console.log('[users/[slug]] getPublicProfileBySlug: empty slug');
+            return null;
+        }
 
         // 1) Try by profileSlug (name-based URL)
         const bySlug = await db.collection('users').where('profileSlug', '==', slugTrim).limit(1).get();
         if (!bySlug.empty) {
             const data = bySlug.docs[0].data();
+            console.log('[users/[slug]] getPublicProfileBySlug: found by profileSlug', { slug: slugTrim, fullName: data?.fullName });
             return {
                 fullName: data?.fullName ?? 'CreditKid Member',
                 accountType: data?.accountType,
@@ -30,6 +34,7 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
             const userDoc = await db.collection('users').doc(slugTrim).get();
             if (userDoc.exists) {
                 const data = userDoc.data();
+                console.log('[users/[slug]] getPublicProfileBySlug: found by uid fallback', { slug: slugTrim, fullName: data?.fullName });
                 return {
                     fullName: data?.fullName ?? 'CreditKid Member',
                     accountType: data?.accountType,
@@ -37,8 +42,10 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
             }
         }
 
+        console.log('[users/[slug]] getPublicProfileBySlug: not found', { slug: slugTrim });
         return null;
-    } catch {
+    } catch (err) {
+        console.error('[users/[slug]] getPublicProfileBySlug error:', err);
         return null;
     }
 }
@@ -48,6 +55,7 @@ export async function generateMetadata({
 }: {
     params: { slug: string };
 }): Promise<Metadata> {
+    console.log('[users/[slug]] generateMetadata: slug', { slug: params.slug });
     const profile = await getPublicProfileBySlug(params.slug);
     if (!profile) {
         return { title: 'Not Found | CreditKid' };
@@ -66,8 +74,13 @@ export default async function UserProfilePage({
 }: {
     params: { slug: string };
 }) {
+    console.log('[users/[slug]] UserProfilePage: resolving slug', { slug: params.slug });
     const profile = await getPublicProfileBySlug(params.slug);
-    if (!profile) notFound();
+    if (!profile) {
+        console.log('[users/[slug]] UserProfilePage: profile not found, returning 404');
+        notFound();
+    }
+    console.log('[users/[slug]] UserProfilePage: rendering profile', { fullName: profile.fullName });
 
     const theme = {
         gradient: 'from-violet-500 via-purple-600 to-fuchsia-600',

@@ -43,11 +43,13 @@ export async function initializeUserProfile(
             [additionalData.legalFirstName, additionalData.legalLastName].filter(Boolean).join(' ') ||
             '';
         const profileSlug = getProfileSlugFromNameAndId(fullName, uid);
-        const userProfileData: CreateUserProfileData & { profileSlug: string } = {
+        const userProfileData: CreateUserProfileData & { profileSlug: string; legalFirstName?: string; legalLastName?: string } = {
             uid,
             email,
             fullName,
             profileSlug,
+            ...(additionalData.legalFirstName && { legalFirstName: additionalData.legalFirstName }),
+            ...(additionalData.legalLastName && { legalLastName: additionalData.legalLastName }),
             createdAt: new Date(),
             updatedAt: new Date(),
             kycStatus: 'pending',

@@ -8,6 +8,8 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -25,7 +27,7 @@ import { useState, useEffect, useRef } from "react";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { routes } from "../../../types/routes";
 import type { PersonalInfoFormData } from "../../../types/verifications";
-import { createCustomConnectAccount, updateAccountInfo, getAccountDetails, acceptTermsOfService } from "../../../src/lib/api";
+import { createCustomConnectAccount, createOnboardingLink, getAccountDetails } from "../../../src/lib/api";
 import { useAuth } from "@/src/utils/auth";
 
 const TOTAL_STEPS = 2;
@@ -164,10 +166,8 @@ export default function PersonalInfoScreen() {
   };
 
   const validateStep2 = () => {
-    const e: { [key: string]: string } = {};
-    if (!tosAccepted) e.tos = "You must accept the Stripe Terms of Service";
-    setErrors((prev) => ({ ...prev, ...e }));
-    return Object.keys(e).length === 0;
+    // No in-app validation for step 2; Stripe Hosted Onboarding collects SSN, DOB, address, bank, and TOS
+    return true;
   };
 
   const parseDob = (dob: string): { day: number; month: number; year: number } | null => {
@@ -183,30 +183,24 @@ export default function PersonalInfoScreen() {
       setStep(2);
       return;
     }
-    // Step 2: create Stripe Custom account (individual only), submit identity + TOS + bank
+    // Step 2: Stage 1 – create Connect account; Stage 2 – redirect to Stripe Hosted Onboarding (SSN, DOB, Address, Bank collected by Stripe)
     if (step === 2) {
       if (!validateStep2()) return;
       setLoading(true);
       try {
         await createCustomConnectAccount({ country: "US" });
-        const dob = parseDob(formData.dob);
-        await updateAccountInfo({
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          dob: dob || undefined,
-          address: {
-            line1: formData.address.trim(),
-            city: formData.city.trim(),
-            state: formData.state.trim(),
-            postal_code: formData.zipCode.trim(),
-            country: "US",
-          },
-          ssn_last_4: formData.ssnLast4.trim(),
-        });
-        await acceptTermsOfService();
-        router.replace(routes.banking.setup.success);
+        const { url } = await createOnboardingLink();
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+          Alert.alert(
+            "Complete verification",
+            "Finish identity verification and add your bank account in the browser. When done, you’ll return to the app.",
+            [{ text: "OK" }]
+          );
+        } else {
+          setApiError("Could not open verification link");
+        }
       } catch (err: any) {
         setApiError(err?.response?.data?.error || err?.message || "Something went wrong");
       } finally {

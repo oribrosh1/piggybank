@@ -43,6 +43,11 @@ import {
   getPayouts,
   Payout,
   createPayout,
+  getIssuingBalance,
+  GetIssuingBalanceResponse,
+  topUpIssuing,
+  createIssuingCardholder,
+  createVirtualCard,
   testCreateTransaction,
   testAddBalance,
   testVerifyAccount
@@ -59,12 +64,15 @@ export default function BankingScreen() {
   const [accountData, setAccountData] = useState<AccountStatusResponse | null>(null);
   const [accountDetails, setAccountDetails] = useState<GetAccountDetailsResponse | null>(null);
   const [balanceData, setBalanceData] = useState<GetBalanceResponse | null>(null);
+  const [issuingBalance, setIssuingBalance] = useState<GetIssuingBalanceResponse | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
+  const [toppingUp, setToppingUp] = useState(false);
+  const [creatingCard, setCreatingCard] = useState(false);
 
   // KYC Status: 'no_account' | 'pending' | 'approved' | 'rejected'
   const [kycStatus, setKycStatus] = useState('no_account');
@@ -136,6 +144,7 @@ export default function BankingScreen() {
 
       if (!profile || !profile.stripeAccountCreated) {
         setKycStatus('no_account');
+        setIssuingBalance(null);
         return;
       }
 
@@ -148,6 +157,7 @@ export default function BankingScreen() {
       // Determine KYC status based on Stripe account
       if (!accountStatus.exists) {
         setKycStatus('no_account');
+        setIssuingBalance(null);
       } else if (accountStatus.charges_enabled && accountStatus.payouts_enabled) {
         setKycStatus('approved');
 
@@ -185,10 +195,21 @@ export default function BankingScreen() {
         } catch (payoutError) {
           console.warn('Could not fetch payouts:', payoutError);
         }
+
+        // Stage 2.5 – Issuing balance (for virtual card funding)
+        try {
+          const issuing = await getIssuingBalance();
+          setIssuingBalance(issuing);
+        } catch (issuingError) {
+          console.warn('Could not fetch issuing balance:', issuingError);
+          setIssuingBalance(null);
+        }
       } else if (accountStatus.details_submitted) {
         setKycStatus('pending');
+        setIssuingBalance(null);
       } else {
         setKycStatus('rejected');
+        setIssuingBalance(null);
       }
 
       console.log('✅ Account data loaded:', {
@@ -226,6 +247,53 @@ export default function BankingScreen() {
   const handleCopyCardNumber = () => {
     // TODO: Copy to clipboard
     alert("Card number copied!");
+  };
+
+  const handleTopUp = async (amountCents: number) => {
+    try {
+      setToppingUp(true);
+      await topUpIssuing({ amount: amountCents });
+      alert(`$${(amountCents / 100).toFixed(2)} added to card balance.`);
+      onRefresh();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to add funds");
+    } finally {
+      setToppingUp(false);
+    }
+  };
+
+  const handleCreateCard = async () => {
+    if (!issuingBalance?.canCreateCard) return;
+    const ind = accountDetails?.individual;
+    if (!ind?.first_name || !ind?.last_name || !ind?.address?.line1 || !ind?.address?.city || !ind?.address?.state || !ind?.address?.postal_code) {
+      alert("Complete your Stripe profile with name and full address first (you can do this in Stripe onboarding).");
+      return;
+    }
+    const email = (userProfile?.email || ind?.email || "").trim();
+    if (!email) {
+      alert("We need your email to create the card.");
+      return;
+    }
+    try {
+      setCreatingCard(true);
+      await createIssuingCardholder({
+        name: `${ind.first_name} ${ind.last_name}`.trim(),
+        email,
+        phone: ind.phone || undefined,
+        line1: ind.address.line1,
+        line2: ind.address.line2 || undefined,
+        city: ind.address.city,
+        state: ind.address.state,
+        postal_code: ind.address.postal_code,
+      });
+      const cardRes = await createVirtualCard({});
+      alert(`Virtual card created! Last 4: ${cardRes.last4}`);
+      onRefresh();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Failed to create card");
+    } finally {
+      setCreatingCard(false);
+    }
   };
 
   return (
@@ -978,6 +1046,93 @@ export default function BankingScreen() {
                 >
                   Your identity is verified by Stripe. You can now receive payments and use your card anywhere!
                 </Text>
+              </View>
+
+              {/* Stage 2.5 + 3: Issuing balance, Add funds, Create Card */}
+              <View
+                style={{
+                  backgroundColor: "#FFFFFF",
+                  borderRadius: 16,
+                  padding: 20,
+                  marginBottom: 20,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "800",
+                    color: "#6B3AA0",
+                    marginBottom: 12,
+                  }}
+                >
+                  💳 CARD BALANCE (Issuing)
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 24,
+                    fontWeight: "800",
+                    color: "#111827",
+                    marginBottom: 16,
+                  }}
+                >
+                  {issuingBalance != null
+                    ? issuingBalance.issuingAvailableFormatted
+                    : "—"}
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+                  {[1000, 2500, 5000].map((cents) => (
+                    <TouchableOpacity
+                      key={cents}
+                      onPress={() => handleTopUp(cents)}
+                      disabled={toppingUp}
+                      style={{
+                        backgroundColor: toppingUp ? "#D1D5DB" : "#8B5CF6",
+                        borderRadius: 10,
+                        paddingVertical: 10,
+                        paddingHorizontal: 16,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF" }}>
+                        +${(cents / 100).toFixed(0)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  onPress={handleCreateCard}
+                  disabled={!issuingBalance?.canCreateCard || creatingCard}
+                  style={{
+                    backgroundColor:
+                      issuingBalance?.canCreateCard && !creatingCard ? "#06D6A0" : "#D1D5DB",
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  {creatingCard ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <CreditCard size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  )}
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: "700",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    {issuingBalance?.canCreateCard
+                      ? "Create virtual card"
+                      : "Add funds above to create card"}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Balance Breakdown */}

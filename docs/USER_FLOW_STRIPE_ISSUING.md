@@ -1,6 +1,13 @@
 # User Flow & Stripe Connect + Issuing (US Individuals)
 
-Three distinct stages for US-based parents using **Stripe Connect + Stripe Issuing**.
+User flow and Stripe integration for US-based individual users (parents) using **Stripe Connect + Stripe Issuing**. The solution is split into **THREE DISTINCT STAGES**.
+
+---
+
+## USER FLOW OVERVIEW (MANDATORY)
+
+* **Step 0 – App Signup:** Parent signs up with Legal First/Last Name (SSN match), Email, and Password.
+* **Step 1 – Public Profile:** Automatically generate a public, non-commercial profile page (e.g. `creditkid.app/users/{profileSlug}`) to serve as the Stripe `business_profile.url`.
 
 ---
 
@@ -15,22 +22,24 @@ Three distinct stages for US-based parents using **Stripe Connect + Stripe Issui
 ## Step 1 – Public Profile
 
 - After signup, a **public non-commercial profile** is available at:
-  - `https://creditkid.vercel.app/users/{profileSlug}` (name-based slug, e.g. `john-doe-abc12def`)
+  - `https://creditkid.app/users/{profileSlug}` (name-based slug, e.g. `john-doe-abc12def`)
 - This URL is used as the Stripe Connect account **`business_profile.url`** (required for Custom accounts).
 
 ---
 
-## STAGE 1 – Create Stripe Connected Account
+## STAGE 1 – Create the Stripe Connected Account
+
+Implement server-side logic (Node.js/TypeScript) to create a **Stripe Custom Connected Account**.
 
 **Route:** `POST /createCustomConnectAccount` (Firebase Functions)
 
-- **Settings:** Country `US`, Type `custom`, Business Type `individual`.
-- **Capabilities:** `transfers`, `card_issuing`.
-- **Business profile:**
-  - `mcc`: `"7399"` (Business Services - Not Elsewhere Classified)
-  - `url`: `https://creditkid.vercel.app/users/{profileSlug}`
-  - `product_description`: `"Personal event fundraising and allowance management for family celebrations."`
-- Stores `accountId` in `stripeAccounts` and `users`.
+* **Settings:** Country: `US`, Type: `custom`, Business Type: `individual`.
+* **Capabilities:** `transfers`, `card_issuing`.
+* **Business Profile:**
+  * `mcc`: `"7399"` (Business Services - Not Elsewhere Classified) or `"7299"`.
+  * `url`: The internally generated public user page (`https://creditkid.app/users/{profileSlug}`).
+  * `product_description`: `"Personal event fundraising and allowance management for family celebrations."`
+* Stores `accountId` in `stripeAccounts` and `users`.
 
 **Errors:** `capability_not_enabled` if Issuing is not enabled on the platform.
 
@@ -38,44 +47,56 @@ Three distinct stages for US-based parents using **Stripe Connect + Stripe Issui
 
 ## STAGE 2 – Stripe Verification (KYC) & Banking
 
+Redirect user to **Stripe Hosted Onboarding** via Account Links.
+
 **Route:** `POST /createOnboardingLink`
 
-- Redirects user to **Stripe Hosted Onboarding** via Account Links.
-- Stripe collects: SSN, DOB, Address, **Bank Account (External Account)**.
-- **Webhook:** `account.updated` – only treat as “ready for Issuing” when `capabilities.card_issuing === 'active'`.
-- When `card_issuing` is active, `stripeAccounts` and `users` are updated (e.g. `cardIssuingActive`, `stripeAccountStatus: 'approved'`).
+* **Requirement:** Stripe must collect SSN, DOB, Address, and **Bank Account (External Account)**.
+* **Webhook Listener:** Create a webhook to listen for `account.updated`. Only proceed when `capabilities.card_issuing === 'active'`.
+* When `card_issuing` is active, `stripeAccounts` and `users` are updated (e.g. `cardIssuingActive`, `stripeAccountStatus: 'approved'`).
 
 ---
 
-## STAGE 2.5 – Funding & Balance (Critical)
+## STAGE 2.5 – Funding & Balance Management (CRITICAL INTERMEDIATE STEP)
 
-**Do not issue a card to a zero-balance account.**
+**Do not issue a card to a zero-balance account.** Implement the following:
 
-1. **Balance check:** `GET /getIssuingBalance`
-   - Returns `issuingAvailable` (cents), `canCreateCard: true` only when issuing balance > 0.
+1. **Balance Check:** Logic to check the `issuing` balance of the connected account.
+   * **Route:** `GET /getIssuingBalance` – returns `issuingAvailable` (cents), `canCreateCard: true` only when issuing balance > 0.
 
-2. **Top-up:** `POST /topUpIssuing` with `{ amount }` (cents)
-   - Uses Stripe Top-ups (from the connected account’s linked bank).
-   - Handles `insufficient_funds` and `capability_not_enabled`.
+2. **Top-up Mechanism:** Create a function to fund the account.
+   * **Route:** `POST /topUpIssuing` with `{ amount }` (cents).
+   * **Approach:** Use `Stripe.topups.create` (from the linked bank account) or a transfer from the platform to the connected account’s issuing balance.
+   * Handles `insufficient_funds` and `capability_not_enabled`.
 
-3. **UI:** Enable the **“Create Card”** button only when `canCreateCard === true` (issuing balance > $0).
+3. **UI Logic:** Ensure the “Create Card” button is only enabled/triggered once the `issuing.available` balance is > $0.
 
 ---
 
 ## STAGE 3 – Issuing Virtual Credit Card
 
-Only when **verified** (card_issuing active) **and funded** (issuing balance > 0):
+Once verified AND funded:
 
-1. **Create Cardholder:** `POST /createIssuingCardholder`
-   - Type: `individual`.
-   - Include: Name, Email, Phone, Address (line1, city, state, postal_code, country US).
+1. **Create Cardholder:** Type: `individual`, include full KYC details (Name, Email, Phone, Address).
+   * **Route:** `POST /createIssuingCardholder` – billing address (line1, city, state, postal_code, country US).
 
-2. **Issue Virtual Card:** `POST /createVirtualCard`
-   - Type: `virtual`, Currency: `usd`.
-   - **Spending controls:** default `spending_limit` (e.g. per_authorization or daily) to prevent overdrafts.
-   - Optional body: `{ spendingLimitAmount, spendingLimitInterval }`.
+2. **Issue Virtual Card:** Type: `virtual`, Currency: `usd`.
+   * **Route:** `POST /createVirtualCard`.
+   * Attach to the cardholder, activate the card.
+
+3. **Spending Controls:** Set a default `spending_limit` to prevent overdrafts.
+   * Optional body: `{ spendingLimitAmount, spendingLimitInterval }`.
 
 **Errors:** `insufficient_funds`, `capability_not_enabled` handled explicitly.
+
+---
+
+## Technical Constraints
+
+* **No Sensitive Data in DB:** Never store full SSNs. Let Stripe handle KYC.
+* **Error Handling:** Handle `insufficient_funds` and `capability_not_enabled` explicitly.
+* **Architecture:** Separate routes for Account Creation, Onboarding Link, Funding, and Issuing.
+* **Environment:** Use Stripe Test Mode logic.
 
 ---
 
@@ -94,7 +115,7 @@ Only when **verified** (card_issuing active) **and funded** (issuing balance > 0
 ## Environment (Functions)
 
 - `STRIPE_SECRET_KEY` – Stripe secret (test/live).
-- `PUBLIC_BASE_URL` or `APP_BASE_URL` – e.g. `https://creditkid.vercel.app` (for profile URL).
+- `PUBLIC_BASE_URL` or `APP_BASE_URL` – e.g. `https://creditkid.app` (for profile URL).
 - `APP_SCHEME` – e.g. `myapp` (for onboarding return/refresh deep links).
 - `STRIPE_WEBHOOK_SECRET` – for `account.updated` (and other) webhooks.
 
