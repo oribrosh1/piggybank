@@ -57,6 +57,8 @@ export interface UserProfile {
     fullName: string;
     legalFirstName?: string;
     legalLastName?: string;
+    /** URL-safe slug for public profile: /users/{profileSlug} (name-based, e.g. john-doe-abc12def) */
+    profileSlug?: string;
 
     // Timestamps
     createdAt: Date;
@@ -214,6 +216,7 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
         if (userProfile.spendingLimitMonthly !== undefined) data.spendingLimitMonthly = userProfile.spendingLimitMonthly;
         if (userProfile.legalFirstName) data.legalFirstName = userProfile.legalFirstName;
         if (userProfile.legalLastName) data.legalLastName = userProfile.legalLastName;
+        if (userProfile.profileSlug) data.profileSlug = userProfile.profileSlug;
 
         return data;
     },
@@ -258,7 +261,21 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
             spendingLimitMonthly: data.spendingLimitMonthly,
             legalFirstName: data.legalFirstName,
             legalLastName: data.legalLastName,
+            profileSlug: data.profileSlug,
         };
     },
 };
+
+/**
+ * Build a URL-safe profile slug from full name + uid for uniqueness.
+ * Example: "John Doe" + uid -> "john-doe-abc12def"
+ */
+export function getProfileSlugFromNameAndId(fullName: string, uid: string): string {
+    const base = (fullName || 'member').trim().toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'member';
+    return `${base}-${uid.slice(0, 8)}`;
+}
 

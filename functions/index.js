@@ -68,7 +68,21 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
             });
         }
 
-        const profileUrl = `${PUBLIC_BASE_URL}/users/${uid}`;
+        const userDoc = await db.collection('users').doc(uid).get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        let profileSlug = userData?.profileSlug;
+        if (!profileSlug) {
+            const name = (userData?.fullName || 'member').trim().toLowerCase()
+                .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'member';
+            profileSlug = `${name}-${uid.slice(0, 8)}`;
+            if (userDoc.exists) {
+                await db.collection('users').doc(uid).update({
+                    profileSlug,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+            }
+        }
+        const profileUrl = `${PUBLIC_BASE_URL}/users/${profileSlug}`;
         console.log(`[Stage 1] Creating Custom Connect account for user ${uid}, profile URL: ${profileUrl}`);
 
         const account = await stripe.accounts.create({

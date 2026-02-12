@@ -4,7 +4,7 @@ import { UserCredential } from "@/types/user";
 
 export const useUser = () => {
   const { auth, isReady } = useAuth();
-  const user: UserCredential = auth?.user as UserCredential || null;
+  const user: UserCredential | null = auth ?? null;
   const fetchUser = useCallback(async () => {
     return user;
   }, [user]);

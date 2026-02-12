@@ -8,16 +8,36 @@ type PublicProfile = {
     accountType?: string;
 };
 
-async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
+/** Resolve user by profileSlug (name-based) or by uid for backward compatibility */
+async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | null> {
     try {
         const db = await getAdminDb();
-        const userDoc = await db.collection('users').doc(userId).get();
-        if (!userDoc.exists) return null;
-        const data = userDoc.data();
-        return {
-            fullName: data?.fullName ?? 'CreditKid Member',
-            accountType: data?.accountType,
-        };
+        const slugTrim = (slug || '').trim();
+        if (!slugTrim) return null;
+
+        // 1) Try by profileSlug (name-based URL)
+        const bySlug = await db.collection('users').where('profileSlug', '==', slugTrim).limit(1).get();
+        if (!bySlug.empty) {
+            const data = bySlug.docs[0].data();
+            return {
+                fullName: data?.fullName ?? 'CreditKid Member',
+                accountType: data?.accountType,
+            };
+        }
+
+        // 2) Fallback: treat slug as uid (Firebase ids are 28 chars, alphanumeric) for old links
+        if (slugTrim.length === 28 && /^[a-zA-Z0-9]+$/.test(slugTrim)) {
+            const userDoc = await db.collection('users').doc(slugTrim).get();
+            if (userDoc.exists) {
+                const data = userDoc.data();
+                return {
+                    fullName: data?.fullName ?? 'CreditKid Member',
+                    accountType: data?.accountType,
+                };
+            }
+        }
+
+        return null;
     } catch {
         return null;
     }
@@ -26,9 +46,9 @@ async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
 export async function generateMetadata({
     params,
 }: {
-    params: { userId: string };
+    params: { slug: string };
 }): Promise<Metadata> {
-    const profile = await getPublicProfile(params.userId);
+    const profile = await getPublicProfileBySlug(params.slug);
     if (!profile) {
         return { title: 'Not Found | CreditKid' };
     }
@@ -44,9 +64,9 @@ export const revalidate = 300;
 export default async function UserProfilePage({
     params,
 }: {
-    params: { userId: string };
+    params: { slug: string };
 }) {
-    const profile = await getPublicProfile(params.userId);
+    const profile = await getPublicProfileBySlug(params.slug);
     if (!profile) notFound();
 
     const theme = {
@@ -85,7 +105,7 @@ export default async function UserProfilePage({
                     </h1>
 
                     <p className="text-white/80 text-sm font-medium">
-                        A CreditKid member — securely collecting digital gifts for birthdays and family celebrations, with a private and safe allowance system.
+                        Personal event fundraising & allowance for family celebrations
                     </p>
                 </div>
             </section>
@@ -124,7 +144,7 @@ export default async function UserProfilePage({
                             Powered by CreditKid
                         </h3>
                         <p className="text-white/80 text-sm mb-4">
-                            The secure way to give and receive gifts. No more gift cards sitting in drawers!
+                            The smart way to give and receive gifts. No more gift cards sitting in drawers!
                         </p>
                     </div>
                 </div>

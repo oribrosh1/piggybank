@@ -13,6 +13,7 @@ import type {
     InitializeUserResult,
     OnboardingStep
 } from '../../types/user';
+import { getProfileSlugFromNameAndId } from '../../types/user';
 
 /**
  * Initialize user profile (no Stripe account yet; created only after banking onboarding completes)
@@ -41,10 +42,12 @@ export async function initializeUserProfile(
             additionalData.fullName ||
             [additionalData.legalFirstName, additionalData.legalLastName].filter(Boolean).join(' ') ||
             '';
-        const userProfileData: CreateUserProfileData = {
+        const profileSlug = getProfileSlugFromNameAndId(fullName, uid);
+        const userProfileData: CreateUserProfileData & { profileSlug: string } = {
             uid,
             email,
             fullName,
+            profileSlug,
             createdAt: new Date(),
             updatedAt: new Date(),
             kycStatus: 'pending',
@@ -103,13 +106,14 @@ export async function getUserProfile(uid: string): Promise<UserProfile | undefin
  */
 export async function updateUserProfile(uid: string, updates: UpdateUserProfileData): Promise<{ success: boolean }> {
     try {
-        const updateData = {
+        const updateData: Record<string, unknown> = {
             ...updates,
             updatedAt: firestore.FieldValue.serverTimestamp(),
         };
-
+        if (updates.fullName !== undefined) {
+            updateData.profileSlug = getProfileSlugFromNameAndId(updates.fullName, uid);
+        }
         await firestore().collection('users').doc(uid).update(updateData);
-
         return { success: true };
     } catch (error) {
         console.error('Error updating user profile:', error);

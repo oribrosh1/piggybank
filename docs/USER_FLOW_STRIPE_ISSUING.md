@@ -15,7 +15,7 @@ Three distinct stages for US-based parents using **Stripe Connect + Stripe Issui
 ## Step 1 – Public Profile
 
 - After signup, a **public non-commercial profile** is available at:
-  - `https://creditkid.vercel.app/users/{userId}`
+  - `https://creditkid.vercel.app/users/{profileSlug}` (name-based slug, e.g. `john-doe-abc12def`)
 - This URL is used as the Stripe Connect account **`business_profile.url`** (required for Custom accounts).
 
 ---
@@ -28,7 +28,7 @@ Three distinct stages for US-based parents using **Stripe Connect + Stripe Issui
 - **Capabilities:** `transfers`, `card_issuing`.
 - **Business profile:**
   - `mcc`: `"7399"` (Business Services - Not Elsewhere Classified)
-  - `url`: `https://creditkid.vercel.app/users/{userId}`
+  - `url`: `https://creditkid.vercel.app/users/{profileSlug}`
   - `product_description`: `"Personal event fundraising and allowance management for family celebrations."`
 - Stores `accountId` in `stripeAccounts` and `users`.
 
