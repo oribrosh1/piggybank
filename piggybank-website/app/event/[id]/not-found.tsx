@@ -16,7 +16,7 @@ export default function NotFound() {
                     href="/"
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all"
                 >
-                    Go to PiggyBank Home
+                    Go to CreditKid Home
                 </Link>
             </div>
         </main>

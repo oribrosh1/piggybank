@@ -206,7 +206,7 @@ function CheckoutForm({
                 <div className="mt-3 bg-white/60 rounded-xl p-3 flex items-center gap-2">
                     <span className="text-green-500">✓</span>
                     <span className="text-xs text-gray-600">
-                        <strong>${amount.toFixed(2)}</strong> goes straight to {hostName.split(' ')[0]}&apos;s PiggyBank card
+                        <strong>${amount.toFixed(2)}</strong> goes straight to {hostName.split(' ')[0]}&apos;s CreditKid card
                     </span>
                 </div>
             </div>

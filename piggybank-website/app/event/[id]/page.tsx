@@ -43,14 +43,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
     if (!event) {
         return {
-            title: 'Event Not Found | PiggyBank',
+            title: 'Event Not Found | CreditKid',
         };
     }
 
     const emoji = getEventEmoji(event.eventType);
     const typeLabel = getEventTypeLabel(event.eventType);
     const title = `${emoji} You're Invited! ${event.eventName}`;
-    const description = `Join us for ${event.creatorName}'s ${typeLabel}! ${formatDate(event.date)} at ${event.time}. RSVP now and send a gift directly to their PiggyBank card!`;
+    const description = `Join us for ${event.creatorName}'s ${typeLabel}! ${formatDate(event.date)} at ${event.time}. RSVP now and send a gift directly to their CreditKid card!`;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://creditkid.vercel.app';
     const eventUrl = `${baseUrl}/event/${event.id}`;
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
             title,
             description,
             url: eventUrl,
-            siteName: 'PiggyBank',
+            siteName: 'CreditKid',
             type: 'website',
             images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${event.eventName} - ${typeLabel}` }],
         },
@@ -286,7 +286,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                         />
                     </Suspense>
 
-                    {/* PiggyBank Gift Section */}
+                    {/* CreditKid Gift Section */}
                     <div className="bg-[#FAF5FF] rounded-3xl p-6 border-2 border-[#E9D5FF]">
                         <div className="flex items-center gap-3 mb-5">
                             <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center">
@@ -324,13 +324,13 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                         age={event.age}
                     />
 
-                    {/* Powered by PiggyBank */}
+                    {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
                         <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                             <span className="text-3xl">🐷</span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
-                            Powered by PiggyBank
+                            Powered by CreditKid
                         </h3>
                         <p className="text-white/80 text-sm mb-4">
                             The smart way to give and receive gifts. No more gift cards sitting in drawers!
@@ -344,7 +344,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
             {/* Footer */}
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
-                <p>© 2024 PiggyBank. The end of gift cards is here! 🎉</p>
+                <p>© 2024 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>
     );

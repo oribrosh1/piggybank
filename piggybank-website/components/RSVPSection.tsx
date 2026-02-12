@@ -283,7 +283,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                 </div>
             </div>
 
-            {/* PiggyBank Gift Promo */}
+            {/* CreditKid Gift Promo */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-6 border-2 border-purple-100">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
@@ -349,7 +349,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                 {/* Bottom message */}
                 <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
                     <p className="text-sm text-amber-800 text-center">
-                        💡 <strong>$50 with PiggyBank</strong> = $48.50 they can spend anywhere<br />
+                        💡 <strong>$50 with CreditKid</strong> = $48.50 they can spend anywhere<br />
                         <span className="text-amber-600">vs. $50 locked to one store that might go unused</span>
                     </p>
                 </div>
@@ -432,7 +432,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                             {/* Card content */}
                             <div className="relative z-10">
                                 <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1 inline-block mb-4">
-                                    <span className="text-white text-xs font-semibold">🐷 PiggyBank Gift</span>
+                                    <span className="text-white text-xs font-semibold">🐷 CreditKid Gift</span>
                                 </div>
 
                                 <div className="text-white mb-4">
@@ -575,11 +575,11 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                             {/* Divider */}
                             <div className="border-t border-gray-200 my-3"></div>
 
-                            {/* PiggyBank fee */}
+                            {/* CreditKid fee */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xl">🐷</span>
-                                    <span className="text-gray-900 font-semibold">PiggyBank</span>
+                                    <span className="text-gray-900 font-semibold">CreditKid</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
@@ -591,7 +591,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                             {/* Bottom note */}
                             <div className="mt-3 text-center">
                                 <p className="text-xs text-gray-500">
-                                    On a <strong>$50 gift</strong>: Store cards = ~$42-47 value → PiggyBank = <span className="text-green-600 font-semibold">$48.50</span> to spend
+                                    On a <strong>$50 gift</strong>: Store cards = ~$42-47 value → CreditKid = <span className="text-green-600 font-semibold">$48.50</span> to spend
                                 </p>
                             </div>
                         </div>

@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
                         </div>
                     )}
 
-                    {/* PiggyBank branding */}
+                    {/* CreditKid branding */}
                     <div
                         style={{
                             display: 'flex',
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
                             <span style={{ fontSize: '28px' }}>🐷</span>
                         </div>
                         <span style={{ fontSize: '28px', fontWeight: 700, color: 'white' }}>
-                            PiggyBank
+                            CreditKid
                         </span>
                     </div>
                 </div>

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
         // Convert to cents
         const giftAmountInCents = Math.round(amount * 100);
-        const platformFeeInCents = Math.round(giftAmountInCents * 0.03); // 3% fee to PiggyBank
+        const platformFeeInCents = Math.round(giftAmountInCents * 0.03); // 3% fee to CreditKid
         const totalChargeInCents = giftAmountInCents + platformFeeInCents;
 
         // Build PaymentIntent options
@@ -71,12 +71,12 @@ export async function POST(request: NextRequest) {
                 feeAmount: (platformFeeInCents / 100).toFixed(2),
                 blessing: blessing?.substring(0, 500) || '',
                 templateId: templateId || '',
-                type: 'piggybank_gift',
+                type: 'creditkid_gift',
             },
         };
 
         // If we have a connected account, use Stripe Connect with application fee
-        // The gift amount goes to the connected account, fee goes to PiggyBank
+        // The gift amount goes to the connected account, fee goes to CreditKid
         if (connectedAccountId) {
             paymentIntentOptions.application_fee_amount = platformFeeInCents;
             paymentIntentOptions.transfer_data = {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
             console.log(`Creating payment with Connect: $${amount} gift + $${platformFeeInCents / 100} fee → ${connectedAccountId}`);
         } else {
-            // No connected account - full amount goes to PiggyBank (platform)
+            // No connected account - full amount goes to CreditKid (platform)
             // This handles cases where event creator hasn't set up Stripe yet
             console.log(`Creating payment without Connect: $${totalChargeInCents / 100} to platform`);
         }

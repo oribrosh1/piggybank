@@ -36,7 +36,7 @@ export default function Home() {
                 <span className="text-white text-xl md:text-2xl">🐷</span>
               </div>
               <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-                PiggyBank
+                CreditKid
               </span>
             </div>
 
@@ -116,7 +116,7 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <div className="text-3xl md:text-4xl font-black text-green-500">100%</div>
-                <div className="text-sm text-gray-500">Usable with PiggyBank</div>
+                <div className="text-sm text-gray-500">Usable with CreditKid</div>
               </div>
             </div>
 
@@ -253,7 +253,7 @@ export default function Home() {
                 <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
                   <span className="text-2xl">✅</span>
                 </div>
-                <h3 className="text-xl font-bold text-green-700">PiggyBank Card</h3>
+                <h3 className="text-xl font-bold text-green-700">CreditKid Card</h3>
               </div>
               <ul className="space-y-4">
                 {[
@@ -429,14 +429,14 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4">
-              Parents Love PiggyBank
+              Parents Love CreditKid
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                quote: "Finally, no more $50 Target cards collecting dust! My daughter uses her PiggyBank card everywhere.",
+                quote: "Finally, no more $50 Target cards collecting dust! My daughter uses her CreditKid card everywhere.",
                 author: "Sarah M.",
                 role: "Mom of 2",
                 avatar: "👩‍👧",
@@ -516,7 +516,7 @@ export default function Home() {
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
                 <span className="text-xl">🐷</span>
               </div>
-              <span className="text-xl font-bold">PiggyBank</span>
+              <span className="text-xl font-bold">CreditKid</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
@@ -527,7 +527,7 @@ export default function Home() {
             </div>
 
             <div className="text-sm text-gray-400">
-              © 2025 PiggyBank. All rights reserved.
+              © 2025 CreditKid. All rights reserved.
             </div>
           </div>
         </div>
