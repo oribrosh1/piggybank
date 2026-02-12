@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Smartphone,
   CreditCard,
@@ -18,23 +18,39 @@ import {
   Menu,
   X,
   Apple,
-  Play
+  Play,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react'
-import { getAdminDb } from '@/lib/firebase-admin'
+import { useAuth } from '@/lib/useAuth'
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
 
-  useEffect(() => {
-    console.log('mobileMenuOpen', mobileMenuOpen)
-    async function checkConnected() {
-      const db = await getAdminDb();
-      console.log('db', db)
-      const connected =  db.collection('users')
-      console.log('connected', connected)
+  const { user, loading: authLoading, signIn, signOut } = useAuth()
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoginError('')
+    setLoginLoading(true)
+    try {
+      await signIn(loginEmail.trim(), loginPassword)
+      setLoginOpen(false)
+      setLoginEmail('')
+      setLoginPassword('')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed'
+      setLoginError(message)
+    } finally {
+      setLoginLoading(false)
     }
-    checkConnected()
-  }, [mobileMenuOpen])
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 overflow-x-hidden">
@@ -57,9 +73,31 @@ export default function Home() {
               <a href="#features" className="text-gray-600 hover:text-purple-600 font-medium transition-colors">Features</a>
               <a href="#how-it-works" className="text-gray-600 hover:text-purple-600 font-medium transition-colors">How it Works</a>
               <a href="#pricing" className="text-gray-600 hover:text-purple-600 font-medium transition-colors">Pricing</a>
-              <button className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105">
-                Get Started
-              </button>
+              {!authLoading && (
+                user ? (
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-2 text-gray-600 font-medium">
+                      <User size={18} />
+                      {user.email}
+                    </span>
+                    <button
+                      onClick={() => signOut()}
+                      className="text-gray-500 hover:text-purple-600 font-medium transition-colors flex items-center gap-1.5"
+                    >
+                      <LogOut size={18} />
+                      Log out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setLoginOpen(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105"
+                  >
+                    <LogIn size={18} />
+                    Log in
+                  </button>
+                )
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -79,9 +117,31 @@ export default function Home() {
               <a href="#features" className="text-gray-600 font-medium py-2">Features</a>
               <a href="#how-it-works" className="text-gray-600 font-medium py-2">How it Works</a>
               <a href="#pricing" className="text-gray-600 font-medium py-2">Pricing</a>
-              <button className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold w-full">
-                Get Started
-              </button>
+              {!authLoading && (
+                user ? (
+                  <>
+                    <div className="flex items-center gap-2 text-gray-600 font-medium py-2">
+                      <User size={18} />
+                      {user.email}
+                    </div>
+                    <button
+                      onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                      className="flex items-center justify-center gap-2 text-gray-600 font-medium py-3"
+                    >
+                      <LogOut size={18} />
+                      Log out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold w-full"
+                  >
+                    <LogIn size={18} />
+                    Log in
+                  </button>
+                )
+              )}
             </div>
           </div>
         )}
@@ -544,6 +604,69 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Login modal (Firebase Auth – same account as app) */}
+      {loginOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" onClick={() => setLoginOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Log in to CreditKid</h2>
+              <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg" onClick={() => setLoginOpen(false)} aria-label="Close">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Use the same email and password as in the CreditKid app.
+            </p>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  id="login-email"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => { setLoginEmail(e.target.value); setLoginError(''); }}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => { setLoginPassword(e.target.value); setLoginError(''); }}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              {loginError && (
+                <p className="text-sm text-red-600">{loginError}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg disabled:opacity-70"
+              >
+                {loginLoading ? 'Signing in…' : (
+                  <>
+                    <LogIn size={18} />
+                    Log in
+                  </>
+                )}
+              </button>
+            </form>
+            <p className="text-xs text-gray-400 mt-4 text-center">
+              New user? Sign up in the CreditKid app, then log in here with the same credentials.
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
