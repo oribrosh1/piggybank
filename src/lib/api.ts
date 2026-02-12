@@ -246,6 +246,61 @@ export interface AcceptTermsOfServiceResponse {
     success: boolean;
 }
 
+export interface CreateOnboardingLinkResponse {
+    accountId: string;
+    url: string;
+    success: boolean;
+}
+
+export interface GetIssuingBalanceResponse {
+    issuingAvailable: number;
+    issuingAvailableFormatted: string;
+    currency: string;
+    canCreateCard: boolean;
+    success: boolean;
+}
+
+export interface TopUpIssuingPayload {
+    amount: number; // cents
+}
+
+export interface TopUpIssuingResponse {
+    topupId: string;
+    amount: number;
+    status: string;
+    success: boolean;
+}
+
+export interface CreateIssuingCardholderPayload {
+    name: string;
+    email: string;
+    phone?: string;
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    dob?: { day: number; month: number; year: number };
+}
+
+export interface CreateIssuingCardholderResponse {
+    cardholderId: string;
+    success: boolean;
+    existing?: boolean;
+}
+
+export interface CreateVirtualCardPayload {
+    spendingLimitAmount?: number; // cents, default 50000 ($500)
+    spendingLimitInterval?: 'per_authorization' | 'daily' | 'weekly' | 'monthly' | 'all_time';
+}
+
+export interface CreateVirtualCardResponse {
+    cardId: string;
+    last4: string;
+    status: string;
+    success: boolean;
+}
+
 // Test endpoints (only work in test mode)
 export interface TestTransactionResponse {
     success: boolean;
@@ -310,6 +365,76 @@ export async function getAccountStatus(): Promise<AccountStatusResponse> {
     const headers = await authHeaders();
     const res = await axios.get<AccountStatusResponse>(
         `${BASE}/getAccountStatus`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 2 – Create Stripe Hosted Onboarding link (SSN, DOB, Address, Bank)
+ */
+export async function createOnboardingLink(): Promise<CreateOnboardingLinkResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreateOnboardingLinkResponse>(
+        `${BASE}/createOnboardingLink`,
+        {},
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 2.5 – Get Issuing balance; canCreateCard when > $0
+ */
+export async function getIssuingBalance(): Promise<GetIssuingBalanceResponse> {
+    const headers = await authHeaders();
+    const res = await axios.get<GetIssuingBalanceResponse>(
+        `${BASE}/getIssuingBalance`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 2.5 – Top-up Issuing balance (from linked bank)
+ */
+export async function topUpIssuing(
+    payload: TopUpIssuingPayload
+): Promise<TopUpIssuingResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<TopUpIssuingResponse>(
+        `${BASE}/topUpIssuing`,
+        payload,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 3 – Create Issuing cardholder (individual, KYC details)
+ */
+export async function createIssuingCardholder(
+    payload: CreateIssuingCardholderPayload
+): Promise<CreateIssuingCardholderResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreateIssuingCardholderResponse>(
+        `${BASE}/createIssuingCardholder`,
+        payload,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 3 – Issue virtual card (only when funded and verified)
+ */
+export async function createVirtualCard(
+    payload: CreateVirtualCardPayload = {}
+): Promise<CreateVirtualCardResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreateVirtualCardResponse>(
+        `${BASE}/createVirtualCard`,
+        payload,
         { headers }
     );
     return res.data;

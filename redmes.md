@@ -433,3 +433,124 @@ Do NOT simplify the flow or merge stages.
 או להפוך אותו ל־ADR / Architecture spec
 
 או לבדוק מולך אם Stripe Issuing הוא הבחירה הנכונה לעומת Marqeta
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+this should be the user flow: user flow and Stripe integration for US-based individual users (parents) using **Stripe Connect + Stripe Issuing**.
+The solution must strictly follow the steps below and be split into **THREE DISTINCT STAGES**.
+
+### USER FLOW OVERVIEW (MANDATORY)
+
+* **Step 0 – App Signup:** Parent signs up with Legal First/Last Name (SSN match), Email, and Password.
+* **Step 1 – Public Profile:** Automatically generate a public, non-commercial profile page (e.g., `piggybank-website/users/{userId}`) to serve as the Stripe `business_profile.url`.
+
+---
+
+### STAGE 1 – Create the Stripe Connected Account
+
+Implement server-side logic (Node.js/TypeScript) to create a **Stripe Custom Connected Account**.
+
+* **Settings:** Country: `US`, Type: `custom`, Business Type: `individual`.
+* **Capabilities:** `transfers`, `card_issuing`.
+* **Business Profile:** * `mcc`: "7399" (Business Services - Not Elsewhere Classified) or "7299".
+* `url`: The internally generated public user page.
+* `product_description`: "Personal event fundraising and allowance management for family celebrations."
+
+
+
+### STAGE 2 – Stripe Verification (KYC) & Banking
+
+Redirect user to **Stripe Hosted Onboarding** via Account Links.
+
+* **Requirement:** Stripe must collect SSN, DOB, Address, and **Bank Account (External Account)**.
+* **Webhook Listener:** Create a webhook to listen for `account.updated`. Only proceed when `capabilities.card_issuing === 'active'`.
+
+### STAGE 2.5 – Funding & Balance Management (CRITICAL INTERMEDIATE STEP)
+
+**Do not issue a card to a zero-balance account.** Implement the following:
+
+1. **Balance Check:** Logic to check the `issuing` balance of the connected account.
+2. **Top-up Mechanism:** Create a function to fund the account.
+* *Approach:* Use `Stripe.topups.create` (from the linked bank account) or a transfer from the platform to the connected account's issuing balance.
+
+
+3. **UI Logic:** Ensure the "Create Card" button is only enabled/triggered once the `issuing.available` balance is > $0.
+
+### STAGE 3 – Issuing Virtual Credit Card
+
+Once verified AND funded:
+
+1. **Create Cardholder:** Type: `individual`, include full KYC details (Name, Email, Phone, Address).
+2. **Issue Virtual Card:** Type: `virtual`, Currency: `usd`.
+3. **Spending Controls:** Set a default `spending_limit` to prevent overdrafts.
+
+---
+
+### Technical Constraints
+
+* **No Sensitive Data in DB:** Never store full SSNs. Let Stripe handle KYC.
+* **Error Handling:** Handle `insufficient_funds` and `capability_not_enabled` explicitly.
+* **Architecture:** Separate routes for `Account Creation`, `Onboarding Link`, `Funding`, and `Issuing`.
+* **Environment:** Use Stripe Test Mode logic.

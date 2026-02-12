@@ -226,7 +226,7 @@ export default function InvitationPreview({ event, delay = 800 }: InvitationPrev
                                 }}
                             >
                                 <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
-                                    creditkid.app/event/{event.id.slice(0, 8)}...
+                                    creditkid.vercel.app/event/{event.id.slice(0, 8)}...
                                 </Text>
                             </View>
                         </View>

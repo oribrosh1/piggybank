@@ -45,15 +45,20 @@ async function verifyFirebaseToken(req, res, next) {
     }
 }
 
+// Base URL for public profile (Stripe business_profile.url)
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://creditkid.vercel.app";
+
 // ============================================
-// 0) CREATE STRIPE CUSTOM CONNECT ACCOUNT (in-app onboarding, no redirect)
+// STAGE 1 – CREATE STRIPE CUSTOM CONNECT ACCOUNT (Connect + Issuing)
+// Country: US, Type: custom, Business Type: individual
+// Capabilities: transfers, card_issuing
+// Business profile: mcc 7399, url = public user page, product_description
 // ============================================
 app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) => {
     const uid = req.user.uid;
     const { country = "US" } = req.body;
 
     try {
-        // Check if user already has a Connect account
         const existing = await db.collection("stripeAccounts").doc(uid).get();
         if (existing.exists && existing.data().accountId) {
             return res.json({
@@ -63,23 +68,26 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
             });
         }
 
-        console.log(`Creating Custom Connect account for user ${uid}`);
+        const profileUrl = `${PUBLIC_BASE_URL}/users/${uid}`;
+        console.log(`[Stage 1] Creating Custom Connect account for user ${uid}, profile URL: ${profileUrl}`);
 
         const account = await stripe.accounts.create({
             type: "custom",
-            country: country,
+            country,
             business_type: "individual",
             capabilities: {
-                card_payments: { requested: true },
                 transfers: { requested: true },
+                card_issuing: { requested: true },
             },
-            tos_acceptance: {
-                service_agreement: "full",
+            business_profile: {
+                mcc: "7399",
+                url: profileUrl,
+                product_description: "Personal event fundraising and allowance management for family celebrations.",
             },
+            tos_acceptance: { service_agreement: "full" },
             settings: {
-                payments: {
-                    statement_descriptor: "PIGGYBANK",
-                },
+                payouts: { statement_descriptor: "CREDITKID" },
+                payments: { statement_descriptor: "CREDITKID GIFT" },
             },
         });
 
@@ -87,12 +95,19 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
 
         await db.collection("stripeAccounts").doc(uid).set({
             accountId: account.id,
-            country: country,
+            country,
             business_type: "individual",
             type: "custom",
             created: admin.firestore.FieldValue.serverTimestamp(),
             status: "pending",
+            cardIssuingActive: false,
         }, { merge: true });
+
+        await db.collection("users").doc(uid).update({
+            stripeAccountId: account.id,
+            stripeAccountStatus: "pending",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }).catch(() => {});
 
         res.json({
             accountId: account.id,
@@ -100,7 +115,43 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
             existing: false,
         });
     } catch (err) {
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Card issuing is not enabled for this platform.", code: err.code });
+        }
         console.error("Error creating Custom Connect account:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// STAGE 2 – CREATE ONBOARDING LINK (Stripe Hosted Onboarding)
+// Redirect user to Stripe to collect SSN, DOB, Address, Bank Account
+// ============================================
+app.post("/createOnboardingLink", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const appScheme = process.env.APP_SCHEME || "myapp";
+
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+        if (!doc.exists || !doc.data().accountId) {
+            return res.status(400).json({ error: "No Connect account. Call createCustomConnectAccount first." });
+        }
+        const accountId = doc.data().accountId;
+
+        const accountLink = await stripe.accountLinks.create({
+            account: accountId,
+            refresh_url: `${appScheme}://banking/setup/stripe-connection?refresh=true`,
+            return_url: `${appScheme}://banking/setup/success`,
+            type: "account_onboarding",
+            collection_options: { fields: "eventually_due" },
+        });
+
+        res.json({ accountId, url: accountLink.url, success: true });
+    } catch (err) {
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Capability not enabled.", code: err.code });
+        }
+        console.error("Error creating onboarding link:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -319,20 +370,12 @@ app.get("/getBalance", verifyFirebaseToken, async (req, res) => {
     const uid = req.user.uid;
 
     try {
-        // Get account ID from Firestore
         const doc = await db.collection("stripeAccounts").doc(uid).get();
-
         if (!doc.exists) {
             return res.status(404).json({ error: "No Stripe account found" });
         }
-
         const { accountId } = doc.data();
-
-        // Get balance from Stripe
-        const balance = await stripe.balance.retrieve({
-            stripeAccount: accountId,
-        });
-
+        const balance = await stripe.balance.retrieve({ stripeAccount: accountId });
         res.json({
             available: balance.available,
             pending: balance.pending,
@@ -340,6 +383,198 @@ app.get("/getBalance", verifyFirebaseToken, async (req, res) => {
         });
     } catch (err) {
         console.error("Error getting balance:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// STAGE 2.5 – GET ISSUING BALANCE (must be > 0 before Create Card)
+// ============================================
+app.get("/getIssuingBalance", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+        if (!doc.exists || !doc.data().accountId) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+        const accountId = doc.data().accountId;
+        const balance = await stripe.balance.retrieve({ stripeAccount: accountId });
+        const issuing = balance.issuing || { available: [{ amount: 0, currency: "usd" }], pending: [] };
+        const availableCents = (issuing.available && issuing.available[0]) ? issuing.available[0].amount : 0;
+        res.json({
+            issuingAvailable: availableCents,
+            issuingAvailableFormatted: (availableCents / 100).toFixed(2),
+            currency: (issuing.available && issuing.available[0]) ? issuing.available[0].currency : "usd",
+            canCreateCard: availableCents > 0,
+            success: true,
+        });
+    } catch (err) {
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Card issuing not enabled for this account.", code: err.code });
+        }
+        console.error("Error getting issuing balance:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// STAGE 2.5 – TOP-UP ISSUING BALANCE (from linked bank account)
+// ============================================
+app.post("/topUpIssuing", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { amount } = req.body; // amount in cents
+    if (!amount || amount < 100) {
+        return res.status(400).json({ error: "Amount required (minimum 100 cents = $1)" });
+    }
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+        if (!doc.exists || !doc.data().accountId) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+        const accountId = doc.data().accountId;
+        const topup = await stripe.topups.create(
+            { amount: Number(amount), currency: "usd", description: "CreditKid Issuing balance top-up" },
+            { stripeAccount: accountId }
+        );
+        res.json({
+            topupId: topup.id,
+            amount: topup.amount,
+            status: topup.status,
+            success: true,
+        });
+    } catch (err) {
+        if (err.code === "insufficient_funds") {
+            return res.status(400).json({ error: "Insufficient funds.", code: err.code });
+        }
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Capability not enabled.", code: err.code });
+        }
+        console.error("Error topping up issuing:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// STAGE 3 – CREATE CARDHOLDER (individual, KYC details)
+// ============================================
+app.post("/createIssuingCardholder", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { name, email, phone, line1, line2, city, state, postal_code, dob } = req.body;
+    if (!name || !email || !line1 || !city || !state || !postal_code) {
+        return res.status(400).json({ error: "Missing required fields: name, email, line1, city, state, postal_code" });
+    }
+    const [first_name, ...lastParts] = (name || "").trim().split(/\s+/);
+    const last_name = lastParts.length ? lastParts.join(" ") : first_name;
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+        if (!doc.exists || !doc.data().accountId) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+        if (doc.data().cardholderId) {
+            return res.json({ cardholderId: doc.data().cardholderId, success: true, existing: true });
+        }
+        const accountId = doc.data().accountId;
+        const cardholder = await stripe.issuing.cardholders.create(
+            {
+                type: "individual",
+                name: `${first_name} ${last_name}`,
+                email,
+                phone: phone || undefined,
+                billing: {
+                    address: {
+                        line1,
+                        line2: line2 || undefined,
+                        city,
+                        state,
+                        postal_code,
+                        country: "US",
+                    },
+                },
+                individual: {
+                    first_name,
+                    last_name,
+                    dob: dob ? (typeof dob === "object" ? dob : { day: 1, month: 1, year: 1990 }) : undefined,
+                },
+            },
+            { stripeAccount: accountId }
+        );
+        await db.collection("stripeAccounts").doc(uid).update({
+            cardholderId: cardholder.id,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        res.json({ cardholderId: cardholder.id, success: true, existing: false });
+    } catch (err) {
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Card issuing not enabled.", code: err.code });
+        }
+        console.error("Error creating cardholder:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// STAGE 3 – ISSUE VIRTUAL CARD (virtual, usd, spending_controls)
+// ============================================
+app.post("/createVirtualCard", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { spendingLimitAmount = 50000, spendingLimitInterval = "per_authorization" } = req.body; // default $500/authorization
+    try {
+        const doc = await db.collection("stripeAccounts").doc(uid).get();
+        if (!doc.exists || !doc.data().accountId) {
+            return res.status(404).json({ error: "No Stripe account found" });
+        }
+        const { accountId, cardholderId } = doc.data();
+        if (!cardholderId) {
+            return res.status(400).json({ error: "Create cardholder first (createIssuingCardholder)" });
+        }
+        const balance = await stripe.balance.retrieve({ stripeAccount: accountId });
+        const issuing = balance.issuing || { available: [{ amount: 0 }] };
+        const availableCents = (issuing.available && issuing.available[0]) ? issuing.available[0].amount : 0;
+        if (availableCents <= 0) {
+            return res.status(400).json({
+                error: "Insufficient issuing balance. Add funds before creating a card.",
+                code: "insufficient_funds",
+            });
+        }
+        const card = await stripe.issuing.cards.create(
+            {
+                cardholder: cardholderId,
+                type: "virtual",
+                currency: "usd",
+                status: "active",
+                spending_controls: {
+                    spending_limits: [
+                        {
+                            amount: Math.min(Number(spendingLimitAmount) || 50000, 50000),
+                            interval: spendingLimitInterval,
+                        },
+                    ],
+                },
+            },
+            { stripeAccount: accountId }
+        );
+        await db.collection("stripeAccounts").doc(uid).update({
+            virtualCardId: card.id,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await db.collection("users").doc(uid).update({
+            virtualCardId: card.id,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }).catch(() => {});
+        res.json({
+            cardId: card.id,
+            last4: card.last4,
+            status: card.status,
+            success: true,
+        });
+    } catch (err) {
+        if (err.code === "insufficient_funds") {
+            return res.status(400).json({ error: "Insufficient issuing balance.", code: err.code });
+        }
+        if (err.code === "capability_not_enabled") {
+            return res.status(400).json({ error: "Capability not enabled.", code: err.code });
+        }
+        console.error("Error creating virtual card:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -733,25 +968,33 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
 
     console.log(`Webhook received: ${event.type}`);
 
-    // Handle account.updated event
+    // Handle account.updated – STAGE 2: only proceed when capabilities.card_issuing === 'active'
     if (event.type === 'account.updated') {
         const account = event.data.object;
-
-        // Find user by account ID
         const querySnapshot = await db.collection('stripeAccounts')
             .where('accountId', '==', account.id)
             .get();
 
         if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
+            const uid = doc.id;
+            const cardIssuingActive = account.capabilities?.card_issuing === 'active';
             await doc.ref.update({
                 charges_enabled: account.charges_enabled,
                 payouts_enabled: account.payouts_enabled,
                 details_submitted: account.details_submitted,
                 requirements: account.requirements,
+                capabilities: account.capabilities,
+                cardIssuingActive: cardIssuingActive || doc.data().cardIssuingActive,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
-            console.log(`Updated account status for ${doc.id}`);
+            if (cardIssuingActive) {
+                await db.collection('users').doc(uid).update({
+                    stripeAccountStatus: 'approved',
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                }).catch(() => {});
+            }
+            console.log(`Updated account status for ${uid}, card_issuing active: ${cardIssuingActive}`);
         }
     }
 
@@ -992,7 +1235,7 @@ app.post("/testVerifyAccount", verifyFirebaseToken, async (req, res) => {
             // Business profile with ALL required fields
             business_profile: {
                 mcc: '8299', // Schools and Educational Services
-                url: 'https://creditkid.app',
+                url: 'https://creditkid.vercel.app',
                 product_description: 'Gift collection platform for special events',
             },
             // Settings including statement descriptors

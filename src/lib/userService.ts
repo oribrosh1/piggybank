@@ -37,10 +37,14 @@ export async function initializeUserProfile(
     try {
         console.log('🚀 Initializing user profile for:', uid);
 
+        const fullName =
+            additionalData.fullName ||
+            [additionalData.legalFirstName, additionalData.legalLastName].filter(Boolean).join(' ') ||
+            '';
         const userProfileData: CreateUserProfileData = {
             uid,
             email,
-            fullName: additionalData.fullName || '',
+            fullName,
             createdAt: new Date(),
             updatedAt: new Date(),
             kycStatus: 'pending',

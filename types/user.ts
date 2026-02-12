@@ -53,8 +53,10 @@ export interface UserProfile {
     uid: string;
     email: string | null;
 
-    // Personal Info
+    // Personal Info (Legal First/Last for SSN match – never store SSN; Stripe collects it)
     fullName: string;
+    legalFirstName?: string;
+    legalLastName?: string;
 
     // Timestamps
     createdAt: Date;
@@ -140,6 +142,10 @@ export interface UserCredential {
  */
 export interface SignupAdditionalData {
     fullName?: string;
+    /** Legal first name (for Stripe KYC / SSN match – not stored in DB) */
+    legalFirstName?: string;
+    /** Legal last name (for Stripe KYC / SSN match – not stored in DB) */
+    legalLastName?: string;
 }
 
 /**
@@ -206,6 +212,8 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
         if (userProfile.totalSpent !== undefined) data.totalSpent = userProfile.totalSpent;
         if (userProfile.spendingLimitDaily !== undefined) data.spendingLimitDaily = userProfile.spendingLimitDaily;
         if (userProfile.spendingLimitMonthly !== undefined) data.spendingLimitMonthly = userProfile.spendingLimitMonthly;
+        if (userProfile.legalFirstName) data.legalFirstName = userProfile.legalFirstName;
+        if (userProfile.legalLastName) data.legalLastName = userProfile.legalLastName;
 
         return data;
     },
@@ -248,6 +256,8 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
             totalSpent: data.totalSpent,
             spendingLimitDaily: data.spendingLimitDaily,
             spendingLimitMonthly: data.spendingLimitMonthly,
+            legalFirstName: data.legalFirstName,
+            legalLastName: data.legalLastName,
         };
     },
 };
