@@ -1,0 +1,138 @@
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Calendar, Sparkles } from 'lucide-react';
+
+type PublicProfile = {
+    fullName: string;
+    accountType?: string;
+};
+
+async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
+    try {
+        const db = await getAdminDb();
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) return null;
+        const data = userDoc.data();
+        return {
+            fullName: data?.fullName ?? 'CreditKid Member',
+            accountType: data?.accountType,
+        };
+    } catch {
+        return null;
+    }
+}
+
+export async function generateMetadata({
+    params,
+}: {
+    params: { userId: string };
+}): Promise<Metadata> {
+    const profile = await getPublicProfile(params.userId);
+    if (!profile) {
+        return { title: 'Not Found | CreditKid' };
+    }
+    return {
+        title: `${profile.fullName} | CreditKid`,
+        description: 'CreditKid member profile – personal event fundraising and allowance management.',
+        robots: 'index, follow',
+    };
+}
+
+export const revalidate = 300;
+
+export default async function UserProfilePage({
+    params,
+}: {
+    params: { userId: string };
+}) {
+    const profile = await getPublicProfile(params.userId);
+    if (!profile) notFound();
+
+    const theme = {
+        gradient: 'from-violet-500 via-purple-600 to-fuchsia-600',
+        glow: 'shadow-purple-500/50',
+    };
+    const initial = profile.fullName.charAt(0).toUpperCase();
+
+    return (
+        <main className="min-h-screen bg-[#F3F4F6]">
+            {/* Hero Header – same style as event page */}
+            <section className={`bg-gradient-to-br ${theme.gradient} pt-10 pb-20 px-6 relative overflow-hidden rounded-b-[40px]`}>
+                <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-10 left-[10%] w-16 h-16 bg-white/10 rounded-full animate-pulse" />
+                    <div className="absolute top-16 right-[15%] w-10 h-10 bg-white/15 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                    <div className="absolute top-32 left-[25%] w-8 h-8 bg-white/10 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+                    <div className="absolute top-24 right-[25%] w-6 h-6 bg-white/20 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+                    <div className="absolute top-12 left-[8%] text-2xl opacity-30">✨</div>
+                    <div className="absolute top-8 right-[12%] text-xl opacity-25">⭐</div>
+                    <div className="absolute top-28 right-[8%] text-lg opacity-20">✨</div>
+                </div>
+
+                <div className="max-w-md mx-auto text-center relative z-10">
+                    <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-5 border border-white/20">
+                        <Sparkles size={14} className="text-white" />
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">CreditKid Member</span>
+                        <Sparkles size={14} className="text-white" />
+                    </div>
+
+                    <div className={`w-24 h-24 mx-auto mb-5 rounded-full bg-white/25 backdrop-blur-md flex items-center justify-center shadow-2xl ${theme.glow} border-4 border-white/30`}>
+                        <span className="text-4xl font-black text-white drop-shadow-lg">{initial}</span>
+                    </div>
+
+                    <h1 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight drop-shadow-lg">
+                        {profile.fullName}
+                    </h1>
+
+                    <p className="text-white/80 text-sm font-medium">
+                        A CreditKid member — securely collecting digital gifts for birthdays and family celebrations, with a private and safe allowance system.
+                    </p>
+                </div>
+            </section>
+
+            {/* Main Content */}
+            <div className="px-4 pt-5 pb-8">
+                <div className="max-w-md mx-auto space-y-4">
+                    {/* No event yet card – same card style as event details */}
+                    <div className="bg-white rounded-3xl shadow-xl p-6 space-y-5">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-[#EDE9FE] flex items-center justify-center flex-shrink-0">
+                                <Calendar size={22} className="text-[#8B5CF6]" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Events</p>
+                                <p className="text-base font-bold text-gray-900">No event yet</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-500 leading-relaxed">
+                            {profile.fullName} hasn’t created an event yet. When they do, you’ll be able to RSVP and send a gift straight to their CreditKid card.
+                        </p>
+                        <div className="pt-4 border-t border-gray-100">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Coming soon</p>
+                            <p className="text-sm text-gray-600">
+                                Create your first event in the CreditKid app to share your link and start receiving gifts.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Powered by CreditKid */}
+                    <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                            <span className="text-3xl">🐷</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-2">
+                            Powered by CreditKid
+                        </h3>
+                        <p className="text-white/80 text-sm mb-4">
+                            The secure way to give and receive gifts. No more gift cards sitting in drawers!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
+                <p>© 2024 CreditKid. The end of gift cards is here! 🎉</p>
+            </footer>
+        </main>
+    );
+}

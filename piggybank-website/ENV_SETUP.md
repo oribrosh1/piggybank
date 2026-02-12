@@ -24,7 +24,7 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Base URL for Open Graph images (for SMS previews)
-NEXT_PUBLIC_BASE_URL=https://creditkid.app
+NEXT_PUBLIC_BASE_URL=https://creditkid.vercel.app
 ```
 
 ## Getting Firebase Admin Service Account Key:

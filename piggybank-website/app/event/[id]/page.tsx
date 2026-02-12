@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const title = `${emoji} You're Invited! ${event.eventName}`;
     const description = `Join us for ${event.creatorName}'s ${typeLabel}! ${formatDate(event.date)} at ${event.time}. RSVP now and send a gift directly to their PiggyBank card!`;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://creditkid.app';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://creditkid.vercel.app';
     const eventUrl = `${baseUrl}/event/${event.id}`;
     const ogImageUrl = `${baseUrl}/api/og?title=${encodeURIComponent(event.eventName)}&type=${event.eventType}&date=${encodeURIComponent(event.date)}&host=${encodeURIComponent(event.creatorName)}`;
 
