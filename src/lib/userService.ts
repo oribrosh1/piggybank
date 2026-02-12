@@ -1,5 +1,5 @@
 /**
- * User Service - Handles user profile and Stripe account creation
+ * User Service - Handles user profile (Stripe account is created only after banking onboarding completes)
  * Uses React Native Firebase for Firestore to share auth state
  */
 import firestore from '@react-native-firebase/firestore';
@@ -15,92 +15,55 @@ import type {
 } from '../../types/user';
 
 /**
- * Initialize user profile and create Stripe Connect account
+ * Initialize user profile (no Stripe account yet; created only after banking onboarding completes)
  * Called automatically after signup
  */
 export async function initializeUserProfile(
-    userCredential: UserCredential,
+    userCredential: UserCredential | { user: { uid: string; email: string | null; displayName?: string | null } },
     additionalData: SignupAdditionalData = {}
 ): Promise<InitializeUserResult> {
-    const user = userCredential.user;
-    const uid = user.uid;
+    // Support both Firebase Auth shape ({ user: { uid, email } }) and flattened ({ uid, email })
+    const uid = 'user' in userCredential && userCredential.user
+        ? userCredential.user.uid
+        : (userCredential as UserCredential).uid;
+    const email = 'user' in userCredential && userCredential.user
+        ? (userCredential.user.email ?? null)
+        : ((userCredential as UserCredential).email ?? null);
+
+    if (!uid) {
+        throw new Error('User credential missing uid (use userCredential.user.uid for Firebase Auth result)');
+    }
 
     try {
         console.log('🚀 Initializing user profile for:', uid);
 
-        // 2. Create user profile document in Firestore
         const userProfileData: CreateUserProfileData = {
-            uid: uid,
-            email: user.email,
+            uid,
+            email,
             fullName: additionalData.fullName || '',
             createdAt: new Date(),
             updatedAt: new Date(),
-            // KYC and verification status
             kycStatus: 'pending',
             verificationStatus: 'pending',
-            // Account settings
             notificationsEnabled: true,
             biometricEnabled: false,
-            // Stats
             eventsCreated: 0,
             eventsAttended: 0,
             totalReceived: 0,
             totalPaid: 0,
-            // Account type - default to parent for new signups
             accountType: 'parent',
         };
 
-        // Save user profile to Firestore using React Native Firebase
         await firestore().collection('users').doc(uid).set(userProfileData);
 
-        console.log('✅ User profile created');
+        console.log('✅ User profile created (Stripe account will be created when user completes banking setup)');
 
-        // 3. Create Stripe Connect account automatically
-        try {
-            console.log('🏦 Creating Stripe Connect account...');
-
-            const stripeResult = await createExpressAccount({
-                email: user.email ?? undefined,
-                country: 'US', // Default to US, can be updated later
-                business_type: 'individual'
-            });
-
-            console.log('✅ Stripe account created:', stripeResult.accountId);
-
-            // Store Stripe account info in user profile
-            await firestore().collection('users').doc(uid).update({
-                stripeAccountId: stripeResult.accountId,
-                stripeAccountLink: stripeResult.accountLink,
-                stripeAccountCreated: true,
-                stripeAccountStatus: 'onboarding_required',
-                updatedAt: firestore.FieldValue.serverTimestamp(),
-            });
-
-            return {
-                success: true,
-                userProfile: userProfileData,
-                stripeAccount: stripeResult,
-                message: 'Account created successfully! Your payment account is ready for setup.',
-            };
-        } catch (stripeError: any) {
-            console.warn('⚠️ Stripe account creation failed (non-critical):', stripeError);
-
-            // Mark that Stripe account creation failed but don't block signup
-            await firestore().collection('users').doc(uid).update({
-                stripeAccountCreated: false,
-                stripeAccountError: stripeError?.message || 'Unknown error',
-                updatedAt: firestore.FieldValue.serverTimestamp(),
-            });
-
-            // Return success for user profile but note Stripe issue
-            return {
-                success: true,
-                userProfile: userProfileData,
-                stripeAccount: null,
-                message: 'Account created! Payment account setup will be available soon.',
-                warning: 'Payment account creation pending. You can set it up later from Banking.',
-            };
-        }
+        return {
+            success: true,
+            userProfile: userProfileData,
+            stripeAccount: null,
+            message: 'Account created! Complete banking setup when you\'re ready to receive payments.',
+        };
     } catch (error) {
         console.error('❌ Error initializing user profile:', error);
         throw error;

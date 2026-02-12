@@ -280,3 +280,156 @@ target 'piggybank' do
 end
 
  -->
+
+
+
+
+
+ Build a complete Stripe integration flow for US-based individual users (not businesses) using Stripe Connect + Stripe Issuing.
+
+The solution must be split into TWO DISTINCT STAGES (do not merge them):
+
+STAGE 1 – Create the Stripe Connected Account (User Creation)
+
+Implement server-side logic (Node.js / TypeScript) to create a Stripe Custom Connected Account for an individual user.
+
+Requirements:
+
+Country: US
+
+Account type: custom
+
+Business type: individual
+
+The user is a private individual (no registered business, no external website)
+
+The platform provides an internal event page URL (can be used as business profile URL)
+
+Capabilities to request:
+
+transfers
+
+card_issuing
+
+Required parameters to include:
+
+business_type: "individual"
+
+individual object (initially minimal)
+
+business_profile:
+
+product_description: e.g. "Personal event fundraising (birthdays, celebrations)"
+
+url: internal platform event page URL
+
+mcc: appropriate MCC for personal events or fundraising
+
+Output:
+
+Return the created account.id
+
+Account should be created in a restricted / pending verification state
+
+STAGE 2 – Verification & Issuing Virtual Card
+
+Implement the full verification (KYC) flow required to:
+
+Enable transfers
+
+Enable card_issuing
+
+Issue a virtual card to the user
+
+Verification Method:
+
+Use Stripe Hosted Onboarding (Account Links)
+
+Do NOT collect SSN directly in the platform backend
+
+Required verification fields (US individual):
+Personal identity (KYC):
+
+First name
+
+Last name
+
+Date of birth
+
+Residential address (no PO box)
+
+Last 4 digits of SSN (or full SSN)
+
+Contact details (required for digital wallets):
+
+Email
+
+Phone number
+
+Business profile clarification:
+
+Industry: personal events / fundraising
+
+Description: non-commercial personal use
+
+After Verification – Issuing Flow
+
+Once both capabilities are active:
+
+Create a Cardholder
+
+type: "individual"
+
+Include:
+
+name
+
+email
+
+phone_number
+
+billing address (US)
+
+date of birth
+
+Issue a Virtual Card
+
+type: "virtual"
+
+currency: "usd"
+
+Attach to the cardholder
+
+Activate the card
+
+Constraints & Notes
+
+US users only
+
+No business registration
+
+No external website required
+
+Must comply with Stripe KYC / AML requirements
+
+Use Stripe Connect + Issuing officially supported flows
+
+Provide:
+
+Clean, production-ready Node.js / TypeScript code
+
+Clear separation between Stage 1 and Stage 2
+
+Comments explaining why each parameter is required
+
+Error handling for missing verification requirements
+
+Do NOT simplify the flow or merge stages.
+
+אם תרצה, אני יכול:
+
+לקצר את הפרומט לגרסת “Cursor Fast”
+
+או להפוך אותו ל־ADR / Architecture spec
+
+או לבדוק מולך אם Stripe Issuing הוא הבחירה הנכונה לעומת Marqeta

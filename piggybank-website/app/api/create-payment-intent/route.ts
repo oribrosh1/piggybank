@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
         if (eventId) {
             try {
-                const db = getAdminDb();
+                const db = await getAdminDb();
                 const eventDoc = await db.collection('events').doc(eventId).get();
 
                 if (eventDoc.exists) {

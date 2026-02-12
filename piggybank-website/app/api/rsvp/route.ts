@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { getAdminDb, getFieldValue } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
     try {
@@ -22,7 +21,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const db = getAdminDb();
+        const db = await getAdminDb();
+        const FieldValue = await getFieldValue();
         const eventRef = db.collection('events').doc(eventId);
         const eventDoc = await eventRef.get();
 
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const db = getAdminDb();
+        const db = await getAdminDb();
         const eventDoc = await db.collection('events').doc(eventId).get();
 
         if (!eventDoc.exists) {

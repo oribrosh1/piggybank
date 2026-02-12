@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getAdminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { getAdminDb, getFieldValue } from '@/lib/firebase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2023-10-16',
@@ -53,7 +52,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     }
 
     try {
-        const db = getAdminDb();
+        const db = await getAdminDb();
+        const FieldValue = await getFieldValue();
         const eventRef = db.collection('events').doc(eventId);
         const eventDoc = await eventRef.get();
 
@@ -132,7 +132,8 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
 
     // Optionally log failed payment attempts
     try {
-        const db = getAdminDb();
+        const db = await getAdminDb();
+        const FieldValue = await getFieldValue();
         await db.collection('failed_payments').add({
             paymentIntentId: paymentIntent.id,
             eventId,

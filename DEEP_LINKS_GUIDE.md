@@ -199,21 +199,21 @@ For production, use **Universal Links** (iOS) or **App Links** (Android) instead
 
 ### Setup:
 
-1. **Domain**: You need a domain (e.g., `piggybank.app`)
+1. **Domain**: You need a domain (e.g., `creditkid.app`)
 
 2. **iOS Universal Links**:
-   - Add `apple-app-site-association` file at `https://piggybank.app/.well-known/apple-app-site-association`
+   - Add `apple-app-site-association` file at `https://creditkid.app/.well-known/apple-app-site-association`
    - Configure in `app.json`:
    ```json
    {
      "ios": {
-       "associatedDomains": ["applinks:piggybank.app"]
+       "associatedDomains": ["applinks:creditkid.app"]
      }
    }
    ```
 
 3. **Android App Links**:
-   - Add `assetlinks.json` at `https://piggybank.app/.well-known/assetlinks.json`
+   - Add `assetlinks.json` at `https://creditkid.app/.well-known/assetlinks.json`
    - Configure in `app.json`:
    ```json
    {
@@ -222,7 +222,7 @@ For production, use **Universal Links** (iOS) or **App Links** (Android) instead
          "action": "VIEW",
          "data": {
            "scheme": "https",
-           "host": "piggybank.app"
+           "host": "creditkid.app"
          }
        }]
      }
@@ -233,8 +233,8 @@ For production, use **Universal Links** (iOS) or **App Links** (Android) instead
    ```javascript
    const accountLink = await stripe.accountLinks.create({
      account: account.id,
-     refresh_url: `https://piggybank.app/banking/setup/stripe-connection`,
-     return_url: `https://piggybank.app/banking/setup/success`,
+     refresh_url: `https://creditkid.app/banking/setup/stripe-connection`,
+     return_url: `https://creditkid.app/banking/setup/success`,
      type: "account_onboarding",
    });
    ```

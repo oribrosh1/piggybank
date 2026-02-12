@@ -3,7 +3,7 @@ import {
   Text,
   TouchableOpacity,
   Animated,
-  ActivityIndicator
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -69,11 +69,19 @@ export default function KYCVerificationScreen() {
       style={{
         flex: 1,
         backgroundColor: "#FFFFFF",
-        paddingTop: insets.top
+        paddingTop: insets.top,
       }}
     >
-      {/* Main Content */}
-      <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: "center" }}>
+      {/* Main Content - scrollable so "Why KYC" and tip are visible on small screens */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Success Check Animation */}
         <Animated.View
           style={{
@@ -113,7 +121,7 @@ export default function KYCVerificationScreen() {
               letterSpacing: -0.5,
             }}
           >
-            Documents Submitted! ✅
+            Information Submitted! ✅
           </Text>
 
           {/* Subtitle */}
@@ -127,7 +135,7 @@ export default function KYCVerificationScreen() {
               paddingHorizontal: 20,
             }}
           >
-            Your information has been securely submitted to Stripe for verification
+            Your information has been securely submitted to Stripe for verification.
           </Text>
 
           {/* KYC Verification Card */}
@@ -170,7 +178,7 @@ export default function KYCVerificationScreen() {
                     marginBottom: 6,
                   }}
                 >
-                  KYC Verification In Progress
+                  Verification In Progress
                 </Text>
                 <Text
                   style={{
@@ -179,16 +187,16 @@ export default function KYCVerificationScreen() {
                     lineHeight: 20,
                   }}
                 >
-                  Stripe is verifying your identity. This usually takes 1-3 business days.
+                  Stripe is verifying your identity. This usually takes 1–3 business days.
                 </Text>
               </View>
             </View>
 
-            {/* Progress Steps */}
+            {/* Progress Steps - matches our flow: personal info + TOS, then Stripe verification */}
             <View style={{ gap: 12 }}>
               {[
-                { icon: "✅", text: "Personal information received", done: true },
-                { icon: "✅", text: "ID document uploaded", done: true },
+                { icon: "✅", text: "Personal information submitted", done: true },
+                { icon: "✅", text: "Terms of Service accepted", done: true },
                 { icon: "⏳", text: "Identity verification", done: false },
                 { icon: "⏳", text: "Account approval", done: false },
               ].map((step, index) => (
@@ -249,7 +257,7 @@ export default function KYCVerificationScreen() {
                   lineHeight: 22,
                 }}
               >
-                Stripe will verify your identity and documents. Once approved, you'll be able to access your virtual credit card (Piggy Bank) and start receiving payments.
+                Stripe will verify your identity. Once approved, you can receive payments to your balance and use your virtual card (Piggy Bank) when available.
               </Text>
             </View>
 
@@ -283,7 +291,7 @@ export default function KYCVerificationScreen() {
                   lineHeight: 22,
                 }}
               >
-                Federal law requires identity verification for anyone receiving a payment card. This protects you and ensures compliance with financial regulations.
+                Federal law requires identity verification for anyone receiving payments or using payment cards. This protects you and ensures compliance with financial regulations.
               </Text>
             </View>
           </View>
@@ -309,9 +317,9 @@ export default function KYCVerificationScreen() {
             </Text>
           </View>
         </Animated.View>
-      </View>
+      </ScrollView>
 
-      {/* Bottom Button */}
+      {/* Bottom Button - fixed */}
       <View
         style={{
           paddingHorizontal: 24,

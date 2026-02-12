@@ -18,7 +18,7 @@ import GiftCardSection from '@/components/GiftCardSection';
 // Fetch event data
 async function getEvent(id: string): Promise<EventData | null> {
     try {
-        const db = getAdminDb();
+        const db = await getAdminDb();
         const eventDoc = await db.collection('events').doc(id).get();
 
         if (!eventDoc.exists) {
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const title = `${emoji} You're Invited! ${event.eventName}`;
     const description = `Join us for ${event.creatorName}'s ${typeLabel}! ${formatDate(event.date)} at ${event.time}. RSVP now and send a gift directly to their PiggyBank card!`;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://piggybank.app';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://creditkid.app';
     const eventUrl = `${baseUrl}/event/${event.id}`;
     const ogImageUrl = `${baseUrl}/api/og?title=${encodeURIComponent(event.eventName)}&type=${event.eventType}&date=${encodeURIComponent(event.date)}&host=${encodeURIComponent(event.creatorName)}`;
 

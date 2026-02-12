@@ -46,6 +46,66 @@ async function verifyFirebaseToken(req, res, next) {
 }
 
 // ============================================
+// 0) CREATE STRIPE CUSTOM CONNECT ACCOUNT (in-app onboarding, no redirect)
+// ============================================
+app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { country = "US" } = req.body;
+
+    try {
+        // Check if user already has a Connect account
+        const existing = await db.collection("stripeAccounts").doc(uid).get();
+        if (existing.exists && existing.data().accountId) {
+            return res.json({
+                accountId: existing.data().accountId,
+                success: true,
+                existing: true,
+            });
+        }
+
+        console.log(`Creating Custom Connect account for user ${uid}`);
+
+        const account = await stripe.accounts.create({
+            type: "custom",
+            country: country,
+            business_type: "individual",
+            capabilities: {
+                card_payments: { requested: true },
+                transfers: { requested: true },
+            },
+            tos_acceptance: {
+                service_agreement: "full",
+            },
+            settings: {
+                payments: {
+                    statement_descriptor: "PIGGYBANK",
+                },
+            },
+        });
+
+        console.log(`Created Custom account: ${account.id}`);
+
+        await db.collection("stripeAccounts").doc(uid).set({
+            accountId: account.id,
+            country: country,
+            business_type: "individual",
+            type: "custom",
+            created: admin.firestore.FieldValue.serverTimestamp(),
+            status: "pending",
+        }, { merge: true });
+
+        res.json({
+            accountId: account.id,
+            success: true,
+            existing: false,
+        });
+    } catch (err) {
+        console.error("Error creating Custom Connect account:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
 // 1) CREATE STRIPE EXPRESS ACCOUNT
 // ============================================
 app.post("/createExpressAccount", verifyFirebaseToken, async (req, res) => {
@@ -566,6 +626,12 @@ app.post("/updateAccountInfo", verifyFirebaseToken, async (req, res) => {
         address, // { line1, line2, city, state, postal_code, country }
         ssn_last_4,
         id_number, // Full SSN for US
+        // Business profile (required for Custom account activation)
+        business_profile_mcc,
+        business_profile_url,
+        business_profile_product_description,
+        business_profile_support_phone,
+        statement_descriptor,
     } = req.body;
 
     try {
@@ -577,7 +643,6 @@ app.post("/updateAccountInfo", verifyFirebaseToken, async (req, res) => {
 
         const { accountId } = doc.data();
 
-        // Build update object
         const updateData = { individual: {} };
 
         if (first_name) updateData.individual.first_name = first_name;
@@ -589,7 +654,18 @@ app.post("/updateAccountInfo", verifyFirebaseToken, async (req, res) => {
         if (ssn_last_4) updateData.individual.ssn_last_4 = ssn_last_4;
         if (id_number) updateData.individual.id_number = id_number;
 
-        // Update Stripe account
+        if (business_profile_mcc || business_profile_url || business_profile_product_description || business_profile_support_phone) {
+            updateData.business_profile = {};
+            if (business_profile_mcc) updateData.business_profile.mcc = String(business_profile_mcc);
+            if (business_profile_url) updateData.business_profile.url = business_profile_url;
+            if (business_profile_product_description) updateData.business_profile.product_description = business_profile_product_description;
+            if (business_profile_support_phone) updateData.business_profile.support_phone = business_profile_support_phone;
+        }
+
+        if (statement_descriptor) {
+            updateData.settings = { payments: { statement_descriptor: String(statement_descriptor).slice(0, 22) } };
+        }
+
         const account = await stripe.accounts.update(accountId, updateData);
 
         res.json({
@@ -916,7 +992,7 @@ app.post("/testVerifyAccount", verifyFirebaseToken, async (req, res) => {
             // Business profile with ALL required fields
             business_profile: {
                 mcc: '8299', // Schools and Educational Services
-                url: 'https://piggybank.app',
+                url: 'https://creditkid.app',
                 product_description: 'Gift collection platform for special events',
             },
             // Settings including statement descriptors
@@ -1103,7 +1179,9 @@ exports.api = functions.https.onRequest(app);
 
 // ============================================
 // FIRESTORE TRIGGER: On Event Created
-// Automatically creates a Stripe Custom account for the user
+// Attach existing Stripe account to event if user completed banking setup.
+// Does NOT create Stripe accounts; those are created only when user completes
+// banking onboarding (personal-info flow step 3).
 // ============================================
 exports.onEventCreated = onDocumentCreated('events/{eventId}', async (event) => {
     const snapshot = event.data;
@@ -1118,193 +1196,41 @@ exports.onEventCreated = onDocumentCreated('events/{eventId}', async (event) => 
     console.log(`🎉 New event created: ${eventId} by user: ${creatorId}`);
 
     try {
-        // 1. Get the user document
-        const userRef = db.collection('users').doc(creatorId);
-        const userDoc = await userRef.get();
+        // 1. Check stripeAccounts first (set when user completes banking onboarding)
+        const stripeAccountDoc = await db.collection('stripeAccounts').doc(creatorId).get();
+        let accountId = stripeAccountDoc.exists ? stripeAccountDoc.data()?.accountId : null;
 
-        if (!userDoc.exists) {
-            console.error(`❌ User not found: ${creatorId}`);
-            return null;
-        }
-
-        const userData = userDoc.data();
-
-        // 2. Check if user already has a Stripe account
-        if (userData.stripeAccountId) {
-            console.log(`✅ User ${creatorId} already has Stripe account: ${userData.stripeAccountId}`);
-
-            // Update the event with the existing Stripe account ID
-            await snapshot.ref.update({
-                stripeAccountId: userData.stripeAccountId,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            return null;
-        }
-
-        // 3. Create a Stripe Custom account for the user with FULL verification
-        // This ensures capabilities are enabled from the start (not restricted)
-        console.log(`🏦 Creating fully verified Stripe Custom account for user: ${creatorId}`);
-
-        // Parse name into first/last
-        const fullName = userData.fullName || eventData.creatorName || 'Test User';
-        const nameParts = fullName.trim().split(' ');
-        const firstName = nameParts[0] || 'Test';
-        const lastName = nameParts.slice(1).join(' ') || 'User';
-
-        // Check if we're in test mode
-        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
-
-        const accountData = {
-            type: "custom",
-            country: "US",
-            email: userData.email || eventData.creatorEmail,
-            business_type: "individual",
-            capabilities: {
-                card_payments: { requested: true },
-                transfers: { requested: true },
-            },
-            // Individual details - REQUIRED for Custom accounts
-            // For individual business type, this person IS the representative
-            individual: {
-                first_name: firstName,
-                last_name: lastName,
-                email: userData.email || eventData.creatorEmail,
-                phone: userData.phone || '+15555555555', // Test phone
-                dob: {
-                    day: 1,
-                    month: 1,
-                    year: 1990,
-                },
-                address: {
-                    line1: '123 Main Street',
-                    city: 'San Francisco',
-                    state: 'CA',
-                    postal_code: '94111',
-                    country: 'US',
-                },
-                // In test mode, use test SSN that always passes verification
-                ...(isTestMode && { ssn_last_4: '0000' }),
-                // Relationship - marks this person as owner and representative
-                relationship: {
-                    owner: true,
-                    representative: true,
-                    percent_ownership: 100,
-                    title: 'Owner',
-                },
-            },
-            // Business profile - ALL required fields
-            business_profile: {
-                name: fullName,
-                mcc: '8299', // Schools and Educational Services (better for gift/event platform)
-                url: 'https://piggybank.app',
-                product_description: 'Gift collection platform for special events like birthdays and bar mitzvahs',
-            },
-            // Accept Terms of Service
-            tos_acceptance: {
-                date: Math.floor(Date.now() / 1000),
-                ip: '127.0.0.1', // Will be replaced by actual IP in production
-            },
-            // Settings including statement descriptor
-            settings: {
-                payouts: {
-                    schedule: {
-                        interval: 'manual',
-                    },
-                    // Statement descriptor for payouts
-                    statement_descriptor: 'PIGGYBANK',
-                },
-                payments: {
-                    // Statement descriptor for card payments (max 22 chars)
-                    statement_descriptor: 'PIGGYBANK GIFT',
-                },
-            },
-        };
-
-        const account = await stripe.accounts.create(accountData);
-        console.log(`✅ Stripe account created: ${account.id}`);
-        console.log(`   Capabilities requested: card_payments, transfers`);
-
-        // 3b. Add a test bank account (required for payouts to work)
-        if (isTestMode) {
-            try {
-                // Use Stripe's test bank account routing number
-                const bankToken = await stripe.tokens.create({
-                    bank_account: {
-                        country: 'US',
-                        currency: 'usd',
-                        account_holder_name: fullName,
-                        account_holder_type: 'individual',
-                        routing_number: '110000000', // Stripe test routing number
-                        account_number: '000123456789', // Stripe test account number
-                    },
-                });
-
-                await stripe.accounts.createExternalAccount(account.id, {
-                    external_account: bankToken.id,
-                });
-                console.log(`✅ Test bank account added to Stripe account`);
-            } catch (bankErr) {
-                console.log(`⚠️ Could not add test bank account: ${bankErr.message}`);
+        // 2. Fallback: check users.stripeAccountId (legacy or synced from elsewhere)
+        if (!accountId) {
+            const userDoc = await db.collection('users').doc(creatorId).get();
+            if (userDoc.exists) {
+                accountId = userDoc.data()?.stripeAccountId || null;
             }
         }
 
-        // 4. Create account link for onboarding
-        const appScheme = process.env.APP_SCHEME || 'myapp';
-        const accountLink = await stripe.accountLinks.create({
-            account: account.id,
-            refresh_url: `${appScheme}://banking/setup/stripe-connection?refresh=true`,
-            return_url: `${appScheme}://banking/setup/success`,
-            type: "account_onboarding",
-        });
+        if (accountId) {
+            console.log(`✅ Attaching existing Stripe account ${accountId} to event ${eventId}`);
+            await snapshot.ref.update({
+                stripeAccountId: accountId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            return { success: true, accountId };
+        }
 
-        // 5. Update user document with Stripe account info
-        await userRef.update({
-            stripeAccountId: account.id,
-            stripeAccountLink: accountLink.url,
-            stripeAccountCreated: true,
-            stripeAccountStatus: 'onboarding_required',
-            stripeAccountType: 'custom',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-        console.log(`✅ User ${creatorId} updated with Stripe account`);
-
-        // 6. Update the event with the Stripe account ID
+        // User has not completed banking setup yet; do NOT create a Stripe account
+        console.log(`ℹ️ User ${creatorId} has no Stripe account yet. Complete banking setup to receive payments.`);
         await snapshot.ref.update({
-            stripeAccountId: account.id,
+            needsBankingSetup: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-        console.log(`✅ Event ${eventId} updated with Stripe account`);
-
-        // 7. Also save to stripeAccounts collection for reference
-        await db.collection('stripeAccounts').doc(creatorId).set({
-            accountId: account.id,
-            userId: creatorId,
-            email: userData.email || eventData.creatorEmail,
-            country: 'US',
-            business_type: 'individual',
-            accountType: 'custom',
-            status: 'pending',
-            onboardingUrl: accountLink.url,
-            created: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-
-        console.log(`✅ Stripe account saved to stripeAccounts collection`);
-
-        return { success: true, accountId: account.id };
-
+        return null;
     } catch (error) {
-        console.error(`❌ Error creating Stripe account for event ${eventId}:`, error);
-
-        // Update event to indicate Stripe setup failed (can retry later)
+        console.error(`❌ Error in onEventCreated for event ${eventId}:`, error);
         await snapshot.ref.update({
             stripeSetupFailed: true,
             stripeSetupError: error.message,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-
         return { success: false, error: error.message };
     }
 });

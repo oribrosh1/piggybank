@@ -130,10 +130,9 @@ export type UpdateUserProfileData = Partial<Omit<UserProfile, 'uid' | 'createdAt
  * User credential from Firebase Auth
  */
 export interface UserCredential {
-    user: {
-        uid: string;
-        email: string | null;
-    };
+    uid: string;
+    email: string | null;
+    displayName: string | null;
 }
 
 /**

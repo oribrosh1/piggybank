@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-tools@latest",
+        "mcp",
+        "--dir",
+        "/Users/oribrosh1/Documents/creditkid/piggybank"
+      ]
+    },
+    "stripe": {
+      "url": "https://mcp.stripe.com"
+    }
+  }
+}

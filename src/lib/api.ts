@@ -21,6 +21,16 @@ export interface CreateExpressAccountResponse {
     success: boolean;
 }
 
+export interface CreateCustomConnectAccountPayload {
+    country?: string;
+}
+
+export interface CreateCustomConnectAccountResponse {
+    accountId: string;
+    success: boolean;
+    existing?: boolean;
+}
+
 export interface AccountStatusResponse {
     exists: boolean;
     accountId?: string;
@@ -215,6 +225,11 @@ export interface UpdateAccountInfoPayload {
     };
     ssn_last_4?: string;
     id_number?: string;
+    business_profile_mcc?: string;
+    business_profile_url?: string;
+    business_profile_product_description?: string;
+    business_profile_support_phone?: string;
+    statement_descriptor?: string;
 }
 
 export interface UpdateAccountInfoResponse {
@@ -266,6 +281,22 @@ export async function createExpressAccount(
     const headers = await authHeaders();
     const res = await axios.post<CreateExpressAccountResponse>(
         `${BASE}/createExpressAccount`,
+        payload,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * Create Stripe Connect Custom account (in-app onboarding, no redirect).
+ * Call this before updating individual/business info and adding bank account.
+ */
+export async function createCustomConnectAccount(
+    payload: CreateCustomConnectAccountPayload = {}
+): Promise<CreateCustomConnectAccountResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreateCustomConnectAccountResponse>(
+        `${BASE}/createCustomConnectAccount`,
         payload,
         { headers }
     );

@@ -1,42 +1,26 @@
-// Introduction screen for creating a Stripe Connect account
+// Introduction screen for banking setup (Stripe account is created only after onboarding completes)
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
-import { createExpressAccount } from '../../src/lib/api';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import firebase from '../../src/firebase';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 
 export default function CreateBankIntroScreen({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const auth = firebase.auth();
-  const db = firebase.firestore();
 
   async function startOnboarding() {
+    if (!auth.currentUser) {
+      Alert.alert('Error', 'You must be logged in');
+      return;
+    }
     setLoading(true);
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert('Error', 'You must be logged in');
-        return;
-      }
-
-      // Create Stripe Express account
-      const res = await createExpressAccount();
-
-      // Store account ID in Firestore
-      setDoc(doc(collection(db, 'stripeAccounts'), user.uid), {
-        accountId: res.accountId,
-        createdAt: new Date().toISOString(),
-      });
-
-      // Navigate to document upload with account ID
-      navigation.navigate('DocumentUpload', {
-        accountId: res.accountId,
-        accountLink: res.accountLink
-      });
-
+      // Go to banking setup flow; Stripe account is created only when user completes all steps
+      router.push('/banking/setup/personal-info');
     } catch (error: any) {
-      console.error('Error creating account:', error);
-      Alert.alert('Error', error.message || 'Failed to create account');
+      console.error('Error starting onboarding:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -48,7 +32,7 @@ export default function CreateBankIntroScreen({ navigation }: { navigation: any 
         <Text style={styles.icon}>🏦</Text>
         <Text style={styles.title}>Create Your Payment Account</Text>
         <Text style={styles.description}>
-          We'll create a secure Stripe Express account for you to receive payments directly.
+          Complete a few steps to set up your secure payment account and receive payments directly.
         </Text>
 
         <View style={styles.features}>

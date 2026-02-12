@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -16,16 +17,25 @@ import {
   Calendar,
   MapPin,
   Shield,
-  Sparkles
+  Sparkles,
+  CreditCard,
+  FileCheck,
 } from "lucide-react-native";
 import { useState, useEffect, useRef } from "react";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { routes } from "../../../types/routes";
 import type { PersonalInfoFormData } from "../../../types/verifications";
+import { createCustomConnectAccount, updateAccountInfo, getAccountDetails, acceptTermsOfService } from "../../../src/lib/api";
+import { useAuth } from "@/src/utils/auth";
+
+const TOTAL_STEPS = 2;
 
 export default function PersonalInfoScreen() {
+  const { auth } = useAuth();
+  const userEmail = auth?.email ?? "";
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<PersonalInfoFormData>({
     firstName: "",
     lastName: "",
@@ -38,28 +48,64 @@ export default function PersonalInfoScreen() {
     zipCode: "",
     ssnLast4: "",
   });
+  const [tosAccepted, setTosAccepted] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const googlePlacesRef = useRef(null);
 
-  // Animation values
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Animate progress bar to 50% (step 1 of 2)
-    Animated.timing(progressAnim, {
-      toValue: 0.5,
-      duration: 800,
-      useNativeDriver: false,
-    }).start();
-
-    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: step / TOTAL_STEPS,
+      duration: 400,
+      useNativeDriver: false,
+    }).start();
+  }, [step]);
+
+  // Set email from logged-in user (read-only source)
+  useEffect(() => {
+    if (userEmail) {
+      setFormData((prev) => ({ ...prev, email: userEmail }));
+    }
+  }, [userEmail]);
+
+  // Pre-fill form from connected account when one exists (email stays from user)
+  useEffect(() => {
+    let cancelled = false;
+    getAccountDetails()
+      .then((res) => {
+        if (cancelled || !res.individual) return;
+        const ind = res.individual;
+        setFormData((prev) => ({
+          ...prev,
+          ...(ind.first_name && { firstName: ind.first_name }),
+          ...(ind.last_name && { lastName: ind.last_name }),
+          ...(ind.phone && { phone: ind.phone }),
+          ...(ind.dob && {
+            dob: `${String(ind.dob.month).padStart(2, "0")}/${String(ind.dob.day).padStart(2, "0")}/${ind.dob.year}`,
+          }),
+          ...(ind.address && {
+            address: ind.address.line1 || "",
+            city: ind.address.city || "",
+            state: ind.address.state || "",
+            zipCode: ind.address.postal_code || "",
+          }),
+        }));
+      })
+      .catch(() => { /* no account yet or error */ });
+    return () => { cancelled = true; };
   }, []);
 
   const validateForm = () => {
@@ -117,13 +163,55 @@ export default function PersonalInfoScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateForm()) {
-      // Pass data to next screen
-      router.push({
-        pathname: routes.banking.setup.identityVerification,
-        params: formData as any,
-      });
+  const validateStep2 = () => {
+    const e: { [key: string]: string } = {};
+    if (!tosAccepted) e.tos = "You must accept the Stripe Terms of Service";
+    setErrors((prev) => ({ ...prev, ...e }));
+    return Object.keys(e).length === 0;
+  };
+
+  const parseDob = (dob: string): { day: number; month: number; year: number } | null => {
+    const match = dob.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return null;
+    return { month: parseInt(match[1], 10), day: parseInt(match[2], 10), year: parseInt(match[3], 10) };
+  };
+
+  const handleNext = async () => {
+    setApiError(null);
+    if (step === 1) {
+      if (!validateForm()) return;
+      setStep(2);
+      return;
+    }
+    // Step 2: create Stripe Custom account (individual only), submit identity + TOS + bank
+    if (step === 2) {
+      if (!validateStep2()) return;
+      setLoading(true);
+      try {
+        await createCustomConnectAccount({ country: "US" });
+        const dob = parseDob(formData.dob);
+        await updateAccountInfo({
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          dob: dob || undefined,
+          address: {
+            line1: formData.address.trim(),
+            city: formData.city.trim(),
+            state: formData.state.trim(),
+            postal_code: formData.zipCode.trim(),
+            country: "US",
+          },
+          ssn_last_4: formData.ssnLast4.trim(),
+        });
+        await acceptTermsOfService();
+        router.replace(routes.banking.setup.success);
+      } catch (err: any) {
+        setApiError(err?.response?.data?.error || err?.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -226,7 +314,7 @@ export default function PersonalInfoScreen() {
             }}
           >
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => step > 1 ? setStep(1) : router.back()}
               style={{
                 width: 40,
                 height: 40,
@@ -248,7 +336,7 @@ export default function PersonalInfoScreen() {
                   letterSpacing: 1,
                 }}
               >
-                STEP 1 OF 2
+                STEP {step} OF {TOTAL_STEPS}
               </Text>
             </View>
 
@@ -279,7 +367,8 @@ export default function PersonalInfoScreen() {
           {/* Title section */}
           <View style={{ paddingHorizontal: 20 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-              <Shield size={28} color="#FFFFFF" strokeWidth={2.5} />
+              {step === 1 && <Shield size={28} color="#FFFFFF" strokeWidth={2.5} />}
+              {step === 2 && <CreditCard size={28} color="#FFFFFF" strokeWidth={2.5} />}
               <Text
                 style={{
                   fontSize: 28,
@@ -289,7 +378,8 @@ export default function PersonalInfoScreen() {
                   letterSpacing: -0.5,
                 }}
               >
-                Verify Identity
+                {step === 1 && "Verify Identity"}
+                {step === 2 && "Accept Terms"}
               </Text>
             </View>
             <Text
@@ -300,7 +390,8 @@ export default function PersonalInfoScreen() {
                 lineHeight: 22,
               }}
             >
-              We need to verify your identity for secure banking
+              {step === 1 && "We need to verify your identity for secure payments"}
+              {step === 2 && "Accept the terms to start receiving money to your balance"}
             </Text>
           </View>
         </View>
@@ -310,7 +401,14 @@ export default function PersonalInfoScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140 }}
           showsVerticalScrollIndicator={false}
         >
+          {apiError && (
+            <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#FEE2E2", borderRadius: 12 }}>
+              <Text style={{ fontSize: 14, color: "#B91C1C", fontWeight: "600" }}>⚠️ {apiError}</Text>
+            </View>
+          )}
 
+          {step === 1 && (
+          <>
           {/* Personal Info Card */}
           <View
             style={{
@@ -460,15 +558,15 @@ export default function PersonalInfoScreen() {
               </View>
             </View>
 
-            {/* Email */}
+            {/* Email (from logged-in user, read-only) */}
             <View
               style={{
                 marginBottom: 16,
-                backgroundColor: focusedField === "email" ? "#F5F3FF" : "#F9FAFB",
+                backgroundColor: "#F3F4F6",
                 borderRadius: 12,
                 padding: 14,
                 borderWidth: 1.5,
-                borderColor: focusedField === "email" ? "#8B5CF6" : errors.email ? "#EF4444" : "transparent",
+                borderColor: errors.email ? "#EF4444" : "transparent",
               }}
             >
               <Text
@@ -487,15 +585,13 @@ export default function PersonalInfoScreen() {
                 style={{
                   fontSize: 16,
                   fontWeight: "600",
-                  color: "#111827",
+                  color: "#6B7280",
                   paddingVertical: 2,
                 }}
-                placeholder="john@example.com"
+                placeholder="Sign in to use your account email"
                 placeholderTextColor="#9CA3AF"
                 value={formData.email}
-                onChangeText={(value) => handleInputChange("email", value)}
-                onFocus={() => setFocusedField("email")}
-                onBlur={() => setFocusedField(null)}
+                editable={false}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -1076,6 +1172,25 @@ export default function PersonalInfoScreen() {
               )}
             </View>
           </View>
+          </>
+          )}
+
+          {step === 2 && (
+            <View style={{ marginBottom: 20, backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, borderWidth: 2, borderColor: "#F3F4F6" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                <FileCheck size={20} color="#8B5CF6" strokeWidth={2.5} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827", marginLeft: 12 }}>Stripe Terms of Service</Text>
+              </View>
+              <TouchableOpacity onPress={() => { setTosAccepted((v) => !v); setErrors((e) => ({ ...e, tos: "" })); }} style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: tosAccepted ? "#8B5CF6" : "#D1D5DB", backgroundColor: tosAccepted ? "#8B5CF6" : "transparent", marginRight: 12, alignItems: "center", justifyContent: "center" }}>
+                  {tosAccepted && <Text style={{ color: "#FFF", fontSize: 14, fontWeight: "700" }}>✓</Text>}
+                </View>
+                <Text style={{ flex: 1, fontSize: 14, color: "#374151" }}>I accept the Stripe Connected Account Agreement and Stripe Terms of Service</Text>
+              </TouchableOpacity>
+              {errors.tos && <Text style={{ fontSize: 11, color: "#EF4444", marginBottom: 12 }}>⚠️ {errors.tos}</Text>}
+              <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 8 }}>Money you receive will be stored in your Stripe balance. You can add a bank account later in settings if you want to withdraw.</Text>
+            </View>
+          )}
         </Animated.ScrollView>
 
         {/* Floating Action Buttons */}
@@ -1100,6 +1215,7 @@ export default function PersonalInfoScreen() {
         >
           <TouchableOpacity
             onPress={handleNext}
+            disabled={loading}
             style={{
               backgroundColor: "#8B5CF6",
               borderRadius: 16,
@@ -1113,6 +1229,9 @@ export default function PersonalInfoScreen() {
               marginBottom: 12,
             }}
           >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Text
                 style={{
@@ -1122,7 +1241,7 @@ export default function PersonalInfoScreen() {
                   letterSpacing: 0.5,
                 }}
               >
-                Continue to ID Upload
+                {step === 2 ? "Complete setup" : "Continue"}
               </Text>
               <View
                 style={{
@@ -1132,13 +1251,15 @@ export default function PersonalInfoScreen() {
                   padding: 4,
                 }}
               >
-                <Text style={{ fontSize: 16 }}>→</Text>
+                <Text style={{ fontSize: 16 }}>{step === 2 ? "✓" : "→"}</Text>
               </View>
             </View>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => step > 1 ? setStep(1) : router.back()}
+            disabled={loading}
             style={{
               backgroundColor: "#F9FAFB",
               borderRadius: 16,
@@ -1156,7 +1277,7 @@ export default function PersonalInfoScreen() {
                 letterSpacing: 0.3,
               }}
             >
-              ← Cancel Setup
+              {step > 1 ? "← Back" : "← Cancel Setup"}
             </Text>
           </TouchableOpacity>
         </View>
