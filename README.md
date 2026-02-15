@@ -594,7 +594,7 @@ firebase deploy --only functions
    * Subscribe to `account.updated` and any events you need.
    * Copy webhook secret and set it in functions config (`stripe.webhook_secret`).
 
-4. **Set return/refresh URLs** used in `accountLinks.create` to deep links for your app. For mobile, consider using universal links or `myapp://onboarding-complete`. On completion Stripe will redirect to that URL which you must handle (open app and continue flow).
+4. **Set return/refresh URLs** used in `accountLinks.create` to deep links for your app. For mobile, consider using universal links or `creditkidapp://onboarding-complete`. On completion Stripe will redirect to that URL which you must handle (open app and continue flow).
 
 5. **EAS Build for iOS/Android** if you want to use `@stripe/stripe-react-native` (native modules) or Apple Pay:
 

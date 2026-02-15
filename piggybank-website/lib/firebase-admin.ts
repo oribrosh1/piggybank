@@ -1,6 +1,11 @@
 /**
  * Firebase Admin - lazy loaded so it is not required at Next.js build time.
- * Uses only FIREBASE_SERVICE_ACCOUNT_KEY from env (JSON string). No hardcoded credentials.
+ *
+ * Auth (pick one):
+ * 1. FIREBASE_SERVICE_ACCOUNT_KEY (env) – JSON string of the service account key. Use for local/dev or any host.
+ * 2. No key – Uses Application Default Credentials (ADC). Works on Google Cloud (Cloud Run, App Engine, GCE,
+ *    Cloud Functions) with the runtime’s default service account. Locally: run
+ *    `gcloud auth application-default login` first.
  */
 
 import type { Firestore } from 'firebase-admin/firestore';
@@ -20,7 +25,9 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
             const { getFirestore } = firestoreMod;
 
             if (getApps().length === 0) {
-                const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+                const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim();
+                if (key?.startsWith('"""') && key.endsWith('"""')) key = key.slice(3, -3).trim();
                 if (key) {
                     let serviceAccount: object;
                     try {
@@ -30,12 +37,11 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
                     }
                     initializeApp({
                         credential: cert(serviceAccount as any),
-                        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                        projectId,
                     });
                 } else {
-                    initializeApp({
-                        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-                    });
+                    // No key: use Application Default Credentials (GCP or gcloud auth application-default login)
+                    initializeApp({ projectId });
                 }
             }
             db = getFirestore();

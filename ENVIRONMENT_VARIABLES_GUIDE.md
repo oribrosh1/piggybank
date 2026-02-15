@@ -30,8 +30,8 @@ firebase functions:config:set stripe.publishable="pk_test_YOUR_STRIPE_PUBLISHABL
 # Set webhook secret (needed for webhooks)
 firebase functions:config:set stripe.webhook_secret="whsec_xxxxx"
 
-# Set app scheme for deep links (optional - defaults to 'piggybank')
-firebase functions:config:set app.scheme="piggybank"
+# Set app scheme for deep links (optional - defaults to 'creditkidapp')
+firebase functions:config:set app.scheme="creditkidapp"
 ```
 
 ### Step 2: View Current Configuration
@@ -49,7 +49,7 @@ firebase functions:config:get
     "webhook_secret": "whsec_xxxxx"
   },
   "app": {
-    "scheme": "piggybank"
+    "scheme": "creditkidapp"
   }
 }
 ```
@@ -66,7 +66,7 @@ firebase deploy --only functions
 // In functions/index.js
 const stripe = Stripe(functions.config().stripe.secret);
 const webhookSecret = functions.config().stripe.webhook_secret;
-const appScheme = functions.config().app.scheme; // e.g., 'piggybank'
+const appScheme = functions.config().app.scheme; // e.g., 'creditkidapp'
 ```
 
 ### ❌ Delete a Config Value
@@ -95,7 +95,7 @@ STRIPE_PUBLISHABLE_KEY=pk_test_51xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
 
 # App Configuration (Mobile Deep Link Scheme)
-APP_SCHEME=piggybank
+APP_SCHEME=creditkidapp
 FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 
 # Environment

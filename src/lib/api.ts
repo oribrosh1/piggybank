@@ -31,6 +31,9 @@ export interface CreateCustomConnectAccountResponse {
     existing?: boolean;
 }
 
+/** Stripe Connect account capabilities (e.g. card_issuing, transfers) */
+export type AccountCapabilities = Record<string, 'active' | 'inactive' | 'pending'>;
+
 export interface AccountStatusResponse {
     exists: boolean;
     accountId?: string;
@@ -42,6 +45,14 @@ export interface AccountStatusResponse {
         eventually_due: string[];
         past_due: string[];
     };
+    /** e.g. { card_issuing: 'active', transfers: 'active' } – only proceed to Issue Card when card_issuing === 'active' */
+    capabilities?: AccountCapabilities;
+}
+
+export interface UpdateAccountCapabilitiesResponse {
+    accountId: string;
+    capabilities?: AccountCapabilities;
+    success: boolean;
 }
 
 export interface UploadVerificationFilePayload {
@@ -301,6 +312,27 @@ export interface CreateVirtualCardResponse {
     success: boolean;
 }
 
+/** STAGE 4 – Server-side card details (number, CVC); never stored in DB */
+export interface GetCardDetailsResponse {
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+    brand?: string;
+    number?: string;
+    cvc?: string;
+    success: boolean;
+}
+
+/** Test mode only – create a test authorization on the user's Issuing card */
+export interface CreateTestAuthorizationResponse {
+    authorizationId: string;
+    amount: number;
+    currency: string;
+    approved: boolean;
+    status: string;
+    success: boolean;
+}
+
 // Test endpoints (only work in test mode)
 export interface TestTransactionResponse {
     success: boolean;
@@ -371,6 +403,19 @@ export async function getAccountStatus(): Promise<AccountStatusResponse> {
 }
 
 /**
+ * Request capabilities (card_issuing, transfers) on the Connect account. Use if account was created without them.
+ */
+export async function updateAccountCapabilities(): Promise<UpdateAccountCapabilitiesResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<UpdateAccountCapabilitiesResponse>(
+        `${BASE}/updateAccountCapabilities`,
+        {},
+        { headers }
+    );
+    return res.data;
+}
+
+/**
  * STAGE 2 – Create Stripe Hosted Onboarding link (SSN, DOB, Address, Bank)
  */
 export async function createOnboardingLink(): Promise<CreateOnboardingLinkResponse> {
@@ -434,6 +479,33 @@ export async function createVirtualCard(
     const headers = await authHeaders();
     const res = await axios.post<CreateVirtualCardResponse>(
         `${BASE}/createVirtualCard`,
+        payload,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * STAGE 4 – Fetch card sensitive details (number, CVV) securely from server. Never stored in DB.
+ */
+export async function getCardDetails(): Promise<GetCardDetailsResponse> {
+    const headers = await authHeaders();
+    const res = await axios.get<GetCardDetailsResponse>(
+        `${BASE}/getCardDetails`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * Test mode only – create a test authorization on the user's virtual card (e.g. $10 default).
+ */
+export async function createTestAuthorization(
+    payload: { amount?: number } = {}
+): Promise<CreateTestAuthorizationResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreateTestAuthorizationResponse>(
+        `${BASE}/createTestAuthorization`,
         payload,
         { headers }
     );

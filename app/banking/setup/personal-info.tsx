@@ -10,9 +10,13 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Modal,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as ExpoLinking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import {
   ArrowLeft,
   User,
@@ -24,11 +28,12 @@ import {
   FileCheck,
 } from "lucide-react-native";
 import { useState, useEffect, useRef } from "react";
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import GooglePlacesTextInput from "react-native-google-places-textinput";
 import { routes } from "../../../types/routes";
 import type { PersonalInfoFormData } from "../../../types/verifications";
 import { createCustomConnectAccount, createOnboardingLink, getAccountDetails } from "../../../src/lib/api";
 import { useAuth } from "@/src/utils/auth";
+import { getUserProfile } from "../../../src/lib/userService";
 
 const TOTAL_STEPS = 2;
 
@@ -55,7 +60,14 @@ export default function PersonalInfoScreen() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const googlePlacesRef = useRef(null);
+  const [showNameEmailEdit, setShowNameEmailEdit] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const [dobPickerDate, setDobPickerDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 25);
+    return d;
+  });
+  const addressPlacesRef = useRef<any>(null);
 
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -83,6 +95,23 @@ export default function PersonalInfoScreen() {
     }
   }, [userEmail]);
 
+  // Pre-fill first/last name from Firebase user profile (signup: legalFirstName, legalLastName)
+  useEffect(() => {
+    let cancelled = false;
+    if (!auth?.uid) return;
+    getUserProfile(auth.uid)
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        setFormData((prev) => ({
+          ...prev,
+          ...(profile.legalFirstName?.trim() && { firstName: profile.legalFirstName.trim() }),
+          ...(profile.legalLastName?.trim() && { lastName: profile.legalLastName.trim() }),
+        }));
+      })
+      .catch(() => { /* no profile yet or error */ });
+    return () => { cancelled = true; };
+  }, [auth?.uid]);
+
   // Pre-fill form from connected account when one exists (email stays from user)
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +123,7 @@ export default function PersonalInfoScreen() {
           ...prev,
           ...(ind.first_name && { firstName: ind.first_name }),
           ...(ind.last_name && { lastName: ind.last_name }),
-          ...(ind.phone && { phone: ind.phone }),
+          ...(ind.phone && { phone: formatUSPhone(ind.phone) }),
           ...(ind.dob && {
             dob: `${String(ind.dob.month).padStart(2, "0")}/${String(ind.dob.day).padStart(2, "0")}/${ind.dob.year}`,
           }),
@@ -130,11 +159,12 @@ export default function PersonalInfoScreen() {
       newErrors.email = "Invalid email format";
     }
 
-    // Phone validation
-    if (!formData.phone.trim()) {
+    // Phone validation (US: 10 digits)
+    const phoneDigits = getPhoneDigits(formData.phone);
+    if (phoneDigits.length === 0) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^\+?[\d\s\-()]{10,}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone number";
+    } else if (phoneDigits.length !== 10) {
+      newErrors.phone = "Enter a valid US phone number (10 digits)";
     }
 
     // DOB validation
@@ -176,6 +206,51 @@ export default function PersonalInfoScreen() {
     return { month: parseInt(match[1], 10), day: parseInt(match[2], 10), year: parseInt(match[3], 10) };
   };
 
+  const dobStringToDate = (dob: string): Date => {
+    const parsed = parseDob(dob);
+    if (parsed) return new Date(parsed.year, parsed.month - 1, parsed.day);
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 25);
+    return d;
+  };
+
+  const dateToDobString = (d: Date): string => {
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const openDobPicker = () => {
+    setDobPickerDate(dobStringToDate(formData.dob));
+    setFocusedField("dob");
+    setShowDobPicker(true);
+  };
+
+  const confirmDobPicker = () => {
+    const value = dateToDobString(dobPickerDate);
+    handleInputChange("dob", value);
+    setErrors((prev) => (prev.dob ? { ...prev, dob: "" } : prev));
+    setShowDobPicker(false);
+    setFocusedField(null);
+  };
+
+  /** Format as (XXX) XXX-XXXX; only allows US 10-digit input */
+  const formatUSPhone = (raw: string): string => {
+    const digits = raw.replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 3) return digits ? `(${digits}` : "";
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
+  const getPhoneDigits = (phone: string): string => phone.replace(/\D/g, "").slice(0, 10);
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatUSPhone(value);
+    setFormData((prev) => ({ ...prev, phone: formatted }));
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
+  };
+
   const handleNext = async () => {
     setApiError(null);
     if (step === 1) {
@@ -190,19 +265,24 @@ export default function PersonalInfoScreen() {
       try {
         await createCustomConnectAccount({ country: "US" });
         const { url } = await createOnboardingLink();
-        const canOpen = await Linking.canOpenURL(url);
-        if (canOpen) {
-          await Linking.openURL(url);
-          Alert.alert(
-            "Complete verification",
+        const returnPath = "banking/setup/success";
+        const redirectUrl = ExpoLinking.createURL(returnPath);
+        await WebBrowser.openAuthSessionAsync(url, redirectUrl);
+        Alert.alert(
+          "Complete verification",
             "Finish identity verification and add your bank account in the browser. When done, you’ll return to the app.",
-            [{ text: "OK" }]
+          [{ text: "OK" }]
+        );
+      } catch (err: any) {
+        const code = err?.response?.data?.code;
+        const serverMessage = err?.response?.data?.error || err?.message || "";
+        if (code === "capability_not_enabled" || /card_issuing|platform has been onboarded/i.test(serverMessage)) {
+          setApiError(
+            "Stripe Issuing isn’t enabled for this app yet. The platform account must complete Issuing onboarding in the Stripe Dashboard (Dashboard → Issuing) before you can create cards."
           );
         } else {
-          setApiError("Could not open verification link");
+          setApiError(serverMessage || "Something went wrong");
         }
-      } catch (err: any) {
-        setApiError(err?.response?.data?.error || err?.message || "Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -216,56 +296,44 @@ export default function PersonalInfoScreen() {
     }
   };
 
-  const handleAddressSelect = (data: any, details: any) => {
-    if (!details) return;
-
-    // Extract address components
-    const addressComponents = details.address_components;
-    let streetNumber = '';
-    let route = '';
-    let city = '';
-    let state = '';
-    let zipCode = '';
-
-    addressComponents.forEach((component: any) => {
-      const types = component.types;
-
-      if (types.includes('street_number')) {
-        streetNumber = component.long_name;
+  /** Parse "City, State ZIP" or "City, State ZIP, USA" from Google Places secondary text */
+  const parseSecondaryAddress = (secondaryText: string): { city: string; state: string; zipCode: string } => {
+    const parts = (secondaryText || "").split(",").map((s) => s.trim()).filter(Boolean);
+    let city = "";
+    let state = "";
+    let zipCode = "";
+    if (parts.length >= 1) city = parts[0];
+    if (parts.length >= 2) {
+      const stateZip = parts[1];
+      const tokens = stateZip.split(/\s+/).filter(Boolean);
+      if (tokens.length >= 2) {
+        zipCode = tokens.pop() || "";
+        state = tokens.join(" ");
+      } else {
+        state = stateZip;
       }
-      if (types.includes('route')) {
-        route = component.long_name;
-      }
-      if (types.includes('locality')) {
-        city = component.long_name;
-      }
-      if (types.includes('administrative_area_level_1')) {
-        state = component.short_name;
-      }
-      if (types.includes('postal_code')) {
-        zipCode = component.long_name;
-      }
-    });
+    }
+    return { city, state, zipCode };
+  };
 
-    const fullAddress = `${streetNumber} ${route}`.trim();
-
-    // Update form data
+  const handleAddressPlaceSelect = (place: { structuredFormat: { mainText: { text: string }; secondaryText?: { text: string } } }) => {
+    const street = place.structuredFormat.mainText?.text ?? "";
+    const secondaryText = place.structuredFormat.secondaryText?.text ?? "";
+    const { city, state, zipCode } = parseSecondaryAddress(secondaryText);
     setFormData((prev) => ({
       ...prev,
-      address: fullAddress,
-      city: city,
-      state: state,
-      zipCode: zipCode,
+      address: street,
+      city,
+      state,
+      zipCode,
     }));
-
-    // Clear errors for address fields
     setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors.address;
-      delete newErrors.city;
-      delete newErrors.state;
-      delete newErrors.zipCode;
-      return newErrors;
+      const next = { ...prev };
+      delete next.address;
+      delete next.city;
+      delete next.state;
+      delete next.zipCode;
+      return next;
     });
   };
 
@@ -392,7 +460,7 @@ export default function PersonalInfoScreen() {
 
         <Animated.ScrollView
           style={{ flex: 1, opacity: fadeAnim }}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
           {apiError && (
@@ -445,6 +513,76 @@ export default function PersonalInfoScreen() {
               </Text>
             </View>
 
+            {/* Name & Email (read-only at top) + Edit btn */}
+            <View
+              style={{
+                marginBottom: 20,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                backgroundColor: "#F9FAFB",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#E5E7EB",
+              }}
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "700",
+                    color: "#6B7280",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  Account
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setShowNameEmailEdit((prev) => !prev)}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  style={{
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: showNameEmailEdit ? "#E5E7EB" : "#EDE9FE",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "700",
+                      color: showNameEmailEdit ? "#4B5563" : "#8B5CF6",
+                    }}
+                  >
+                    {showNameEmailEdit ? "Done" : "Edit"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "700",
+                  color: "#111827",
+                  marginBottom: 6,
+                }}
+                numberOfLines={1}
+              >
+                {[formData.firstName, formData.lastName].filter(Boolean).join(" ") || "—"}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "500",
+                  color: "#6B7280",
+                }}
+                numberOfLines={1}
+              >
+                {formData.email || userEmail || "—"}
+              </Text>
+            </View>
+
+            {showNameEmailEdit && (
+            <>
             {/* First & Last Name Row */}
             <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
               <View style={{ flex: 1 }}>
@@ -603,6 +741,8 @@ export default function PersonalInfoScreen() {
                 </Text>
               )}
             </View>
+            </>
+            )}
 
             {/* Phone Number */}
             <View
@@ -634,14 +774,15 @@ export default function PersonalInfoScreen() {
                   color: "#111827",
                   paddingVertical: 2,
                 }}
-                placeholder="+1 (555) 123-4567"
+                placeholder="(555) 555-5555"
                 placeholderTextColor="#9CA3AF"
                 value={formData.phone}
-                onChangeText={(value) => handleInputChange("phone", value)}
+                onChangeText={handlePhoneChange}
                 onFocus={() => setFocusedField("phone")}
                 onBlur={() => setFocusedField(null)}
                 keyboardType="phone-pad"
                 autoComplete="tel"
+                maxLength={14}
               />
               {errors.phone && (
                 <Text
@@ -679,21 +820,21 @@ export default function PersonalInfoScreen() {
               >
                 🎂 Date of Birth
               </Text>
-              <TextInput
-                style={{
-                  fontSize: 16,
-                  fontWeight: "600",
-                  color: "#111827",
-                  paddingVertical: 2,
-                }}
-                placeholder="MM/DD/YYYY"
-                placeholderTextColor="#9CA3AF"
-                value={formData.dob}
-                onChangeText={(value) => handleInputChange("dob", value)}
-                onFocus={() => setFocusedField("dob")}
-                onBlur={() => setFocusedField(null)}
-                keyboardType="numbers-and-punctuation"
-              />
+              <TouchableOpacity
+                onPress={openDobPicker}
+                activeOpacity={0.7}
+                style={{ paddingVertical: 4 }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: formData.dob ? "#111827" : "#9CA3AF",
+                  }}
+                >
+                  {formData.dob || "MM/DD/YYYY"}
+                </Text>
+              </TouchableOpacity>
               {errors.dob && (
                 <Text
                   style={{
@@ -707,6 +848,94 @@ export default function PersonalInfoScreen() {
                 </Text>
               )}
             </View>
+
+            {/* DOB Date Picker Modal */}
+            <Modal
+              visible={showDobPicker}
+              transparent
+              animationType="fade"
+              onRequestClose={() => {
+                setShowDobPicker(false);
+                setFocusedField(null);
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 20,
+                    padding: 24,
+                    width: "90%",
+                    maxWidth: 400,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 16,
+                    elevation: 24,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "800",
+                      color: "#8B5CF6",
+                      marginBottom: 16,
+                      textAlign: "center",
+                    }}
+                  >
+                    🎂 Select Date of Birth
+                  </Text>
+                  <View style={{ alignItems: "center" }}>
+                    <DateTimePicker
+                      value={dobPickerDate}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
+                      maximumDate={new Date()}
+                      minimumDate={new Date(1900, 0, 1)}
+                      onChange={(_, date) => date && setDobPickerDate(date)}
+                    />
+                  </View>
+                  <View style={{ marginTop: 20, gap: 12 }}>
+                    <TouchableOpacity
+                      onPress={confirmDobPicker}
+                      style={{
+                        backgroundColor: "#8B5CF6",
+                        borderRadius: 14,
+                        paddingVertical: 14,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>
+                        Confirm
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowDobPicker(false);
+                        setFocusedField(null);
+                      }}
+                      style={{
+                        backgroundColor: "#F3F4F6",
+                        borderRadius: 14,
+                        paddingVertical: 12,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: "600", color: "#6B7280" }}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </View>
 
           {/* Address Card */}
@@ -751,12 +980,8 @@ export default function PersonalInfoScreen() {
               </Text>
             </View>
 
-            {/* Street Address - Google Places Autocomplete (Mobile Only) */}
-            <View
-              style={{
-                marginBottom: 16,
-              }}
-            >
+            {/* Street Address – Google Maps (like event-details location) */}
+            <View style={{ marginBottom: 16 }}>
               <Text
                 style={{
                   fontSize: 11,
@@ -769,109 +994,47 @@ export default function PersonalInfoScreen() {
               >
                 🏠 Street Address
               </Text>
-
-              {Platform.OS === 'web' ? (
-                // Regular TextInput for Web
-                <View
-                  style={{
-                    backgroundColor: focusedField === "address" ? "#F5F3FF" : "#F9FAFB",
+              <GooglePlacesTextInput
+                ref={addressPlacesRef}
+                scrollEnabled={false}
+                placeHolderText="Enter your address..."
+                value={formData.address}
+                onTextChange={(text) => handleInputChange("address", text)}
+                onFocus={() => setFocusedField("address")}
+                onTouchStart={() => setFocusedField("address")}
+                style={{
+                  input: {
+                    borderWidth: focusedField === "address" ? 2 : 1.5,
+                    borderColor: focusedField === "address" ? "#8B5CF6" : errors.address ? "#EF4444" : "#E5E7EB",
                     borderRadius: 12,
-                    borderWidth: 1.5,
-                    borderColor: focusedField === "address" ? "#8B5CF6" : errors.address ? "#EF4444" : "transparent",
-                    paddingHorizontal: 14,
-                    paddingVertical: 14,
-                  }}
-                >
-                  <TextInput
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "600",
-                      color: "#111827",
-                      paddingVertical: 2,
-                    }}
-                    placeholder="123 Main Street, Apt 4B"
-                    placeholderTextColor="#9CA3AF"
-                    value={formData.address}
-                    onChangeText={(value) => handleInputChange("address", value)}
-                    onFocus={() => setFocusedField("address")}
-                    onBlur={() => setFocusedField(null)}
-                  />
-                </View>
-              ) : (
-                // Google Places Autocomplete for iOS/Android
-                <GooglePlacesAutocomplete
-                  ref={googlePlacesRef}
-                  placeholder="Start typing your address..."
-                  onPress={(data, details = null) => {
-                    handleAddressSelect(data, details);
-                  }}
-                  query={{
-                    key: process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || 'YOUR_GOOGLE_API_KEY',
-                    language: 'en',
-                    components: 'country:us',
-                  }}
-                  fetchDetails={true}
-                  enablePoweredByContainer={false}
-                  textInputProps={{
-                    value: formData.address,
-                    onChangeText: (text) => handleInputChange("address", text),
-                    onFocus: () => setFocusedField("address"),
-                    onBlur: () => setFocusedField(null),
-                    placeholderTextColor: "#9CA3AF",
-                  }}
-                  styles={{
-                    container: {
-                      flex: 0,
-                    },
-                    textInputContainer: {
-                      backgroundColor: focusedField === "address" ? "#F5F3FF" : "#F9FAFB",
-                      borderRadius: 12,
-                      borderWidth: 1.5,
-                      borderColor: focusedField === "address" ? "#8B5CF6" : errors.address ? "#EF4444" : "transparent",
-                      paddingHorizontal: 14,
-                      paddingVertical: 8,
-                    },
-                    textInput: {
-                      backgroundColor: "transparent",
-                      height: 38,
-                      fontSize: 16,
-                      fontWeight: "600",
-                      color: "#111827",
-                      padding: 0,
-                      margin: 0,
-                    },
-                    listView: {
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 12,
-                      marginTop: 8,
-                      borderWidth: 1,
-                      borderColor: "#E5E7EB",
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 12,
-                      elevation: 5,
-                    },
-                    row: {
-                      backgroundColor: "#FFFFFF",
-                      padding: 14,
-                      minHeight: 58,
-                    },
-                    separator: {
-                      height: 1,
-                      backgroundColor: "#F3F4F6",
-                    },
-                    description: {
-                      fontSize: 14,
-                      color: "#111827",
-                      fontWeight: "500",
-                    },
-                    predefinedPlacesDescription: {
-                      color: "#8B5CF6",
-                    },
-                  }}
-                />
-              )}
+                    backgroundColor: focusedField === "address" ? "#F5F3FF" : "#F9FAFB",
+                    padding: 12,
+                    marginBottom: 4,
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: "#111827",
+                  },
+                  suggestionsList: {
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "#E5E7EB",
+                    marginTop: 4,
+                  },
+                  suggestionItem: {
+                    backgroundColor: "#FFFFFF",
+                    borderColor: "#F3F4F6",
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    padding: 12,
+                    marginBottom: 4,
+                  },
+                }}
+                fetchDetails={false}
+                apiKey={process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || "AIzaSyA5YGDeZpa2bcYGeZQ7XJOSVPTQCh-HrG8"}
+                includedRegionCodes={["us"]}
+                onPlaceSelect={handleAddressPlaceSelect}
+              />
 
               {errors.address && (
                 <Text
@@ -1050,7 +1213,7 @@ export default function PersonalInfoScreen() {
           {/* SSN Card */}
           <View
             style={{
-              marginBottom: 20,
+              marginBottom: 30,
               backgroundColor: "#FFFFFF",
               borderRadius: 20,
               padding: 20,
@@ -1063,7 +1226,7 @@ export default function PersonalInfoScreen() {
               borderColor: "#F3F4F6",
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
               <View
                 style={{
                   width: 36,
@@ -1122,16 +1285,6 @@ export default function PersonalInfoScreen() {
                 🔢 Last 4 Digits of SSN/Tax ID
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    color: "#9CA3AF",
-                    marginRight: 8,
-                    fontWeight: "600",
-                  }}
-                >
-                  XXX-XX-
-                </Text>
                 <TextInput
                   style={{
                     flex: 1,
@@ -1187,92 +1340,71 @@ export default function PersonalInfoScreen() {
           )}
         </Animated.ScrollView>
 
-        {/* Floating Action Buttons */}
+        {/* Compact footer actions */}
         <View
           style={{
             position: "absolute",
             bottom: 0,
             left: 0,
             right: 0,
-            paddingHorizontal: 20,
-            paddingTop: 16,
-            paddingBottom: insets.bottom + 16,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingHorizontal: 16,
+            paddingTop: 10,
+            paddingBottom: insets.bottom + 10,
             backgroundColor: "#FFFFFF",
             borderTopWidth: 1,
             borderTopColor: "#F3F4F6",
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 10,
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
+            elevation: 6,
           }}
         >
+          <TouchableOpacity
+            onPress={() => (step > 1 ? setStep(1) : router.back())}
+            disabled={loading}
+            style={{
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: "#E5E7EB",
+              backgroundColor: "#F9FAFB",
+              minWidth: 88,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: "700", color: "#6B7280" }}>
+              {step > 1 ? "Back" : "Cancel"}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleNext}
             disabled={loading}
             style={{
+              flex: 1,
+              paddingVertical: 12,
+              borderRadius: 12,
               backgroundColor: "#8B5CF6",
-              borderRadius: 16,
-              paddingVertical: 18,
               alignItems: "center",
+              justifyContent: "center",
               shadowColor: "#8B5CF6",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.35,
-              shadowRadius: 16,
-              elevation: 8,
-              marginBottom: 12,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 8,
+              elevation: 4,
             }}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text
-                style={{
-                  fontSize: 17,
-                  fontWeight: "800",
-                  color: "#FFFFFF",
-                  letterSpacing: 0.5,
-                }}
-              >
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>
                 {step === 2 ? "Complete setup" : "Continue"}
               </Text>
-              <View
-                style={{
-                  marginLeft: 8,
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
-                  borderRadius: 12,
-                  padding: 4,
-                }}
-              >
-                <Text style={{ fontSize: 16 }}>{step === 2 ? "✓" : "→"}</Text>
-              </View>
-            </View>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => step > 1 ? setStep(1) : router.back()}
-            disabled={loading}
-            style={{
-              backgroundColor: "#F9FAFB",
-              borderRadius: 16,
-              paddingVertical: 16,
-              alignItems: "center",
-              borderWidth: 1.5,
-              borderColor: "#E5E7EB",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: "#6B7280",
-                letterSpacing: 0.3,
-              }}
-            >
-              {step > 1 ? "← Back" : "← Cancel Setup"}
-            </Text>
           </TouchableOpacity>
         </View>
       </View>

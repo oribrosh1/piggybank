@@ -12,12 +12,12 @@ From `app.json`:
 ```json
 {
   "expo": {
-    "scheme": "myapp"
+    "scheme": "creditkidapp"
   }
 }
 ```
 
-**Your deep link format:** `myapp://path/to/screen`
+**Your deep link format:** `creditkidapp://path/to/screen`
 
 ---
 
@@ -27,7 +27,7 @@ When a user completes Stripe onboarding:
 
 1. **User opens Stripe onboarding** → Opens in browser/WebView
 2. **User completes form** → Enters business info, bank account, ID
-3. **Stripe redirects** → `myapp://banking/setup/success`
+3. **Stripe redirects** → `creditkidapp://banking/setup/success`
 4. **Your app opens** → Detects the deep link and navigates to success screen
 
 ---
@@ -38,7 +38,7 @@ When a user completes Stripe onboarding:
 
 ```javascript
 // functions/index.js (already configured)
-const appScheme = 'myapp'; // Matches your app.json
+const appScheme = 'creditkidapp'; // Matches your app.json
 
 const accountLink = await stripe.accountLinks.create({
   account: account.id,
@@ -52,15 +52,15 @@ const accountLink = await stripe.accountLinks.create({
 
 Expo Router **automatically handles** deep links that match your route structure:
 
-- `myapp://banking/setup/success` → Opens `/app/banking/setup/success.tsx`
-- `myapp://banking/setup/stripe-connection` → Opens `/app/banking/setup/stripe-connection.tsx`
+- `creditkidapp://banking/setup/success` → Opens `/app/banking/setup/success.tsx`
+- `creditkidapp://banking/setup/stripe-connection` → Opens `/app/banking/setup/stripe-connection.tsx`
 
 ---
 
 ## 📋 Setup Checklist
 
 ### ✅ Already Done:
-- [x] App scheme set in `app.json`: `"scheme": "myapp"`
+- [x] App scheme set in `app.json`: `"scheme": "creditkidapp"`
 - [x] Cloud Functions configured to use deep links
 - [x] Expo Router will handle deep links automatically
 
@@ -99,21 +99,21 @@ export default function StripeOnboardingSuccess() {
 
 **Test on iOS Simulator:**
 ```bash
-xcrun simctl openurl booted myapp://banking/setup/success
+xcrun simctl openurl booted creditkidapp://banking/setup/success
 ```
 
 **Test on Android Emulator:**
 ```bash
-adb shell am start -a android.intent.action.VIEW -d "myapp://banking/setup/success"
+adb shell am start -a android.intent.action.VIEW -d "creditkidapp://banking/setup/success"
 ```
 
 **Test on Physical Device:**
 ```bash
 # iOS
-npx uri-scheme open myapp://banking/setup/success --ios
+npx uri-scheme open creditkidapp://banking/setup/success --ios
 
 # Android
-npx uri-scheme open myapp://banking/setup/success --android
+npx uri-scheme open creditkidapp://banking/setup/success --android
 ```
 
 ---
@@ -125,7 +125,7 @@ If you want to support web AND mobile, use a web URL that redirects:
 ### Option 1: Custom Redirect Page
 
 1. **Create a simple web page**: `https://yourwebsite.com/stripe-redirect`
-2. **Page auto-detects mobile** and redirects to `myapp://`
+2. **Page auto-detects mobile** and redirects to `creditkidapp://`
 3. **Falls back to web** if app not installed
 
 ```html
@@ -138,7 +138,7 @@ If you want to support web AND mobile, use a web URL that redirects:
     // Detect mobile and try deep link
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
     if (isMobile) {
-      window.location = 'myapp://banking/setup/success';
+      window.location = 'creditkidapp://banking/setup/success';
       // Fallback to app store if app not installed (after 2 seconds)
       setTimeout(() => {
         window.location = 'https://apps.apple.com/your-app'; // or Play Store
@@ -173,16 +173,16 @@ const accountLink = await stripe.accountLinks.create({
 
 ### For Default Scheme (Recommended):
 
-**No config needed!** It uses `myapp` from your `app.json`.
+**No config needed!** It uses `creditkidapp` from your `app.json`.
 
 ### To Override (Optional):
 
 ```bash
 # Set custom scheme in Firebase
-firebase functions:config:set app.scheme="myapp"
+firebase functions:config:set app.scheme="creditkidapp"
 
 # Or in .env file
-echo "APP_SCHEME=myapp" >> functions/.env
+echo "APP_SCHEME=creditkidapp" >> functions/.env
 ```
 
 ---
@@ -267,7 +267,7 @@ For production, use **Universal Links** (iOS) or **App Links** (Android) instead
 
 6. **Complete Stripe form** → Fill in business info
 
-7. **Stripe redirects** → `myapp://banking/setup/success`
+7. **Stripe redirects** → `creditkidapp://banking/setup/success`
 
 8. **App opens** → Navigate to success screen
 
@@ -277,7 +277,7 @@ For production, use **Universal Links** (iOS) or **App Links** (Android) instead
 
 For simplicity during development:
 
-✅ **Use custom URL scheme** (`myapp://`)
+✅ **Use custom URL scheme** (`creditkidapp://`)
 - Easy to set up
 - Works immediately
 - Good for testing
@@ -304,12 +304,12 @@ For production:
 ## ✅ Current Status
 
 Your app is **ready** with:
-- ✅ Deep link scheme: `myapp://`
+- ✅ Deep link scheme: `creditkidapp://`
 - ✅ Cloud Functions configured
 - ✅ Expo Router handles deep links automatically
-- ✅ Redirect URLs: `myapp://banking/setup/success`
+- ✅ Redirect URLs: `creditkidapp://banking/setup/success`
 
 **No additional setup needed for basic functionality!** 🎉
 
-When Stripe redirects to `myapp://banking/setup/success`, your app will automatically open to that route.
+When Stripe redirects to `creditkidapp://banking/setup/success`, your app will automatically open to that route.
 
