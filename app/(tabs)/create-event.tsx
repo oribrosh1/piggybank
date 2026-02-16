@@ -8,7 +8,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
-import { routes } from "../../types/routes";
+import { routes } from "@/types/routes";
 
 export default function CreateEventScreen() {
   const insets = useSafeAreaInsets();

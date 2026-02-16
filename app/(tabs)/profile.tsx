@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ChevronRight, LogOut } from "lucide-react-native";
-import firebase from "../../src/firebase";
+import firebase from "@/src/firebase";
 import * as SecureStore from "expo-secure-store";
 
 export default function ProfileScreen() {

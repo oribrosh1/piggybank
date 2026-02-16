@@ -24,9 +24,9 @@ import {
     Check,
 } from "lucide-react-native";
 import * as Contacts from "expo-contacts";
-import { routes } from "../../../types/routes";
-import { Guest, Event } from "../../../types/events";
-import { getEvent, updateEventGuests } from "../../../src/lib/eventService";
+import { routes } from "@/types/routes";
+import { Guest, Event } from "@/types/events";
+import { getEvent, updateEventGuests } from "@/src/lib/eventService";
 
 export default function AddGuestsScreen() {
     const insets = useSafeAreaInsets();

@@ -16,8 +16,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
 import { CreditCard, Gift, DollarSign, MessageCircle } from "lucide-react-native";
-import { claimChildInvite } from "../src/lib/api";
-import type { Event, Guest } from "../types/events";
+import { claimChildInvite } from "@/src/lib/api";
+import type { Event, Guest } from "@/types/events";
 
 const CHILD_UID_PREFIX = "child_";
 

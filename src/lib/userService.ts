@@ -12,8 +12,8 @@ import type {
     SignupAdditionalData,
     InitializeUserResult,
     OnboardingStep
-} from '../../types/user';
-import { getProfileSlugFromNameAndId } from '../../types/user';
+} from "@/types/user";
+import { getProfileSlugFromNameAndId } from "@/types/user";
 
 /**
  * Initialize user profile (no Stripe account yet; created only after banking onboarding completes)

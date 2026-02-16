@@ -1,8 +1,8 @@
 import { Tabs, Redirect } from "expo-router";
 import { Plus, Calendar, User, Home, CreditCard } from "lucide-react-native";
 import { View, Platform } from "react-native";
-import { useAuth } from "../../src/utils/auth/useAuth";
-import { routes } from "../../types/routes";
+import { useAuth } from "@/src/utils/auth/useAuth";
+import { routes } from "@/types/routes";
 
 export default function TabLayout() {
   const { isAuthenticated, isReady } = useAuth();

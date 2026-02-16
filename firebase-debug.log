@@ -205,3 +205,26 @@
 [debug] [2026-02-16T13:04:01.566Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo {"name":"projects/piggybank-a0011/billingInfo","projectId":"piggybank-a0011","billingAccountName":"billingAccounts/015160-BDB82A-F593ED","billingEnabled":true}
 [debug] [2026-02-16T13:04:01.602Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-02-16T13:04:01.602Z] > authorizing via signed-in user (brosh1999@gmail.com)
+[debug] [2026-02-16T14:15:28.556Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-16T14:15:28.557Z] > authorizing via signed-in user (brosh1999@gmail.com)
+[debug] [2026-02-16T14:15:28.557Z] Checked if tokens are valid: false, expires at: 1771249943661
+[debug] [2026-02-16T14:15:28.557Z] Checked if tokens are valid: false, expires at: 1771249943661
+[debug] [2026-02-16T14:15:28.557Z] > refreshing access token with scopes: []
+[debug] [2026-02-16T14:15:28.557Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-16T14:15:28.557Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-16T14:15:28.719Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-02-16T14:15:28.719Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-16T14:15:28.733Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo [none]
+[debug] [2026-02-16T14:15:29.103Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo 200
+[debug] [2026-02-16T14:15:29.103Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo {"name":"projects/piggybank-a0011/billingInfo","projectId":"piggybank-a0011","billingAccountName":"billingAccounts/015160-BDB82A-F593ED","billingEnabled":true}
+[debug] [2026-02-16T14:15:29.305Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-16T14:15:29.305Z] > authorizing via signed-in user (brosh1999@gmail.com)
+[debug] [2026-02-16T14:15:29.367Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-16T14:15:29.367Z] > authorizing via signed-in user (brosh1999@gmail.com)
+[debug] [2026-02-16T14:15:29.368Z] Checked if tokens are valid: true, expires at: 1771254927719
+[debug] [2026-02-16T14:15:29.368Z] Checked if tokens are valid: true, expires at: 1771254927719
+[debug] [2026-02-16T14:15:29.368Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo [none]
+[debug] [2026-02-16T14:15:29.698Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo 200
+[debug] [2026-02-16T14:15:29.698Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/piggybank-a0011/billingInfo {"name":"projects/piggybank-a0011/billingInfo","projectId":"piggybank-a0011","billingAccountName":"billingAccounts/015160-BDB82A-F593ED","billingEnabled":true}
+[debug] [2026-02-16T14:15:29.733Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-16T14:15:29.733Z] > authorizing via signed-in user (brosh1999@gmail.com)

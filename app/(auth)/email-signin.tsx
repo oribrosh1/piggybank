@@ -12,8 +12,8 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
-import firebase from '../../src/firebase';
-import { routes } from '../../types/routes';
+import firebase from "@/src/firebase";
+import { routes } from "@/types/routes";
 
 export default function EmailSignInScreen() {
   const router = useRouter();

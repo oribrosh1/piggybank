@@ -12,10 +12,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Users } from "lucide-react-native";
-import { getEvent } from "../../src/lib/eventService";
-import { getChildInviteLink } from "../../src/lib/api";
-import { Event, Guest } from "../../types/events";
-import { routes } from "../../types/routes";
+import { getEvent } from "@/src/lib/eventService";
+import { getChildInviteLink } from "@/src/lib/api";
+import { Event, Guest } from "@/types/events";
+import { routes } from "@/types/routes";
 import {
     EventHeader,
     SuccessMessage,
@@ -29,7 +29,7 @@ import {
     InvitationPreview,
     AIPosterGenerator,
     GuestManagementModal,
-} from "../components/event-dashboard";
+} from "@/src/components/events";
 
 export default function EventDashboard() {
     const insets = useSafeAreaInsets();

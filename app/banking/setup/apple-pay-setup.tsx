@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Check, Apple } from "lucide-react-native";
 import { useState } from "react";
-import { routes } from "../../../types/routes";
+import { routes } from "@/types/routes";
 
 export default function ApplePaySetupScreen() {
   const insets = useSafeAreaInsets();

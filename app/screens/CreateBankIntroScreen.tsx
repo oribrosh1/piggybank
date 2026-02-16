@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import firebase from '../../src/firebase';
+import firebase from "@/src/firebase";
 
 export default function CreateBankIntroScreen({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState(false);

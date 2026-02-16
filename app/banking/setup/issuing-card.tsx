@@ -9,14 +9,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { CreditCard, ArrowRight } from "lucide-react-native";
 import { useState, useEffect } from "react";
-import { routes } from "../../../types/routes";
+import { routes } from "@/types/routes";
 import {
   getAccountDetails,
   getIssuingBalance,
   createIssuingCardholder,
   topUpIssuing,
   createVirtualCard,
-} from "../../../src/lib/api";
+} from "@/src/lib/api";
 import { useAuth } from "@/src/utils/auth";
 
 export default function IssuingCardScreen() {

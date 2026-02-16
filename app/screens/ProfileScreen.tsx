@@ -12,7 +12,7 @@ import { signOut } from 'firebase/auth';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import firebase from '../../src/firebase';
+import firebase from "@/src/firebase";
 
 export default function ProfileScreen({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState(true);

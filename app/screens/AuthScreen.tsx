@@ -1,7 +1,7 @@
 // Authentication screen for login and signup
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import firebase from '../../src/firebase';
+import firebase from "@/src/firebase";
 
 export default function AuthScreen({ navigation }: { navigation: any }) {
   const [email, setEmail] = useState('');

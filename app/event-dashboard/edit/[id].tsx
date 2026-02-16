@@ -25,9 +25,9 @@ import {
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import GooglePlacesTextInput from "react-native-google-places-textinput";
-import { routes } from "../../../types/routes";
-import { Event, EventFormData, EventCategory } from "../../../types/events";
-import { getEvent, updateEvent } from "../../../src/lib/eventService";
+import { routes } from "@/types/routes";
+import { Event, EventFormData, EventCategory } from "@/types/events";
+import { getEvent, updateEvent } from "@/src/lib/eventService";
 
 export default function EditEventScreen() {
     const insets = useSafeAreaInsets();

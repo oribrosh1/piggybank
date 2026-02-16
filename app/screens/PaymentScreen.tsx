@@ -10,9 +10,9 @@ import {
   TextInput,
   Platform
 } from 'react-native';
-import { CardField, useConfirmPayment, initStripe } from '../../src/lib/stripe';
-import { createPaymentIntent, CreatePaymentIntentResponse } from '../../src/lib/api';
-import { STRIPE_PUBLISHABLE_KEY } from '../../src/lib/config';
+import { CardField, useConfirmPayment, initStripe } from "@/src/lib/stripe";
+import { createPaymentIntent, CreatePaymentIntentResponse } from "@/src/lib/api";
+import { STRIPE_PUBLISHABLE_KEY } from "@/src/lib/config";
 
 export default function PaymentScreen({ route, navigation }: { route: any, navigation: any }) {
   const { accountId } = route.params || {};

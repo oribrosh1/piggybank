@@ -13,8 +13,8 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadBytes } from 'firebase/storage';
-import { uploadVerificationFile } from '../../src/lib/api';
-import firebase from '../../src/firebase';
+import { uploadVerificationFile } from "@/src/lib/api";
+import firebase from "@/src/firebase";
 
 export default function DocumentUploadScreen({ route, navigation }: { route: any, navigation: any }) {
   const { accountId, accountLink } = route.params;

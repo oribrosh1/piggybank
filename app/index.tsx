@@ -1,9 +1,9 @@
 import { Redirect } from "expo-router";
-import { useAuthStore } from "../src/utils/auth/store";
+import { useAuthStore } from "@/src/utils/auth/store";
 import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Linking } from "react-native";
-import { routes } from "../types/routes";
+import { routes } from "@/types/routes";
 
 function parseChildDeepLink(url: string | null): string | null {
   if (!url) return null;

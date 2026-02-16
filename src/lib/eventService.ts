@@ -6,8 +6,8 @@
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { Event, EventSummary, CreateEventData, Guest, calculateGuestStats } from '../../types/events';
-import { UserProfile } from '../../types/user';
+import { Event, EventSummary, CreateEventData, Guest, calculateGuestStats } from "@/types/events";
+import { UserProfile } from "@/types/user";
 
 export interface CreateEventResult {
     success: boolean;

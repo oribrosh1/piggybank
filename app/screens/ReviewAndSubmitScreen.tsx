@@ -9,7 +9,7 @@ import {
   Alert
 } from 'react-native';
 import { collection, doc, getDoc } from 'firebase/firestore';
-import firebase from '../../src/firebase';
+import firebase from "@/src/firebase";
 
 export default function ReviewAndSubmitScreen({ route, navigation }: { route: any, navigation: any }) {
   const { accountId } = route.params;

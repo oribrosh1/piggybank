@@ -2,10 +2,10 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshCon
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ChevronRight, Plus, Calendar, Users, MapPin } from "lucide-react-native";
-import { routes } from "../../types/routes";
+import { routes } from "@/types/routes";
 import { useEffect, useState, useCallback } from "react";
-import { getUserEventsStats } from "../../src/lib/eventService";
-import { EventSummary } from "../../types/events";
+import { getUserEventsStats } from "@/src/lib/eventService";
+import { EventSummary } from "@/types/events";
 
 export default function MyEventsScreen() {
   const insets = useSafeAreaInsets();

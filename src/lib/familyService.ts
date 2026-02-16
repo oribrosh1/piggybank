@@ -14,8 +14,8 @@ import {
     SpendingSummary,
     SpendingLimit,
     TransactionCategory
-} from '../../types/family';
-import { UserProfile, AccountType } from '../../types/user';
+} from "@/types/family";
+import { UserProfile, AccountType } from "@/types/user";
 
 // ============================================
 // Family Management

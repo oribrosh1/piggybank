@@ -1,6 +1,6 @@
 // API wrapper for calling Firebase Cloud Functions
 import axios from 'axios';
-import firebase from '../firebase';
+import firebase from "@/src/firebase";
 
 // API base URL from environment variables
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || "https://us-central1-piggybank-a0011.cloudfunctions.net/api";

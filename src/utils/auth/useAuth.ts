@@ -2,7 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect } from "react";
 import { Platform } from "react-native";
 import { useAuthModal, useAuthStore, authKey } from "./store";
-import firebase from '../../firebase';
+import firebase from "@/src/firebase";
 
 /**
  * This hook provides authentication functionality.

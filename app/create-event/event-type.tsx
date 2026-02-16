@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react-native";
-import { routes } from "../../types/routes";
+import { routes } from "@/types/routes";
 
 export default function EventTypeScreen() {
   const insets = useSafeAreaInsets();

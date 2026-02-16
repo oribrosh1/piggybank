@@ -1,4 +1,4 @@
-import { routes } from "../../../types/routes";
+import { routes } from "@/types/routes";
 import { Redirect } from "expo-router";
 
 export default function SetupIndex() {
