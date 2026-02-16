@@ -83,6 +83,11 @@ export function useEventDetailsScreen() {
     }
   };
 
+  const setAddressFromPlace = (address1: string, address2: string) => {
+    setFormData((prev) => ({ ...prev, address1, address2 }));
+    setErrors((prev) => ({ ...prev, address1: "", address2: "" }));
+  };
+
   const formatDateDisplay = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(parseInt(year!, 10), parseInt(month!, 10) - 1, parseInt(day!, 10));
@@ -144,6 +149,7 @@ export function useEventDetailsScreen() {
     validateForm,
     handleContinue,
     handleInputChange,
+    setAddressFromPlace,
     formatDateDisplay,
     handleDateConfirm,
     handleTimeConfirm,
