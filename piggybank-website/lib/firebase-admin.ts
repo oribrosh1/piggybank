@@ -28,6 +28,10 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
                 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
                 let key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim();
                 if (key?.startsWith('"""') && key.endsWith('"""')) key = key.slice(3, -3).trim();
+                // Strip one level of surrounding quotes (Vercel/shell often set KEY='{"type":...}')
+                if (key && (key.startsWith("'") && key.endsWith("'") || key.startsWith('"') && key.endsWith('"'))) {
+                    key = key.slice(1, -1).trim();
+                }
                 if (key) {
                     let serviceAccount: object;
                     try {
@@ -35,9 +39,6 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
                     } catch {
                         // Fallback: init with project from client env; will use Application Default Credentials
                         console.warn('[lib/firebase-admin.ts]: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON, initializing with projectId only (ADC)');
-                        console.log(key);
-                        console.log(projectId);
-                        console.log(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
                         initializeApp({
                             projectId: projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
                         });
