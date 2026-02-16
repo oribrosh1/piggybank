@@ -1,11 +1,22 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { Calendar, Sparkles } from 'lucide-react';
+import { getEventEmoji, getEventTypeLabel, formatDate } from '@/lib/types';
 
 type PublicProfile = {
     fullName: string;
+    uid: string;
     accountType?: string;
+};
+
+type UserEventSummary = {
+    id: string;
+    eventName: string;
+    eventType: string;
+    date: string;
+    time: string;
 };
 
 const LOG_PREFIX = '[CreditKid /users/[slug]]';
@@ -43,6 +54,7 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
             console.log(`${LOG_PREFIX} found by profileSlug`, { slug: slugTrim, docId, fullName: data?.fullName, hasProfileSlug: !!data?.profileSlug });
             return {
                 fullName: data?.fullName ?? 'CreditKid Member',
+                uid: docId,
                 accountType: data?.accountType,
             };
         }
@@ -56,6 +68,7 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
                 console.log(`${LOG_PREFIX} found by uid fallback`, { slug: slugTrim, fullName: data?.fullName });
                 return {
                     fullName: data?.fullName ?? 'CreditKid Member',
+                    uid: slugTrim,
                     accountType: data?.accountType,
                 };
             }
@@ -66,6 +79,35 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
     } catch (err) {
         console.error(`${LOG_PREFIX} getPublicProfileBySlug error`, { slug: slugTrim, error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
         return null;
+    }
+}
+
+/** Fetch events created by this user (for profile page listing) */
+async function getEventsByCreatorId(uid: string): Promise<UserEventSummary[]> {
+    try {
+        const db = await getAdminDb();
+        const snapshot = await db
+            .collection('events')
+            .where('creatorId', '==', uid)
+            .orderBy('date', 'asc')
+            .limit(20)
+            .get();
+        return snapshot.docs
+            .filter((doc) => doc.data()?.status === 'active')
+            .map((doc) => {
+                const d = doc.data();
+                return {
+                    id: doc.id,
+                    eventName: d.eventName ?? 'Event',
+                    eventType: d.eventType ?? 'other',
+                    date: d.date ?? '',
+                    time: d.time ?? '',
+                };
+            })
+            .slice(0, 10);
+    } catch (err) {
+        console.error(`${LOG_PREFIX} getEventsByCreatorId error`, { uid, error: err instanceof Error ? err.message : String(err) });
+        return [];
     }
 }
 
@@ -104,6 +146,7 @@ export default async function UserProfilePage({
     }
     console.log(`${LOG_PREFIX} UserProfilePage 200 OK`, { slug, fullName: profile.fullName });
 
+    const events = await getEventsByCreatorId(profile.uid);
     const theme = {
         gradient: 'from-violet-500 via-purple-600 to-fuchsia-600',
         glow: 'shadow-purple-500/50',
@@ -156,18 +199,46 @@ export default async function UserProfilePage({
                             </div>
                             <div className="flex-1">
                                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Events</p>
-                                <p className="text-base font-bold text-gray-900">No event yet</p>
+                                <p className="text-base font-bold text-gray-900">
+                                    {events.length > 0 ? `${events.length} event${events.length === 1 ? '' : 's'}` : 'No event yet'}
+                                </p>
                             </div>
                         </div>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                            {profile.fullName} hasn’t created an event yet. When they do, you’ll be able to RSVP and send a gift straight to their CreditKid card.
-                        </p>
-                        <div className="pt-4 border-t border-gray-100">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Coming soon</p>
-                            <p className="text-sm text-gray-600">
-                                Create your first event in the CreditKid app to share your link and start receiving gifts.
-                            </p>
-                        </div>
+                        {events.length > 0 ? (
+                            <ul className="space-y-3">
+                                {events.map((ev) => (
+                                    <li key={ev.id}>
+                                        <Link
+                                            href={`/event/${ev.id}`}
+                                            className="block rounded-2xl border border-gray-100 bg-gray-50/80 p-4 hover:bg-[#EDE9FE]/50 hover:border-[#8B5CF6]/30 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl" aria-hidden>{getEventEmoji(ev.eventType as 'birthday' | 'barMitzvah' | 'batMitzvah' | 'other')}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-gray-900 truncate">{ev.eventName}</p>
+                                                    <p className="text-sm text-gray-500">
+                                                        {ev.date ? formatDate(ev.date) : ''}{ev.time ? ` · ${ev.time}` : ''}
+                                                    </p>
+                                                </div>
+                                                <span className="text-[#8B5CF6] font-semibold text-sm shrink-0">View →</span>
+                                            </div>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <>
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    {profile.fullName} hasn't created an event yet. When they do, you'll be able to RSVP and send a gift straight to their CreditKid card.
+                                </p>
+                                <div className="pt-4 border-t border-gray-100">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Coming soon</p>
+                                    <p className="text-sm text-gray-600">
+                                        Create your first event in the CreditKid app to share your link and start receiving gifts.
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Powered by CreditKid */}
@@ -186,7 +257,7 @@ export default async function UserProfilePage({
             </div>
 
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
-                <p>© 2024 CreditKid. The end of gift cards is here! 🎉</p>
+                <p>© 2026 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>
     );

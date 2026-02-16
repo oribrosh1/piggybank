@@ -350,7 +350,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
             {/* Footer */}
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
-                <p>© 2024 CreditKid. The end of gift cards is here! 🎉</p>
+                <p>© 2026 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>
     );
