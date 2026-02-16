@@ -82,18 +82,33 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
     }
 }
 
-/** Fetch events created by this user (for profile page listing) */
+/** Fetch events created by this user (for profile page listing). No orderBy to avoid requiring a composite index. */
 async function getEventsByCreatorId(uid: string): Promise<UserEventSummary[]> {
+    console.log(`${LOG_PREFIX} getEventsByCreatorId start`, { uid, uidLength: uid?.length });
     try {
         const db = await getAdminDb();
         const snapshot = await db
             .collection('events')
             .where('creatorId', '==', uid)
-            .orderBy('date', 'asc')
-            .limit(20)
+            .limit(10)
             .get();
-        return snapshot.docs
-            .filter((doc) => doc.data()?.status === 'active')
+        console.log(`${LOG_PREFIX} getEventsByCreatorId query done`, { uid, total: snapshot.size });
+        if (snapshot.size > 0) {
+            snapshot.docs.forEach((doc, i) => {
+                const d = doc.data();
+                console.log(`${LOG_PREFIX} getEventsByCreatorId doc[${i}]`, {
+                    id: doc.id,
+                    creatorId: d?.creatorId,
+                    status: d?.status,
+                    eventName: d?.eventName,
+                });
+            });
+        }
+        const events = snapshot.docs
+            .filter((doc) => {
+                const s = doc.data()?.status;
+                return s === 'active' || s === undefined;
+            })
             .map((doc) => {
                 const d = doc.data();
                 return {
@@ -103,8 +118,11 @@ async function getEventsByCreatorId(uid: string): Promise<UserEventSummary[]> {
                     date: d.date ?? '',
                     time: d.time ?? '',
                 };
-            })
-            .slice(0, 10);
+            });
+        events.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+        const result = events.slice(0, 10);
+        console.log(`${LOG_PREFIX} getEventsByCreatorId done`, { uid, total: snapshot.size, active: events.length, returning: result.length, eventIds: result.map((e) => e.id) });
+        return result;
     } catch (err) {
         console.error(`${LOG_PREFIX} getEventsByCreatorId error`, { uid, error: err instanceof Error ? err.message : String(err) });
         return [];
@@ -144,9 +162,10 @@ export default async function UserProfilePage({
         console.log(`${LOG_PREFIX} UserProfilePage 404 notFound`, { slug });
         notFound();
     }
-    console.log(`${LOG_PREFIX} UserProfilePage 200 OK`, { slug, fullName: profile.fullName });
+    console.log(`${LOG_PREFIX} UserProfilePage profile ok`, { slug, fullName: profile.fullName, uid: profile.uid });
 
     const events = await getEventsByCreatorId(profile.uid);
+    console.log(`${LOG_PREFIX} UserProfilePage events loaded`, { slug, uid: profile.uid, eventsCount: events.length, eventIds: events.map((e) => e.id) });
     const theme = {
         gradient: 'from-violet-500 via-purple-600 to-fuchsia-600',
         glow: 'shadow-purple-500/50',
