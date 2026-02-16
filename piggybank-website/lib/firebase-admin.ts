@@ -33,7 +33,16 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
                     try {
                         serviceAccount = JSON.parse(key);
                     } catch {
-                        throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY must be valid JSON');
+                        // Fallback: init with project from client env; will use Application Default Credentials
+                        console.warn('[lib/firebase-admin.ts]: FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON, initializing with projectId only (ADC)');
+                        console.log(key);
+                        console.log(projectId);
+                        console.log(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+                        initializeApp({
+                            projectId: projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                        });
+                        db = getFirestore();
+                        return { db, FieldValue: firestoreMod.FieldValue };
                     }
                     initializeApp({
                         credential: cert(serviceAccount as any),
@@ -41,7 +50,9 @@ async function initAdmin(): Promise<{ db: Firestore; FieldValue: typeof import('
                     });
                 } else {
                     // No key: use Application Default Credentials (GCP or gcloud auth application-default login)
-                    initializeApp({ projectId });
+                    initializeApp({
+                        projectId: projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                    });
                 }
             }
             db = getFirestore();
