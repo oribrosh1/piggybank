@@ -1,13 +1,15 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { MessageSquare, UserPlus, Share2 } from "lucide-react-native";
+import { MessageSquare, UserPlus, Share2, Gift } from "lucide-react-native";
 
 interface QuickActionsProps {
     delay?: number;
     onSendInvites?: () => void;
     onAddGuests?: () => void;
     onShare?: () => void;
+    onSendChildLink?: () => void;
+    childLinkLoading?: boolean;
 }
 
 export default function QuickActions({
@@ -15,6 +17,8 @@ export default function QuickActions({
     onSendInvites,
     onAddGuests,
     onShare,
+    onSendChildLink,
+    childLinkLoading = false,
 }: QuickActionsProps) {
     return (
         <Animated.View
@@ -24,11 +28,12 @@ export default function QuickActions({
             <Text style={{ fontSize: 13, fontWeight: "700", color: "#9CA3AF", marginBottom: 12, letterSpacing: 1 }}>
                 QUICK ACTIONS
             </Text>
-            <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                 <TouchableOpacity
                     onPress={onSendInvites}
                     style={{
                         flex: 1,
+                        minWidth: "30%",
                         backgroundColor: "#8B5CF6",
                         borderRadius: 16,
                         padding: 16,
@@ -49,6 +54,7 @@ export default function QuickActions({
                     onPress={onAddGuests}
                     style={{
                         flex: 1,
+                        minWidth: "30%",
                         backgroundColor: "#FFFFFF",
                         borderRadius: 16,
                         padding: 16,
@@ -66,6 +72,7 @@ export default function QuickActions({
                     onPress={onShare}
                     style={{
                         flex: 1,
+                        minWidth: "30%",
                         backgroundColor: "#FFFFFF",
                         borderRadius: 16,
                         padding: 16,
@@ -79,6 +86,30 @@ export default function QuickActions({
                         Share
                     </Text>
                 </TouchableOpacity>
+                {onSendChildLink && (
+                    <TouchableOpacity
+                        onPress={onSendChildLink}
+                        disabled={childLinkLoading}
+                        style={{
+                            flex: 1,
+                            minWidth: "30%",
+                            backgroundColor: "#06D6A0",
+                            borderRadius: 16,
+                            padding: 16,
+                            alignItems: "center",
+                            borderWidth: 0,
+                        }}
+                    >
+                        {childLinkLoading ? (
+                            <ActivityIndicator size="small" color="#065F46" />
+                        ) : (
+                            <Gift size={24} color="#065F46" strokeWidth={2} />
+                        )}
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: "#065F46", marginTop: 8 }}>
+                            Child link
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </Animated.View>
     );

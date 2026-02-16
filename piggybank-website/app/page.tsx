@@ -61,7 +61,7 @@ export default function Home() {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <span className="text-white text-xl md:text-2xl">🐷</span>
+                <span className="text-white text-xl md:text-2xl"></span>
               </div>
               <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 CreditKid
@@ -586,7 +586,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                <span className="text-xl">🐷</span>
+                <span className="text-xl"></span>
               </div>
               <span className="text-xl font-bold">CreditKid</span>
             </div>

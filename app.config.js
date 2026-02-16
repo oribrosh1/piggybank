@@ -1,7 +1,7 @@
 module.exports = {
     expo: {
-        name: "piggy-bank",
-        slug: "piggy-bank",
+        name: "CreditKid",
+        slug: "creditkid",
         version: "1.0.0",
         orientation: "portrait",
         icon: "./assets/images/icon.png",

@@ -78,7 +78,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="banking"
         options={{
-          title: "Banking",
+          title: "Credit",
           tabBarIcon: ({ color, focused }) => (
             <View
               style={{

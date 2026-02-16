@@ -181,7 +181,7 @@ function CheckoutForm({
                 <div className="flex justify-between items-center mb-3">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm">🐷</span>
+                            <span className="text-sm"></span>
                         </div>
                         <div>
                             <span className="text-sm font-medium text-gray-700">Service Fee</span>

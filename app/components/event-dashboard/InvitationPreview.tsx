@@ -452,7 +452,7 @@ export default function InvitationPreview({ event, delay = 800 }: InvitationPrev
                             </View>
                         </View>
 
-                        {/* PiggyBank Gift Card */}
+                        {/* CreditKid Gift Card */}
                         <View
                             style={{
                                 backgroundColor: "#FAF5FF",
@@ -475,7 +475,7 @@ export default function InvitationPreview({ event, delay = 800 }: InvitationPrev
                                         marginRight: 12,
                                     }}
                                 >
-                                    <Text style={{ fontSize: 24 }}>🐷</Text>
+                                    <Text style={{ fontSize: 24 }}></Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={{ fontSize: 16, fontWeight: "800", color: "#111827" }}>Skip the Gift Card! 🎁</Text>
@@ -586,7 +586,7 @@ export default function InvitationPreview({ event, delay = 800 }: InvitationPrev
                                         marginBottom: 12,
                                     }}
                                 >
-                                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#FFFFFF" }}>🐷 PiggyBank Gift</Text>
+                                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#FFFFFF" }}> CreditKid Gift</Text>
                                 </View>
                                 <Text style={{ fontSize: 32, fontWeight: "900", color: "#FFFFFF", marginBottom: 4 }}>$50</Text>
                                 <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.9)" }}>

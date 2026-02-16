@@ -21,7 +21,7 @@ function NotFoundScreen() {
 
   // Predefined available routes for the app
   const availableRoutes: Route[] = useMemo(() => [
-    { name: 'Banking', path: routes.tabs.banking },
+    { name: 'Credit', path: routes.tabs.banking },
     { name: 'Create Event', path: routes.tabs.createEvent },
     { name: 'Events', path: routes.tabs.myEvents },
     { name: 'Profile', path: routes.tabs.profile },
@@ -74,14 +74,14 @@ function NotFoundScreen() {
           <View style={styles.mainContent}>
             {/* 404 Illustration */}
             <View style={styles.illustrationContainer}>
-              <Text style={styles.emojiLarge}>🐷</Text>
+              <Text style={styles.emojiLarge}></Text>
               <View style={styles.notFoundBadge}>
                 <Text style={styles.notFoundText}>404</Text>
               </View>
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>Oops! Lost Piggy Bank!</Text>
+            <Text style={styles.title}>Oops! Lost CreditKid!</Text>
 
             {/* Subtitle */}
             <Text style={styles.subtitle}>

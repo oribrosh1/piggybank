@@ -24,6 +24,7 @@ import {
   Wallet,
   ArrowUpRight,
   ArrowDownLeft,
+  ArrowRight,
   TrendingUp,
   DollarSign,
   Banknote
@@ -74,35 +75,15 @@ export default function BankingScreen() {
   const [toppingUp, setToppingUp] = useState(false);
   const [creatingCard, setCreatingCard] = useState(false);
 
-  // KYC Status: 'no_account' | 'pending' | 'approved' | 'rejected'
-  const [kycStatus, setKycStatus] = useState('no_account');
+  // KYC Status: derived only from Stripe account (getAccountStatus)
+  // 'no_account' | 'pending' | 'approved' | 'rejected'
+  const [kycStatus, setKycStatus] = useState<'no_account' | 'pending' | 'approved' | 'rejected'>('no_account');
   const [refreshing, setRefreshing] = useState(false);
   const [cardVisible, setCardVisible] = useState(false);
-
-  // Countdown timer (5 minutes = 300 seconds)
-  const [timeRemaining, setTimeRemaining] = useState(300);
 
   // Card animation
   const cardScale = useRef(new Animated.Value(0.95)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (kycStatus === 'pending' && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setKycStatus('approved');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [kycStatus, timeRemaining]);
 
   useEffect(() => {
     if (kycStatus === 'approved') {
@@ -122,104 +103,116 @@ export default function BankingScreen() {
     }
   }, [kycStatus]);
 
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Fetch account data from Stripe and Firestore
+  // Fetch account data: single source of truth is Stripe (getAccountStatus)
   const fetchAccountData = async () => {
     try {
       const user = firebase.auth().currentUser;
       if (!user) {
-        console.log('No user logged in');
         setKycStatus('no_account');
+        setAccountData(null);
+        setUserProfile(null);
         return;
       }
 
-      // Get user profile from Firestore
-      const profile = await getUserProfile(user.uid);
-
-      if (!profile || !profile.stripeAccountCreated) {
+      // 1) Get Stripe account status first (backend uses stripeAccounts doc + Stripe API)
+      let accountStatus: AccountStatusResponse;
+      try {
+        accountStatus = await getAccountStatus();
+      } catch (statusErr) {
+        console.warn('getAccountStatus failed:', statusErr);
         setKycStatus('no_account');
+        setAccountData(null);
+        setUserProfile(null);
+        setBalanceData(null);
+        setTransactions([]);
         setIssuingBalance(null);
         return;
       }
 
-      setUserProfile(profile);
-
-      // Get account status from Stripe
-      const accountStatus = await getAccountStatus();
       setAccountData(accountStatus);
 
-      // Determine KYC status based on Stripe account
       if (!accountStatus.exists) {
         setKycStatus('no_account');
+        setUserProfile(null);
+        setBalanceData(null);
+        setTransactions([]);
+        setAccountDetails(null);
+        setPayouts([]);
         setIssuingBalance(null);
-      } else if (accountStatus.charges_enabled && accountStatus.payouts_enabled) {
-        setKycStatus('approved');
+        return;
+      }
 
-        // Get balance if approved
+      // 2) Optional: load user profile for display (name, etc.)
+      try {
+        const profile = await getUserProfile(user.uid);
+        setUserProfile(profile ?? null);
+      } catch {
+        setUserProfile(null);
+      }
+
+      // 3) Derive KYC status only from Stripe account flags
+      const approved = accountStatus.charges_enabled && accountStatus.payouts_enabled;
+      const pending = accountStatus.details_submitted && !approved;
+
+      if (approved) {
+        setKycStatus('approved');
         try {
           const balance = await getBalance();
           setBalanceData(balance);
-        } catch (balanceError) {
-          console.warn('Could not fetch balance:', balanceError);
+        } catch (e) {
+          console.warn('Could not fetch balance:', e);
         }
-
-        // Get transactions if approved
         try {
           setLoadingTransactions(true);
           const txnData = await getTransactions(10);
           setTransactions(txnData.transactions || []);
-        } catch (txnError) {
-          console.warn('Could not fetch transactions:', txnError);
+        } catch (e) {
+          console.warn('Could not fetch transactions:', e);
         } finally {
           setLoadingTransactions(false);
         }
-
-        // Get full account details (Custom account)
         try {
           const details = await getAccountDetails();
           setAccountDetails(details);
-        } catch (detailsError) {
-          console.warn('Could not fetch account details:', detailsError);
+        } catch (e) {
+          console.warn('Could not fetch account details:', e);
         }
-
-        // Get payout history
         try {
           const payoutData = await getPayouts(5);
           setPayouts(payoutData.payouts || []);
-        } catch (payoutError) {
-          console.warn('Could not fetch payouts:', payoutError);
+        } catch (e) {
+          console.warn('Could not fetch payouts:', e);
         }
-
-        // Stage 2.5 – Issuing balance (for virtual card funding)
         try {
           const issuing = await getIssuingBalance();
           setIssuingBalance(issuing);
-        } catch (issuingError) {
-          console.warn('Could not fetch issuing balance:', issuingError);
+        } catch (e) {
+          console.warn('Could not fetch issuing balance:', e);
           setIssuingBalance(null);
         }
-      } else if (accountStatus.details_submitted) {
+      } else if (pending) {
         setKycStatus('pending');
+        setBalanceData(null);
+        setTransactions([]);
         setIssuingBalance(null);
       } else {
         setKycStatus('rejected');
+        setBalanceData(null);
+        setTransactions([]);
         setIssuingBalance(null);
       }
 
-      console.log('✅ Account data loaded:', {
-        kycStatus,
-        accountStatus,
-        balance: balanceData
+      console.log('✅ Account data loaded from Stripe:', {
+        exists: accountStatus.exists,
+        charges_enabled: accountStatus.charges_enabled,
+        payouts_enabled: accountStatus.payouts_enabled,
+        details_submitted: accountStatus.details_submitted,
+        derivedStatus: approved ? 'approved' : pending ? 'pending' : 'rejected',
       });
     } catch (error) {
       console.error('Error fetching account data:', error);
       setKycStatus('no_account');
+      setAccountData(null);
     } finally {
       setLoading(false);
     }
@@ -236,7 +229,7 @@ export default function BankingScreen() {
     setRefreshing(false);
   };
 
-  const handleSetupBanking = () => {
+  const handleSetupCredit = () => {
     router.push(routes.banking.setup.personalInfo);
   };
 
@@ -386,7 +379,7 @@ export default function BankingScreen() {
             >
               {kycStatus === 'approved' ? 'Ready to earn! 🚀' :
                 kycStatus === 'pending' ? 'Verification in progress ⏳' :
-                  'Set up banking to start! 🐷'}
+                  'Set up credit to start! '}
             </Text>
           </View>
         </View>
@@ -423,7 +416,7 @@ export default function BankingScreen() {
               marginBottom: 20,
             }}
           >
-            YOUR PIGGY BANKS 🐷
+            YOUR CREDIT 
           </Text>
 
           {/* No Account State */}
@@ -452,7 +445,7 @@ export default function BankingScreen() {
                       textAlign: "center",
                     }}
                   >
-                    No Piggy Banks Yet!
+                    No credit yet
                   </Text>
                   <Text
                     style={{
@@ -468,7 +461,7 @@ export default function BankingScreen() {
 
               {/* Create Button */}
               <TouchableOpacity
-                onPress={handleSetupBanking}
+                onPress={handleSetupCredit}
                 style={{
                   backgroundColor: "#06D6A0",
                   borderRadius: 16,
@@ -482,7 +475,7 @@ export default function BankingScreen() {
               >
                 <Plus size={24} color="#6B3AA0" strokeWidth={3} />
                 <Text style={{ fontSize: 16, fontWeight: "800", color: "#6B3AA0" }}>
-                  CREATE PIGGY BANK
+                  SET UP CREDIT
                 </Text>
               </TouchableOpacity>
 
@@ -517,7 +510,7 @@ export default function BankingScreen() {
                       fontWeight: "500",
                     }}
                   >
-                    1. Tap "CREATE PIGGY BANK" to set up your Stripe account{"\n"}
+                    1. Tap "SET UP CREDIT" to set up your Stripe account{"\n"}
                     2. Tap "Verify for Testing" to enable transfers{"\n"}
                     3. Then add test money!
                   </Text>
@@ -593,67 +586,20 @@ export default function BankingScreen() {
               >
                 {/* Countdown Timer */}
                 <View style={{ alignItems: "center", marginBottom: 20 }}>
-                  {/* Large Countdown Circle */}
                   <View
                     style={{
-                      width: 160,
-                      height: 160,
-                      borderRadius: 80,
+                      width: 120,
+                      height: 120,
+                      borderRadius: 60,
                       backgroundColor: "#F0FDF4",
                       alignItems: "center",
                       justifyContent: "center",
                       marginBottom: 16,
-                      borderWidth: 8,
+                      borderWidth: 6,
                       borderColor: "#10B981",
-                      shadowColor: "#10B981",
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 12,
-                      elevation: 6,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 48,
-                        fontWeight: "900",
-                        color: "#10B981",
-                        letterSpacing: 2,
-                      }}
-                    >
-                      {formatTime(timeRemaining)}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: "700",
-                        color: "#059669",
-                        marginTop: 4,
-                        letterSpacing: 1,
-                      }}
-                    >
-                      REMAINING
-                    </Text>
-                  </View>
-
-                  {/* Progress Bar */}
-                  <View
-                    style={{
-                      width: "80%",
-                      height: 8,
-                      backgroundColor: "#E5E7EB",
-                      borderRadius: 4,
-                      overflow: "hidden",
-                      marginBottom: 24,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: `${((300 - timeRemaining) / 300) * 100}%`,
-                        height: "100%",
-                        backgroundColor: "#10B981",
-                        borderRadius: 4,
-                      }}
-                    />
+                    <Clock size={48} color="#10B981" strokeWidth={2} />
                   </View>
 
                   <Text
@@ -665,7 +611,7 @@ export default function BankingScreen() {
                       textAlign: "center",
                     }}
                   >
-                    Verification In Progress ⏳
+                    Verification in progress
                   </Text>
                   <Text
                     style={{
@@ -674,13 +620,25 @@ export default function BankingScreen() {
                       fontWeight: "600",
                       textAlign: "center",
                       lineHeight: 20,
+                      marginBottom: 16,
                     }}
                   >
-                    Stripe is verifying your identity.{'\n'}Your card will be ready soon!
+                    Stripe is verifying your account. Pull to refresh to check status.
                   </Text>
+                  <TouchableOpacity
+                    onPress={onRefresh}
+                    style={{
+                      paddingVertical: 12,
+                      paddingHorizontal: 24,
+                      backgroundColor: "#10B981",
+                      borderRadius: 12,
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>Check status</Text>
+                  </TouchableOpacity>
                 </View>
 
-                {/* Progress Timeline */}
+                {/* Progress Timeline – based on Stripe account (details_submitted = in progress) */}
                 <View
                   style={{
                     backgroundColor: "#F9FAFB",
@@ -703,10 +661,10 @@ export default function BankingScreen() {
 
                   <View style={{ gap: 14 }}>
                     {[
-                      { label: "Personal info received", done: true, emoji: "📝", threshold: 300 },
-                      { label: "ID document uploaded", done: true, emoji: "🆔", threshold: 300 },
-                      { label: "Identity verification", done: timeRemaining <= 180, emoji: "🔍", threshold: 180 },
-                      { label: "Account approval", done: timeRemaining <= 60, emoji: "✅", threshold: 60 },
+                      { label: "Personal info received", done: true, emoji: "📝" },
+                      { label: "ID document uploaded", done: true, emoji: "🆔" },
+                      { label: "Identity verification", done: false, emoji: "🔍" },
+                      { label: "Account approval", done: false, emoji: "✅" },
                     ].map((step, index) => (
                       <View
                         key={index}
@@ -923,7 +881,7 @@ export default function BankingScreen() {
                   {/* Card Header */}
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 32 }}>
                     <Text style={{ fontSize: 17, fontWeight: "800", color: "#6B3AA0" }}>
-                      Piggy Bank Card 🐷
+                      CreditKid Card 
                     </Text>
                     <CreditCard size={22} color="#6B3AA0" strokeWidth={2.5} />
                   </View>
@@ -1048,6 +1006,52 @@ export default function BankingScreen() {
                 </Text>
               </View>
 
+              {/* Get your virtual card – links to issuing onboarding */}
+              {!accountDetails?.virtualCardId && (
+                <TouchableOpacity
+                  onPress={() => router.push(routes.banking.setup.issuingCard)}
+                  style={{
+                    backgroundColor: "#8B5CF6",
+                    borderRadius: 16,
+                    padding: 20,
+                    marginBottom: 20,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    shadowColor: "#8B5CF6",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 24,
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 14,
+                      }}
+                    >
+                      <CreditCard size={24} color="#FFFFFF" strokeWidth={2.5} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginBottom: 4 }}>
+                        Get your virtual card
+                      </Text>
+                      <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.9)", fontWeight: "500" }}>
+                        Create a virtual credit card to spend from your balance
+                      </Text>
+                    </View>
+                  </View>
+                  <ArrowRight size={22} color="#FFFFFF" strokeWidth={2.5} />
+                </TouchableOpacity>
+              )}
+
               {/* Stage 2.5 + 3: Issuing balance, Add funds, Create Card */}
               <View
                 style={{
@@ -1135,7 +1139,168 @@ export default function BankingScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Balance Breakdown */}
+              {/* Stripe Connected Account – Balance & Transactions */}
+              <View
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                  borderRadius: 20,
+                  padding: 20,
+                  marginBottom: 20,
+                  borderWidth: 2,
+                  borderColor: "rgba(255,255,255,0.2)",
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+                  <Wallet size={22} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "800",
+                      color: "#FFFFFF",
+                      marginLeft: 10,
+                    }}
+                  >
+                    Stripe Connected Account
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.85)",
+                    marginBottom: 16,
+                    marginLeft: 32,
+                  }}
+                >
+                  Balance and activity for your connected account
+                </Text>
+                <View
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 16,
+                    padding: 20,
+                    marginBottom: 16,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.08,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: "#6B3AA0",
+                      marginBottom: 12,
+                    }}
+                  >
+                    Balance
+                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "baseline", gap: 24 }}>
+                    <View>
+                      <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "600" }}>Available</Text>
+                      <Text style={{ fontSize: 22, fontWeight: "800", color: "#10B981" }}>
+                        ${balanceData?.available?.[0] ? (balanceData.available[0].amount / 100).toFixed(2) : "0.00"}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "600" }}>Pending</Text>
+                      <Text style={{ fontSize: 22, fontWeight: "800", color: "#F59E0B" }}>
+                        ${balanceData?.pending?.[0] ? (balanceData.pending[0].amount / 100).toFixed(2) : "0.00"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 16,
+                    padding: 20,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.08,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: "#6B3AA0" }}>
+                      All transactions
+                    </Text>
+                    <TouchableOpacity onPress={onRefresh}>
+                      <RefreshCw size={16} color="#6B3AA0" strokeWidth={2.5} />
+                    </TouchableOpacity>
+                  </View>
+                  {loadingTransactions ? (
+                    <ActivityIndicator size="small" color="#6B3AA0" style={{ marginVertical: 20 }} />
+                  ) : transactions.length === 0 ? (
+                    <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                      <Banknote size={36} color="#D1D5DB" strokeWidth={1.5} />
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#9CA3AF", marginTop: 10 }}>
+                        No transactions yet
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#D1D5DB", marginTop: 4 }}>
+                        Payments and transfers will appear here
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={{ gap: 0 }}>
+                      {transactions.slice(0, 10).map((txn, index) => (
+                        <View
+                          key={txn.id}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            paddingVertical: 12,
+                            borderBottomWidth: index < Math.min(transactions.length, 10) - 1 ? 1 : 0,
+                            borderBottomColor: "#F3F4F6",
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 20,
+                              backgroundColor: txn.amount >= 0 ? "#D1FAE5" : "#FEE2E2",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              marginRight: 12,
+                            }}
+                          >
+                            {txn.amount >= 0 ? (
+                              <ArrowDownLeft size={18} color="#10B981" strokeWidth={2.5} />
+                            ) : (
+                              <ArrowUpRight size={18} color="#EF4444" strokeWidth={2.5} />
+                            )}
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827" }}>
+                              {txn.type === "charge" ? "Payment" : txn.type === "payout" ? "Withdrawal" : txn.type === "transfer" ? "Transfer" : txn.type?.charAt(0).toUpperCase() + (txn.type?.slice(1) || "")}
+                            </Text>
+                            <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
+                              {new Date(txn.created * 1000).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </Text>
+                          </View>
+                          <Text
+                            style={{
+                              fontSize: 15,
+                              fontWeight: "800",
+                              color: txn.amount >= 0 ? "#10B981" : "#EF4444",
+                            }}
+                          >
+                            {txn.amount >= 0 ? "+" : ""}${(Math.abs(txn.amount) / 100).toFixed(2)}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Balance Breakdown (detailed) */}
               <View
                 style={{
                   backgroundColor: "#FFFFFF",
@@ -1240,7 +1405,7 @@ export default function BankingScreen() {
                 </View>
 
                 {/* Request Payout Button */}
-                {balanceData?.available?.[0]?.amount && balanceData.available[0].amount > 0 && (
+                {((balanceData?.available?.[0]?.amount) ?? 0) > 0 && (
                   <TouchableOpacity
                     onPress={async () => {
                       const availableAmount = balanceData?.available?.[0]?.amount || 0;
@@ -1280,120 +1445,14 @@ export default function BankingScreen() {
                     {requestingPayout ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
                         <ArrowUpRight size={18} color="#FFFFFF" strokeWidth={2.5} />
                         <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 8 }}>
                           Withdraw to Bank
                         </Text>
-                      </>
+                      </View>
                     )}
                   </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Transaction History */}
-              <View
-                style={{
-                  backgroundColor: "#FFFFFF",
-                  borderRadius: 16,
-                  padding: 20,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.1,
-                  shadowRadius: 8,
-                  elevation: 4,
-                  marginBottom: 20,
-                }}
-              >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "800",
-                      color: "#6B3AA0",
-                    }}
-                  >
-                    📊 RECENT TRANSACTIONS
-                  </Text>
-                  <TouchableOpacity onPress={onRefresh}>
-                    <RefreshCw size={16} color="#6B3AA0" strokeWidth={2.5} />
-                  </TouchableOpacity>
-                </View>
-
-                {loadingTransactions ? (
-                  <ActivityIndicator size="small" color="#6B3AA0" style={{ marginVertical: 20 }} />
-                ) : transactions.length === 0 ? (
-                  <View style={{ alignItems: "center", paddingVertical: 24 }}>
-                    <TrendingUp size={40} color="#D1D5DB" strokeWidth={1.5} />
-                    <Text style={{ fontSize: 14, fontWeight: "600", color: "#9CA3AF", marginTop: 12 }}>
-                      No transactions yet
-                    </Text>
-                    <Text style={{ fontSize: 12, color: "#D1D5DB", marginTop: 4 }}>
-                      Transactions will appear here
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={{ gap: 12 }}>
-                    {transactions.slice(0, 5).map((txn, index) => (
-                      <View
-                        key={txn.id}
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          paddingVertical: 10,
-                          borderBottomWidth: index < Math.min(transactions.length, 5) - 1 ? 1 : 0,
-                          borderBottomColor: "#F3F4F6",
-                        }}
-                      >
-                        {/* Icon */}
-                        <View
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            backgroundColor: txn.amount >= 0 ? "#D1FAE5" : "#FEE2E2",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            marginRight: 12,
-                          }}
-                        >
-                          {txn.amount >= 0 ? (
-                            <ArrowDownLeft size={18} color="#10B981" strokeWidth={2.5} />
-                          ) : (
-                            <ArrowUpRight size={18} color="#EF4444" strokeWidth={2.5} />
-                          )}
-                        </View>
-
-                        {/* Details */}
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 13, fontWeight: "700", color: "#111827" }}>
-                            {txn.type === 'charge' ? 'Payment Received' :
-                              txn.type === 'payout' ? 'Withdrawal' :
-                                txn.type === 'transfer' ? 'Transfer' :
-                                  txn.type.charAt(0).toUpperCase() + txn.type.slice(1)}
-                          </Text>
-                          <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
-                            {new Date(txn.created * 1000).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </Text>
-                        </View>
-
-                        {/* Amount */}
-                        <Text
-                          style={{
-                            fontSize: 15,
-                            fontWeight: "800",
-                            color: txn.amount >= 0 ? "#10B981" : "#EF4444",
-                          }}
-                        >
-                          {txn.amount >= 0 ? '+' : ''}${(Math.abs(txn.amount) / 100).toFixed(2)}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
                 )}
               </View>
 
@@ -1849,7 +1908,7 @@ export default function BankingScreen() {
                 </Text>
 
                 <TouchableOpacity
-                  onPress={handleSetupBanking}
+                  onPress={handleSetupCredit}
                   style={{
                     backgroundColor: "#EF4444",
                     borderRadius: 12,

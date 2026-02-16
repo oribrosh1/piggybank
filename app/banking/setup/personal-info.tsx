@@ -8,15 +8,11 @@ import {
   Platform,
   Animated,
   ActivityIndicator,
-  Linking,
-  Alert,
   Modal,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import * as ExpoLinking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 import {
   ArrowLeft,
   User,
@@ -26,23 +22,46 @@ import {
   Sparkles,
   CreditCard,
   FileCheck,
+  Landmark,
 } from "lucide-react-native";
 import { useState, useEffect, useRef } from "react";
 import GooglePlacesTextInput from "react-native-google-places-textinput";
-import { routes } from "../../../types/routes";
 import type { PersonalInfoFormData } from "../../../types/verifications";
-import { createCustomConnectAccount, createOnboardingLink, getAccountDetails } from "../../../src/lib/api";
+import { createCustomConnectAccount, getAccountDetails } from "../../../src/lib/api";
 import { useAuth } from "@/src/utils/auth";
 import { getUserProfile } from "../../../src/lib/userService";
 
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 4;
+
+const TEST_ROUTING = "110000000";
+const TEST_ACCOUNT = "000123456789";
+const TEST_ACCOUNT_LAST4 = "6789";
+
+const ID_DOCUMENT_OPTIONS = [
+  { value: "passport", label: "Passport" },
+  { value: "passport_card", label: "Passport card" },
+  { value: "drivers_license", label: "Driver license" },
+  { value: "state_id", label: "State issued ID card" },
+  { value: "resident_permit", label: "Resident permit ID / U.S. Green Card" },
+  { value: "border_crossing", label: "Border crossing card" },
+  { value: "child_id", label: "Child ID card" },
+  { value: "nyc_card", label: "NYC card" },
+  { value: "us_visa", label: "U.S. visa" },
+  { value: "other", label: "Other" },
+];
 
 export default function PersonalInfoScreen() {
   const { auth } = useAuth();
   const userEmail = auth?.email ?? "";
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [idDocumentType, setIdDocumentType] = useState("");
+  const [useTestDocument, setUseTestDocument] = useState(false);
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [confirmAccountLast4, setConfirmAccountLast4] = useState("");
+  const [useTestBankAccount, setUseTestBankAccount] = useState(false);
   const [formData, setFormData] = useState<PersonalInfoFormData>({
     firstName: "",
     lastName: "",
@@ -196,8 +215,40 @@ export default function PersonalInfoScreen() {
   };
 
   const validateStep2 = () => {
-    // No in-app validation for step 2; Stripe Hosted Onboarding collects SSN, DOB, address, bank, and TOS
-    return true;
+    const newErrors: { [key: string]: string } = {};
+    if (!idDocumentType.trim()) {
+      newErrors.idDocumentType = "Please select which document you'll use for verification.";
+    }
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const newErrors: { [key: string]: string } = {};
+    const routing = (useTestBankAccount ? TEST_ROUTING : routingNumber).replace(/\D/g, "");
+    const account = (useTestBankAccount ? TEST_ACCOUNT : accountNumber).replace(/\D/g, "");
+    const confirm = (useTestBankAccount ? TEST_ACCOUNT_LAST4 : confirmAccountLast4).replace(/\D/g, "");
+    if (routing.length !== 9) {
+      newErrors.routingNumber = "Routing number must be 9 digits.";
+    }
+    if (account.length < 4) {
+      newErrors.accountNumber = "Account number is required (at least 4 digits).";
+    }
+    const accountLast4 = account.slice(-4);
+    if (confirm !== accountLast4) {
+      newErrors.confirmAccountLast4 = "Confirm account number must match the last 4 digits of your account number.";
+    }
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep4 = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!tosAccepted) {
+      newErrors.tos = "You must accept the Stripe Connected Account Agreement and Terms of Service to continue.";
+    }
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
   };
 
   const parseDob = (dob: string): { day: number; month: number; year: number } | null => {
@@ -258,21 +309,44 @@ export default function PersonalInfoScreen() {
       setStep(2);
       return;
     }
-    // Step 2: Stage 1 – create Connect account; Stage 2 – redirect to Stripe Hosted Onboarding (SSN, DOB, Address, Bank collected by Stripe)
     if (step === 2) {
       if (!validateStep2()) return;
+      setStep(3);
+      return;
+    }
+    if (step === 3) {
+      if (!validateStep3()) return;
+      setStep(4);
+      return;
+    }
+    // Step 4: Create Connect account with ToS, SSN, optional test document, and bank account for payouts
+    if (step === 4) {
+      if (!validateStep4()) return;
       setLoading(true);
+      const routing = (useTestBankAccount ? TEST_ROUTING : routingNumber).replace(/\D/g, "");
+      const account = (useTestBankAccount ? TEST_ACCOUNT : accountNumber).replace(/\D/g, "");
+      const accountHolderName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "Account Holder";
       try {
-        await createCustomConnectAccount({ country: "US" });
-        const { url } = await createOnboardingLink();
-        const returnPath = "banking/setup/success";
-        const redirectUrl = ExpoLinking.createURL(returnPath);
-        await WebBrowser.openAuthSessionAsync(url, redirectUrl);
-        Alert.alert(
-          "Complete verification",
-            "Finish identity verification and add your bank account in the browser. When done, you’ll return to the app.",
-          [{ text: "OK" }]
-        );
+        await createCustomConnectAccount({
+          country: "US",
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          dob: formData.dob,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          ssnLast4: formData.ssnLast4,
+          idDocumentType: idDocumentType || undefined,
+          useTestDocument: __DEV__ ? useTestDocument : false,
+          routingNumber: routing,
+          accountNumber: account,
+          accountHolderName,
+        });
+        router.replace("/banking/setup/success");
+        return;
       } catch (err: any) {
         const code = err?.response?.data?.code;
         const serverMessage = err?.response?.data?.error || err?.message || "";
@@ -280,6 +354,10 @@ export default function PersonalInfoScreen() {
           setApiError(
             "Stripe Issuing isn’t enabled for this app yet. The platform account must complete Issuing onboarding in the Stripe Dashboard (Dashboard → Issuing) before you can create cards."
           );
+        } else if (code === "postal_code_invalid") {
+          setStep(1);
+          setErrors((prev) => ({ ...prev, zipCode: serverMessage || "Please enter a valid 5-digit ZIP that matches your state." }));
+          setApiError("");
         } else {
           setApiError(serverMessage || "Something went wrong");
         }
@@ -319,7 +397,10 @@ export default function PersonalInfoScreen() {
   const handleAddressPlaceSelect = (place: { structuredFormat: { mainText: { text: string }; secondaryText?: { text: string } } }) => {
     const street = place.structuredFormat.mainText?.text ?? "";
     const secondaryText = place.structuredFormat.secondaryText?.text ?? "";
-    const { city, state, zipCode } = parseSecondaryAddress(secondaryText);
+    const { city, state: stateRaw, zipCode } = parseSecondaryAddress(secondaryText);
+    let state = stateRaw.trim().length === 2 ? stateRaw.toUpperCase() : "";
+    const allStates = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC"];
+    if (state && !allStates.includes(state)) state = "";
     setFormData((prev) => ({
       ...prev,
       address: street,
@@ -339,7 +420,7 @@ export default function PersonalInfoScreen() {
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+    outputRange: ["0%", "100%"],
   });
 
   return (
@@ -430,7 +511,9 @@ export default function PersonalInfoScreen() {
           <View style={{ paddingHorizontal: 20 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
               {step === 1 && <Shield size={28} color="#FFFFFF" strokeWidth={2.5} />}
-              {step === 2 && <CreditCard size={28} color="#FFFFFF" strokeWidth={2.5} />}
+              {step === 2 && <FileCheck size={28} color="#FFFFFF" strokeWidth={2.5} />}
+              {step === 3 && <Landmark size={28} color="#FFFFFF" strokeWidth={2.5} />}
+              {step === 4 && <CreditCard size={28} color="#FFFFFF" strokeWidth={2.5} />}
               <Text
                 style={{
                   fontSize: 28,
@@ -441,7 +524,9 @@ export default function PersonalInfoScreen() {
                 }}
               >
                 {step === 1 && "Verify Identity"}
-                {step === 2 && "Accept Terms"}
+                {step === 2 && "Proof of Identity"}
+                {step === 3 && "Add account for payouts"}
+                {step === 4 && "Accept Terms"}
               </Text>
             </View>
             <Text
@@ -453,7 +538,9 @@ export default function PersonalInfoScreen() {
               }}
             >
               {step === 1 && "We need to verify your identity for secure payments"}
-              {step === 2 && "Accept the terms to start receiving money to your balance"}
+              {step === 2 && "Choose the document you'll upload to verify your identity"}
+              {step === 3 && "We'll send earnings you receive to this account."}
+              {step === 4 && "Accept the terms to start receiving money to your balance"}
             </Text>
           </View>
         </View>
@@ -784,15 +871,21 @@ export default function PersonalInfoScreen() {
                 autoComplete="tel"
                 maxLength={14}
               />
+              {__DEV__ && (
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8, flexWrap: "wrap", gap: 8 }}>
+                  <Text style={{ fontSize: 12, color: "#6B7280" }}>
+                    Test: use 000000 on Stripe’s verification screen.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setFormData((prev) => ({ ...prev, phone: "(000) 000-0000" }))}
+                    style={{ paddingVertical: 4, paddingHorizontal: 8, backgroundColor: "#EDE9FE", borderRadius: 8 }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D28D9" }}>Use test number</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               {errors.phone && (
-                <Text
-                  style={{
-                    fontSize: 11,
-                    color: "#EF4444",
-                    marginTop: 6,
-                    fontWeight: "600",
-                  }}
-                >
+                <Text style={{ fontSize: 11, color: "#EF4444", marginTop: 6, fontWeight: "600" }}>
                   ⚠️ {errors.phone}
                 </Text>
               )}
@@ -1035,16 +1128,8 @@ export default function PersonalInfoScreen() {
                 includedRegionCodes={["us"]}
                 onPlaceSelect={handleAddressPlaceSelect}
               />
-
               {errors.address && (
-                <Text
-                  style={{
-                    fontSize: 11,
-                    color: "#EF4444",
-                    marginTop: 6,
-                    fontWeight: "600",
-                  }}
-                >
+                <Text style={{ fontSize: 11, color: "#EF4444", marginTop: 6, fontWeight: "600" }}>
                   ⚠️ {errors.address}
                 </Text>
               )}
@@ -1326,6 +1411,133 @@ export default function PersonalInfoScreen() {
             <View style={{ marginBottom: 20, backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, borderWidth: 2, borderColor: "#F3F4F6" }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
                 <FileCheck size={20} color="#8B5CF6" strokeWidth={2.5} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827", marginLeft: 12 }}>Proof of identity document</Text>
+              </View>
+              {__DEV__ && (
+                <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#FEF3C7", borderRadius: 12 }}>
+                  <Text style={{ fontSize: 13, color: "#92400E", fontWeight: "600" }}>You're using a test account.</Text>
+                  <TouchableOpacity
+                    onPress={() => setUseTestDocument((v) => !v)}
+                    style={{ marginTop: 10, flexDirection: "row", alignItems: "center" }}
+                  >
+                    <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: useTestDocument ? "#8B5CF6" : "#D1D5DB", backgroundColor: useTestDocument ? "#8B5CF6" : "transparent", marginRight: 10, alignItems: "center", justifyContent: "center" }}>
+                      {useTestDocument && <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>✓</Text>}
+                    </View>
+                    <Text style={{ fontSize: 14, color: "#374151", fontWeight: "600" }}>Use test document</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <Text style={{ fontSize: 13, color: "#6B7280", marginBottom: 12 }}>
+                Please pick which document you'd like to upload in order to verify the identity of {[formData.firstName, formData.lastName].filter(Boolean).join(" ") || "the account holder"}.
+              </Text>
+              <View style={{ gap: 8 }}>
+                {ID_DOCUMENT_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => { setIdDocumentType(opt.value); setErrors((e) => ({ ...e, idDocumentType: "" })); }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      borderRadius: 12,
+                      backgroundColor: idDocumentType === opt.value ? "#EDE9FE" : "#F9FAFB",
+                      borderWidth: 1.5,
+                      borderColor: idDocumentType === opt.value ? "#8B5CF6" : "transparent",
+                    }}
+                  >
+                    <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: idDocumentType === opt.value ? "#8B5CF6" : "#D1D5DB", backgroundColor: idDocumentType === opt.value ? "#8B5CF6" : "transparent", marginRight: 12, alignItems: "center", justifyContent: "center" }}>
+                      {idDocumentType === opt.value && <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>✓</Text>}
+                    </View>
+                    <Text style={{ fontSize: 15, fontWeight: "600", color: "#111827" }}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.idDocumentType && (
+                <Text style={{ fontSize: 11, color: "#EF4444", marginTop: 10, fontWeight: "600" }}>⚠️ {errors.idDocumentType}</Text>
+              )}
+            </View>
+          )}
+
+          {step === 3 && (
+            <View style={{ marginBottom: 20, backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, borderWidth: 2, borderColor: "#F3F4F6" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                <Landmark size={20} color="#8B5CF6" strokeWidth={2.5} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827", marginLeft: 12 }}>Add an account for payouts</Text>
+              </View>
+              {__DEV__ && (
+                <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#FEF3C7", borderRadius: 12 }}>
+                  <Text style={{ fontSize: 13, color: "#92400E", fontWeight: "600" }}>You're using a test account.</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setUseTestBankAccount((v) => !v);
+                      if (!useTestBankAccount) {
+                        setRoutingNumber(TEST_ROUTING);
+                        setAccountNumber(TEST_ACCOUNT);
+                        setConfirmAccountLast4(TEST_ACCOUNT_LAST4);
+                        setErrors((e) => ({ ...e, routingNumber: "", accountNumber: "", confirmAccountLast4: "" }));
+                      }
+                    }}
+                    style={{ marginTop: 10, flexDirection: "row", alignItems: "center" }}
+                  >
+                    <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: useTestBankAccount ? "#8B5CF6" : "#D1D5DB", backgroundColor: useTestBankAccount ? "#8B5CF6" : "transparent", marginRight: 10, alignItems: "center", justifyContent: "center" }}>
+                      {useTestBankAccount && <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>✓</Text>}
+                    </View>
+                    <Text style={{ fontSize: 14, color: "#374151", fontWeight: "600" }}>Use test account</Text>
+                  </TouchableOpacity>
+                  {useTestBankAccount && (
+                    <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 8 }}>
+                      Routing {TEST_ROUTING} · Account {TEST_ACCOUNT} · Last 4 {TEST_ACCOUNT_LAST4}
+                    </Text>
+                  )}
+                </View>
+              )}
+              <Text style={{ fontSize: 13, color: "#6B7280", marginBottom: 12 }}>Your bank account must be a checking account.</Text>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>Routing number</Text>
+              <TextInput
+                value={useTestBankAccount ? TEST_ROUTING : routingNumber}
+                onChangeText={(t) => { setRoutingNumber(t.replace(/\D/g, "").slice(0, 9)); setErrors((e) => ({ ...e, routingNumber: "" })); }}
+                placeholder="e.g. 110000000"
+                placeholderTextColor="#9CA3AF"
+                editable={!useTestBankAccount}
+                style={{ borderWidth: 1.5, borderColor: errors.routingNumber ? "#EF4444" : "#E5E7EB", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: "#111827", marginBottom: 12 }}
+                keyboardType="number-pad"
+                maxLength={9}
+              />
+              {errors.routingNumber && <Text style={{ fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {errors.routingNumber}</Text>}
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>Account number</Text>
+              <TextInput
+                value={useTestBankAccount ? TEST_ACCOUNT : accountNumber}
+                onChangeText={(t) => { setAccountNumber(t.replace(/\D/g, "")); setErrors((e) => ({ ...e, accountNumber: "", confirmAccountLast4: "" })); }}
+                placeholder="e.g. 000123456789"
+                placeholderTextColor="#9CA3AF"
+                editable={!useTestBankAccount}
+                style={{ borderWidth: 1.5, borderColor: errors.accountNumber ? "#EF4444" : "#E5E7EB", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: "#111827", marginBottom: 12 }}
+                keyboardType="number-pad"
+              />
+              {errors.accountNumber && <Text style={{ fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {errors.accountNumber}</Text>}
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 }}>Confirm account number</Text>
+              <TextInput
+                value={useTestBankAccount ? TEST_ACCOUNT_LAST4 : confirmAccountLast4}
+                onChangeText={(t) => { setConfirmAccountLast4(t.replace(/\D/g, "").slice(0, 4)); setErrors((e) => ({ ...e, confirmAccountLast4: "" })); }}
+                placeholder="Last 4 digits"
+                placeholderTextColor="#9CA3AF"
+                editable={!useTestBankAccount}
+                style={{ borderWidth: 1.5, borderColor: errors.confirmAccountLast4 ? "#EF4444" : "#E5E7EB", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: "#111827", marginBottom: 12 }}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
+              {errors.confirmAccountLast4 && <Text style={{ fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {errors.confirmAccountLast4}</Text>}
+              <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 8, lineHeight: 18 }}>
+                By adding your bank account to your Stripe account and clicking below, you authorize Stripe to debit your bank as described in these terms.
+              </Text>
+            </View>
+          )}
+
+          {step === 4 && (
+            <View style={{ marginBottom: 20, backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3, borderWidth: 2, borderColor: "#F3F4F6" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+                <FileCheck size={20} color="#8B5CF6" strokeWidth={2.5} />
                 <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827", marginLeft: 12 }}>Stripe Terms of Service</Text>
               </View>
               <TouchableOpacity onPress={() => { setTosAccepted((v) => !v); setErrors((e) => ({ ...e, tos: "" })); }} style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
@@ -1335,7 +1547,7 @@ export default function PersonalInfoScreen() {
                 <Text style={{ flex: 1, fontSize: 14, color: "#374151" }}>I accept the Stripe Connected Account Agreement and Stripe Terms of Service</Text>
               </TouchableOpacity>
               {errors.tos && <Text style={{ fontSize: 11, color: "#EF4444", marginBottom: 12 }}>⚠️ {errors.tos}</Text>}
-              <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 8 }}>Money you receive will be stored in your Stripe balance. You can add a bank account later in settings if you want to withdraw.</Text>
+              <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 8 }}>Money you receive will be stored in your Stripe balance. Payouts will go to the bank account you added.</Text>
             </View>
           )}
         </Animated.ScrollView>
@@ -1364,7 +1576,7 @@ export default function PersonalInfoScreen() {
           }}
         >
           <TouchableOpacity
-            onPress={() => (step > 1 ? setStep(1) : router.back())}
+            onPress={() => (step > 1 ? setStep((s) => (s - 1) as 1 | 2 | 3 | 4) : router.back())}
             disabled={loading}
             style={{
               paddingVertical: 12,
@@ -1402,7 +1614,7 @@ export default function PersonalInfoScreen() {
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>
-                {step === 2 ? "Complete setup" : "Continue"}
+                {step === 4 ? "Complete setup" : "Continue"}
               </Text>
             )}
           </TouchableOpacity>

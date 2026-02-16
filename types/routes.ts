@@ -32,11 +32,14 @@ export type AppRoute =
     | "/banking/setup/review-submit"
     | "/banking/setup/success"
     | "/banking/setup/apple-pay-setup"
+    | "/banking/setup/issuing-card"
     // Event detail
     | `/event-detail/${string}`
     // Event dashboard sub-routes
     | `/event-dashboard/${string}/edit`
     | `/event-dashboard/${string}/add-guests`
+    // Child (single-screen app from parent's SMS link)
+    | "/child"
     // Not found
     | "/+not-found";
 
@@ -96,12 +99,14 @@ export const routes = {
             reviewSubmit: route("/banking/setup/review-submit"),
             success: route("/banking/setup/success"),
             applePaySetup: route("/banking/setup/apple-pay-setup"),
+            issuingCard: route("/banking/setup/issuing-card"),
         },
     },
     eventDetail: (id: string) => route(`/event-detail/${id}`),
     eventDashboard: (id: string) => route(`/event-dashboard/${id}`),
     editEvent: (id: string) => route(`/event-dashboard/edit/${id}`),
     addGuests: (id: string) => route(`/event-dashboard/add-guests/${id}`),
+    child: route("/child"),
     notFound: route("/+not-found"),
 } as const;
 

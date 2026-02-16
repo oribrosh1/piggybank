@@ -23,6 +23,27 @@ export interface CreateExpressAccountResponse {
 
 export interface CreateCustomConnectAccountPayload {
     country?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    dob: string;
+    address: string;
+    address2?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    ssnLast4: string;
+    /** Document type chosen by user (e.g. drivers_license, passport). */
+    idDocumentType?: string;
+    /** If true (test mode only), backend attaches Stripe test identity document. */
+    useTestDocument?: boolean;
+    /** Bank account for payouts: 9-digit routing number. */
+    routingNumber?: string;
+    /** Bank account number (full). */
+    accountNumber?: string;
+    /** Account holder name for the bank account. */
+    accountHolderName?: string;
 }
 
 export interface CreateCustomConnectAccountResponse {
@@ -180,6 +201,8 @@ export interface GetAccountDetailsResponse {
         payments: Record<string, unknown>;
     };
     external_accounts: ExternalBankAccount[];
+    cardholderId?: string | null;
+    virtualCardId?: string | null;
     created: number;
     success: boolean;
 }
@@ -356,6 +379,44 @@ async function authHeaders(): Promise<{ Authorization: string }> {
 }
 
 // ============================================
+// Child invite (parent link → child claims account)
+// ============================================
+
+export interface GetChildInviteLinkResponse {
+    link: string;
+    expiresAt: string;
+    token: string;
+}
+
+export interface ClaimChildInviteResponse {
+    customToken: string;
+    childAccountId: string;
+    eventId: string;
+    eventName?: string;
+}
+
+/** Parent: get SMS link for child to open (requires auth). */
+export async function getChildInviteLink(eventId: string): Promise<GetChildInviteLinkResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<GetChildInviteLinkResponse>(
+        `${BASE}/getChildInviteLink`,
+        { eventId },
+        { headers }
+    );
+    return res.data;
+}
+
+/** Child: claim invite with token from link (no auth). Returns customToken to sign in. */
+export async function claimChildInvite(token: string): Promise<ClaimChildInviteResponse> {
+    const res = await axios.post<ClaimChildInviteResponse>(
+        `${BASE}/claimChildInvite`,
+        { token },
+        { headers: { 'Content-Type': 'application/json' } }
+    );
+    return res.data;
+}
+
+// ============================================
 // API Functions
 // ============================================
 
@@ -379,7 +440,7 @@ export async function createExpressAccount(
  * Call this before updating individual/business info and adding bank account.
  */
 export async function createCustomConnectAccount(
-    payload: CreateCustomConnectAccountPayload = {}
+    payload: CreateCustomConnectAccountPayload
 ): Promise<CreateCustomConnectAccountResponse> {
     const headers = await authHeaders();
     const res = await axios.post<CreateCustomConnectAccountResponse>(

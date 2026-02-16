@@ -10,11 +10,19 @@ service cloud.firestore {
     }
     
     // Events collection - authenticated users can create, owners can edit
+    // Child users (role=='child') can only read their linked event (eventId claim)
     match /events/{eventId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null &&
+        (request.auth.token.role != 'child' || resource.id == request.auth.token.eventId);
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && 
         (resource.data.creatorId == request.auth.uid || resource.data.hostId == request.auth.uid);
+    }
+
+    // Child accounts - child can read their own doc (by userId)
+    match /childAccounts/{childAccountId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
     }
     
     // Families collection

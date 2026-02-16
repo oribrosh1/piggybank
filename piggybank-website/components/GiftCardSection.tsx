@@ -187,7 +187,7 @@ export default function GiftCardSection({ firstName, eventType, typeLabel, age }
                         <div className="relative">
                             {/* CreditKid Badge */}
                             <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg mb-4">
-                                <span className="text-xs font-bold text-white">🐷 CreditKid Gift</span>
+                                <span className="text-xs font-bold text-white"> CreditKid Gift</span>
                             </div>
 
                             {/* Amount */}

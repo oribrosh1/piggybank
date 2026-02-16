@@ -609,7 +609,7 @@ export default function HomeScreen() {
                                 marginBottom: 4,
                             }}
                         >
-                            Banking
+                            Credit
                         </Text>
                         <Text
                             style={{
@@ -772,7 +772,7 @@ export default function HomeScreen() {
                                             VIRTUAL CARD
                                         </Text>
                                         <Text style={{ fontSize: 20, fontWeight: '900', color: '#FFFFFF', marginTop: 4 }}>
-                                            PiggyBank
+                                            CreditKid
                                         </Text>
                                     </View>
                                     <View
@@ -1159,7 +1159,7 @@ export default function HomeScreen() {
                                     </View>
                                 </View>
                                 <Text style={{ fontSize: 14, fontWeight: '800', color: '#065F46', textAlign: 'center', marginBottom: 8 }}>
-                                    PiggyBank
+                                    CreditKid
                                 </Text>
                                 <View style={{ gap: 6 }}>
                                     {['Use anywhere', 'Only 3% fee', 'Apple Pay ready', 'Never expires'].map((text, i) => (

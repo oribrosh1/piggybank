@@ -10,6 +10,7 @@ import {
   Modal,
   Keyboard,
   FlatList,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -706,89 +707,94 @@ export default function EventDetailsScreen() {
                         )}
                       </View>
 
-                      {/* Attire Type - Single Select */}
-                      <View style={{ marginBottom: 16 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                          <Text style={{ fontSize: 16 }}>👕</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Attire Type</Text>
-                          <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-                        </View>
-                        <View style={{ flexDirection: "row", gap: 10 }}>
-                          {[
-                            { value: "casual", label: "👕 Casual", desc: "Everyday wear" },
-                            { value: "swimwear", label: "🩱 Swimwear", desc: "Pool/Beach" },
-                            { value: "costume", label: "🎭 Costume", desc: "Themed outfit" },
-                          ].map((option) => (
-                            <TouchableOpacity
-                              key={option.value}
-                              onPress={() => handleInputChange("attireType", option.value)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: formData.attireType === option.value ? "#06D6A0" : "#F9FAFB",
-                                borderRadius: 14,
-                                paddingVertical: 14,
-                                paddingHorizontal: 10,
-                                alignItems: "center",
-                                borderWidth: 2,
-                                borderColor: formData.attireType === option.value ? "#06D6A0" : "#E5E7EB",
-                              }}
-                            >
-                              <Text style={{ fontSize: 22, marginBottom: 4 }}>{option.label.split(" ")[0]}</Text>
-                              <Text style={{
-                                fontSize: 12,
-                                fontWeight: "700",
-                                color: formData.attireType === option.value ? "#FFFFFF" : "#374151",
-                                textAlign: "center",
-                              }}>{option.label.split(" ")[1]}</Text>
-                              <Text style={{
-                                fontSize: 10,
-                                color: formData.attireType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
-                                marginTop: 2,
-                                textAlign: "center",
-                              }}>{option.desc}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
+                      {/* Attire Type & Footwear – hidden for Restaurant */}
+                      {formData.partyType !== "restaurant" && (
+                        <>
+                          {/* Attire Type - Single Select */}
+                          <View style={{ marginBottom: 16 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                              <Text style={{ fontSize: 16 }}>👕</Text>
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Attire Type</Text>
+                              <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", gap: 10 }}>
+                              {[
+                                { value: "casual", label: "👕 Casual", desc: "Everyday wear" },
+                                { value: "swimwear", label: "🩱 Swimwear", desc: "Pool/Beach" },
+                                { value: "costume", label: "🎭 Costume", desc: "Themed outfit" },
+                              ].map((option) => (
+                                <TouchableOpacity
+                                  key={option.value}
+                                  onPress={() => handleInputChange("attireType", option.value)}
+                                  style={{
+                                    flex: 1,
+                                    backgroundColor: formData.attireType === option.value ? "#06D6A0" : "#F9FAFB",
+                                    borderRadius: 14,
+                                    paddingVertical: 14,
+                                    paddingHorizontal: 10,
+                                    alignItems: "center",
+                                    borderWidth: 2,
+                                    borderColor: formData.attireType === option.value ? "#06D6A0" : "#E5E7EB",
+                                  }}
+                                >
+                                  <Text style={{ fontSize: 22, marginBottom: 4 }}>{option.label.split(" ")[0]}</Text>
+                                  <Text style={{
+                                    fontSize: 12,
+                                    fontWeight: "700",
+                                    color: formData.attireType === option.value ? "#FFFFFF" : "#374151",
+                                    textAlign: "center",
+                                  }}>{option.label.split(" ")[1]}</Text>
+                                  <Text style={{
+                                    fontSize: 10,
+                                    color: formData.attireType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
+                                    marginTop: 2,
+                                    textAlign: "center",
+                                  }}>{option.desc}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          </View>
 
-                      {/* Footwear Type - Single Select */}
-                      <View style={{ marginBottom: 14 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                          <Text style={{ fontSize: 16 }}>👟</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Footwear</Text>
-                          <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-                        </View>
-                        <View style={{ flexDirection: "row", gap: 10 }}>
-                          {[
-                            { value: "sneakers", label: "👟", name: "Sneakers" },
-                            { value: "slides", label: "🩴", name: "Slides" },
-                            { value: "any", label: "✨", name: "Any" },
-                          ].map((option) => (
-                            <TouchableOpacity
-                              key={option.value}
-                              onPress={() => handleInputChange("footwearType", option.value)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: formData.footwearType === option.value ? "#06D6A0" : "#F9FAFB",
-                                borderRadius: 14,
-                                paddingVertical: 14,
-                                paddingHorizontal: 10,
-                                alignItems: "center",
-                                borderWidth: 2,
-                                borderColor: formData.footwearType === option.value ? "#06D6A0" : "#E5E7EB",
-                              }}
-                            >
-                              <Text style={{ fontSize: 24, marginBottom: 4 }}>{option.label}</Text>
-                              <Text style={{
-                                fontSize: 12,
-                                fontWeight: "700",
-                                color: formData.footwearType === option.value ? "#FFFFFF" : "#374151",
-                                textAlign: "center",
-                              }}>{option.name}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
+                          {/* Footwear Type - Single Select */}
+                          <View style={{ marginBottom: 14 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                              <Text style={{ fontSize: 16 }}>👟</Text>
+                              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Footwear</Text>
+                              <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                            </View>
+                            <View style={{ flexDirection: "row", gap: 10 }}>
+                              {[
+                                { value: "sneakers", label: "👟", name: "Sneakers" },
+                                { value: "slides", label: "🩴", name: "Slides" },
+                                { value: "any", label: "✨", name: "Any" },
+                              ].map((option) => (
+                                <TouchableOpacity
+                                  key={option.value}
+                                  onPress={() => handleInputChange("footwearType", option.value)}
+                                  style={{
+                                    flex: 1,
+                                    backgroundColor: formData.footwearType === option.value ? "#06D6A0" : "#F9FAFB",
+                                    borderRadius: 14,
+                                    paddingVertical: 14,
+                                    paddingHorizontal: 10,
+                                    alignItems: "center",
+                                    borderWidth: 2,
+                                    borderColor: formData.footwearType === option.value ? "#06D6A0" : "#E5E7EB",
+                                  }}
+                                >
+                                  <Text style={{ fontSize: 24, marginBottom: 4 }}>{option.label}</Text>
+                                  <Text style={{
+                                    fontSize: 12,
+                                    fontWeight: "700",
+                                    color: formData.footwearType === option.value ? "#FFFFFF" : "#374151",
+                                    textAlign: "center",
+                                  }}>{option.name}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          </View>
+                        </>
+                      )}
                     </>
                   )}
 
@@ -922,7 +928,12 @@ export default function EventDetailsScreen() {
                         ].map((option) => (
                           <TouchableOpacity
                             key={option.value}
-                            onPress={() => handleInputChange("mealType", option.value)}
+                            onPress={() => {
+                              if (option.value === "meat") {
+                                handleInputChange("vegetarianType", "");
+                              }
+                              handleInputChange("mealType", option.value);
+                            }}
                             style={{
                               flex: 1,
                               backgroundColor: formData.mealType === option.value ? "#06D6A0" : "#F9FAFB",
@@ -953,50 +964,72 @@ export default function EventDetailsScreen() {
                     </View>
                   )}
 
-                  {/* Vegetarian Options - Single Select */}
-                  <View>
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                      <Text style={{ fontSize: 16 }}>🌱</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Vegetarian Options</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                  {/* Vegetarian: when Meat = "by request" toggle; when Dairy/Pareve = primary option (None/Vegetarian/Vegan) */}
+                  {formData.mealType === "meat" ? (
+                    <View style={{ marginBottom: 16 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16 }}>🌱</Text>
+                          <Text style={{ fontSize: 14, fontWeight: "700", color: "#374151", marginTop: 4 }}>
+                            Offer vegetarian meals (guests can request)
+                          </Text>
+                          <Text style={{ fontSize: 12, fontWeight: "500", color: "#9CA3AF", marginTop: 4 }}>
+                            Guests can choose if they want a vegetarian option; you'll know to prepare it.
+                          </Text>
+                        </View>
+                        <Switch
+                          value={formData.vegetarianType === "by_request"}
+                          onValueChange={(value) => handleInputChange("vegetarianType", value ? "by_request" : "")}
+                          trackColor={{ false: "#E5E7EB", true: "#A7F3D0" }}
+                          thumbColor={formData.vegetarianType === "by_request" ? "#06D6A0" : "#9CA3AF"}
+                        />
+                      </View>
                     </View>
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      {[
-                        { value: "none", label: "🍴", name: "None", desc: "Regular menu" },
-                        { value: "vegetarian", label: "🥗", name: "Vegetarian", desc: "No meat" },
-                        { value: "vegan", label: "🌱", name: "Vegan", desc: "Plant-based" },
-                      ].map((option) => (
-                        <TouchableOpacity
-                          key={option.value}
-                          onPress={() => handleInputChange("vegetarianType", option.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: formData.vegetarianType === option.value ? "#06D6A0" : "#F9FAFB",
-                            borderRadius: 14,
-                            paddingVertical: 12,
-                            paddingHorizontal: 8,
-                            alignItems: "center",
-                            borderWidth: 2,
-                            borderColor: formData.vegetarianType === option.value ? "#06D6A0" : "#E5E7EB",
-                          }}
-                        >
-                          <Text style={{ fontSize: 20, marginBottom: 4 }}>{option.label}</Text>
-                          <Text style={{
-                            fontSize: 11,
-                            fontWeight: "700",
-                            color: formData.vegetarianType === option.value ? "#FFFFFF" : "#374151",
-                            textAlign: "center",
-                          }}>{option.name}</Text>
-                          <Text style={{
-                            fontSize: 10,
-                            fontWeight: "500",
-                            color: formData.vegetarianType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
-                            textAlign: "center",
-                          }}>{option.desc}</Text>
-                        </TouchableOpacity>
-                      ))}
+                  ) : (
+                    <View>
+                      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                        <Text style={{ fontSize: 16 }}>🌱</Text>
+                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Vegetarian Options</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
+                      </View>
+                      <View style={{ flexDirection: "row", gap: 10 }}>
+                        {[
+                          { value: "none", label: "🍴", name: "None", desc: "Regular menu" },
+                          { value: "vegetarian", label: "🥗", name: "Vegetarian", desc: "No meat" },
+                          { value: "vegan", label: "🌱", name: "Vegan", desc: "Plant-based" },
+                        ].map((option) => (
+                          <TouchableOpacity
+                            key={option.value}
+                            onPress={() => handleInputChange("vegetarianType", option.value)}
+                            style={{
+                              flex: 1,
+                              backgroundColor: formData.vegetarianType === option.value ? "#06D6A0" : "#F9FAFB",
+                              borderRadius: 14,
+                              paddingVertical: 12,
+                              paddingHorizontal: 8,
+                              alignItems: "center",
+                              borderWidth: 2,
+                              borderColor: formData.vegetarianType === option.value ? "#06D6A0" : "#E5E7EB",
+                            }}
+                          >
+                            <Text style={{ fontSize: 20, marginBottom: 4 }}>{option.label}</Text>
+                            <Text style={{
+                              fontSize: 11,
+                              fontWeight: "700",
+                              color: formData.vegetarianType === option.value ? "#FFFFFF" : "#374151",
+                              textAlign: "center",
+                            }}>{option.name}</Text>
+                            <Text style={{
+                              fontSize: 10,
+                              fontWeight: "500",
+                              color: formData.vegetarianType === option.value ? "rgba(255,255,255,0.8)" : "#9CA3AF",
+                              textAlign: "center",
+                            }}>{option.desc}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
-                  </View>
+                  )}
                 </>
               )}
             </View>

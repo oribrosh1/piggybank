@@ -8,33 +8,52 @@ type PublicProfile = {
     accountType?: string;
 };
 
+const LOG_PREFIX = '[CreditKid /users/[slug]]';
+
 /** Resolve user by profileSlug (name-based) or by uid for backward compatibility */
 async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | null> {
+    const slugTrim = (slug || '').trim();
+    console.log(`${LOG_PREFIX} getPublicProfileBySlug start`, {
+        slug: slugTrim,
+        slugLength: slugTrim.length,
+        slugLower: slugTrim.toLowerCase(),
+        is28Alnum: slugTrim.length === 28 && /^[a-zA-Z0-9]+$/.test(slugTrim),
+    });
+
     try {
         const db = await getAdminDb();
-        const slugTrim = (slug || '').trim();
         if (!slugTrim) {
-            console.log('[users/[slug]] getPublicProfileBySlug: empty slug');
+            console.log(`${LOG_PREFIX} getPublicProfileBySlug: empty slug, returning null`);
             return null;
         }
 
-        // 1) Try by profileSlug (name-based URL)
-        const bySlug = await db.collection('users').where('profileSlug', '==', slugTrim).limit(1).get();
+        // 1) Try by profileSlug (exact match – Firestore is case-sensitive)
+        let bySlug = await db.collection('users').where('profileSlug', '==', slugTrim).limit(1).get();
+        console.log(`${LOG_PREFIX} query profileSlug==slugTrim`, { slug: slugTrim, empty: bySlug.empty, size: bySlug.size });
+
+        if (bySlug.empty && slugTrim !== slugTrim.toLowerCase()) {
+            const slugLower = slugTrim.toLowerCase();
+            bySlug = await db.collection('users').where('profileSlug', '==', slugLower).limit(1).get();
+            console.log(`${LOG_PREFIX} query profileSlug==slugLower (fallback)`, { slugLower, empty: bySlug.empty, size: bySlug.size });
+        }
+
         if (!bySlug.empty) {
             const data = bySlug.docs[0].data();
-            console.log('[users/[slug]] getPublicProfileBySlug: found by profileSlug', { slug: slugTrim, fullName: data?.fullName });
+            const docId = bySlug.docs[0].id;
+            console.log(`${LOG_PREFIX} found by profileSlug`, { slug: slugTrim, docId, fullName: data?.fullName, hasProfileSlug: !!data?.profileSlug });
             return {
                 fullName: data?.fullName ?? 'CreditKid Member',
                 accountType: data?.accountType,
             };
         }
 
-        // 2) Fallback: treat slug as uid (Firebase ids are 28 chars, alphanumeric) for old links
+        // 3) Fallback: treat slug as uid (Firebase ids are 28 chars, alphanumeric) for old links
         if (slugTrim.length === 28 && /^[a-zA-Z0-9]+$/.test(slugTrim)) {
             const userDoc = await db.collection('users').doc(slugTrim).get();
+            console.log(`${LOG_PREFIX} uid fallback doc.get`, { slug: slugTrim, exists: userDoc.exists });
             if (userDoc.exists) {
                 const data = userDoc.data();
-                console.log('[users/[slug]] getPublicProfileBySlug: found by uid fallback', { slug: slugTrim, fullName: data?.fullName });
+                console.log(`${LOG_PREFIX} found by uid fallback`, { slug: slugTrim, fullName: data?.fullName });
                 return {
                     fullName: data?.fullName ?? 'CreditKid Member',
                     accountType: data?.accountType,
@@ -42,10 +61,10 @@ async function getPublicProfileBySlug(slug: string): Promise<PublicProfile | nul
             }
         }
 
-        console.log('[users/[slug]] getPublicProfileBySlug: not found', { slug: slugTrim });
+        console.log(`${LOG_PREFIX} not found (no match)`, { slug: slugTrim });
         return null;
     } catch (err) {
-        console.error('[users/[slug]] getPublicProfileBySlug error:', err);
+        console.error(`${LOG_PREFIX} getPublicProfileBySlug error`, { slug: slugTrim, error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
         return null;
     }
 }
@@ -55,9 +74,11 @@ export async function generateMetadata({
 }: {
     params: { slug: string };
 }): Promise<Metadata> {
-    console.log('[users/[slug]] generateMetadata: slug', { slug: params.slug });
-    const profile = await getPublicProfileBySlug(params.slug);
+    const slug = typeof params.slug === 'string' ? params.slug : (params as { slug?: string }).slug ?? '';
+    console.log(`${LOG_PREFIX} generateMetadata`, { slug });
+    const profile = await getPublicProfileBySlug(slug);
     if (!profile) {
+        console.log(`${LOG_PREFIX} generateMetadata: no profile, title=Not Found`);
         return { title: 'Not Found | CreditKid' };
     }
     return {
@@ -74,13 +95,14 @@ export default async function UserProfilePage({
 }: {
     params: { slug: string };
 }) {
-    console.log('[users/[slug]] UserProfilePage: resolving slug', { slug: params.slug });
-    const profile = await getPublicProfileBySlug(params.slug);
+    const slug = typeof params.slug === 'string' ? params.slug : (params as { slug?: string }).slug ?? '';
+    console.log(`${LOG_PREFIX} UserProfilePage request`, { slug, timestamp: new Date().toISOString() });
+    const profile = await getPublicProfileBySlug(slug);
     if (!profile) {
-        console.log('[users/[slug]] UserProfilePage: profile not found, returning 404');
+        console.log(`${LOG_PREFIX} UserProfilePage 404 notFound`, { slug });
         notFound();
     }
-    console.log('[users/[slug]] UserProfilePage: rendering profile', { fullName: profile.fullName });
+    console.log(`${LOG_PREFIX} UserProfilePage 200 OK`, { slug, fullName: profile.fullName });
 
     const theme = {
         gradient: 'from-violet-500 via-purple-600 to-fuchsia-600',
@@ -151,7 +173,7 @@ export default async function UserProfilePage({
                     {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
                         <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                            <span className="text-3xl">🐷</span>
+                            <span className="text-3xl"></span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
                             Powered by CreditKid

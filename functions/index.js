@@ -26,6 +26,10 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({ origin: true }));
+
+// Stripe webhook must get raw body for signature verification – register before express.json()
+app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhookHandler);
+
 app.use(express.json({ limit: '10mb' }));
 
 // Middleware: Verify Firebase ID token
@@ -49,6 +53,26 @@ async function verifyFirebaseToken(req, res, next) {
 // Base URL for public profile (Stripe business_profile.url)
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://creditkid.vercel.app";
 
+/** Parse client dob string "MM/DD/YYYY" to Stripe format { day, month, year }. Returns null if invalid. */
+function parseDobString(dob) {
+    if (!dob || typeof dob !== "string") return null;
+    const match = dob.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) return null;
+    const month = parseInt(match[1], 10);
+    const day = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > new Date().getFullYear()) return null;
+    return { day, month, year };
+}
+
+/** Normalize US ZIP to 5 digits (digits only, first 5). Returns null if fewer than 5 digits. */
+function normalizeUSZip(zipCode) {
+    if (zipCode == null) return null;
+    const digits = String(zipCode).replace(/\D/g, "");
+    if (digits.length < 5) return null;
+    return digits.slice(0, 5);
+}
+
 // ============================================
 // STAGE 1 – CREATE STRIPE CUSTOM CONNECT ACCOUNT (Connect + Issuing)
 // Country: US, Type: custom, Business Type: individual
@@ -57,11 +81,14 @@ const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL 
 // ============================================
 app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) => {
     const uid = req.user.uid;
-    const { country = "US" } = req.body;
+    const { country = "US", firstName, lastName, email, phone, dob, address, address2, city, state, zipCode, ssnLast4, idDocumentType, useTestDocument, routingNumber, accountNumber, accountHolderName } = req.body;
+
+    console.log("[createCustomConnectAccount] Start", { uid, country, hasZip: !!zipCode, useTestDocument: !!useTestDocument, hasBank: !!(routingNumber && accountNumber && accountHolderName) });
 
     try {
         const existing = await db.collection("stripeAccounts").doc(uid).get();
         if (existing.exists && existing.data().accountId) {
+            console.log("[createCustomConnectAccount] Existing account, skip create", { uid, accountId: existing.data().accountId });
             return res.json({
                 accountId: existing.data().accountId,
                 success: true,
@@ -82,13 +109,77 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
             }
+            console.log("[createCustomConnectAccount] Generated profileSlug", { uid, profileSlug });
         }
         const profileUrl = `${PUBLIC_BASE_URL}/users/${profileSlug}`;
-        console.log(`[Stage 1] Creating Custom Connect account for user ${uid}, profile URL: ${profileUrl}`);
+        console.log("[createCustomConnectAccount] Creating Custom Connect account", { uid, profileUrl });
 
-        const account = await stripeService.createCustomConnectAccount(stripe, { country, profileUrl });
+        const dobObj = parseDobString(dob);
+        const isTestMode = (process.env.STRIPE_SECRET_KEY || "").toString().startsWith("sk_test_");
+        const accountPhone = isTestMode ? "0000000000" : phone;
+        const normalizedZip = country === "US" ? normalizeUSZip(zipCode) : (zipCode ? String(zipCode).trim() : undefined);
+        if (country === "US" && (!normalizedZip || normalizedZip.length !== 5)) {
+            console.log("[createCustomConnectAccount] Invalid ZIP", { uid, zipCode: zipCode ? "***" : null, normalizedZip });
+            return res.status(400).json({
+                error: "Please enter a valid 5-digit US ZIP code.",
+                code: "postal_code_invalid",
+                param: "zipCode",
+            });
+        }
 
-        console.log(`Created Custom account: ${account.id}`);
+        const account = await stripeService.createCustomConnectAccount(stripe, { country, profileUrl, firstName, lastName, email, phone: accountPhone, dob: dobObj, address, address2, city, state, zipCode: normalizedZip || zipCode, ssnLast4 });
+        console.log("[createCustomConnectAccount] Account created", { uid, accountId: account.id });
+
+        if (useTestDocument && isTestMode) {
+            try {
+                await stripe.accounts.update(account.id, {
+                    individual: { verification: { document: { front: "file_identity_document_success" } } },
+                });
+                console.log("[createCustomConnectAccount] Test identity document attached", { accountId: account.id });
+            } catch (docErr) {
+                console.warn("[createCustomConnectAccount] Test document attach failed (non-blocking)", { accountId: account.id, message: docErr.message });
+            }
+        }
+
+        // In test mode, provide full SSN via account token so Stripe clears "Social Security Number (SSN)" requirement
+        if (isTestMode) {
+            try {
+                const accountToken = await stripe.tokens.create({
+                    account: {
+                        business_type: "individual",
+                        individual: { id_number: "000000000" },
+                    },
+                });
+                await stripe.accounts.update(account.id, { account_token: accountToken.id });
+                console.log("[createCustomConnectAccount] Test full SSN set", { accountId: account.id });
+            } catch (ssnErr) {
+                console.warn("[createCustomConnectAccount] Test SSN token failed (non-blocking)", { accountId: account.id, message: ssnErr.message });
+            }
+        }
+
+        if (routingNumber && accountNumber && accountHolderName) {
+            const routing = String(routingNumber).replace(/\D/g, "");
+            const accountNum = String(accountNumber).replace(/\D/g, "");
+            if (routing.length === 9 && accountNum.length >= 4) {
+                try {
+                    await stripe.accounts.createExternalAccount(account.id, {
+                        external_account: {
+                            object: "bank_account",
+                            country: "US",
+                            currency: "usd",
+                            account_holder_name: String(accountHolderName).trim() || "Account Holder",
+                            routing_number: routing,
+                            account_number: accountNum,
+                        },
+                    });
+                    console.log("[createCustomConnectAccount] External bank account added", { accountId: account.id });
+                } catch (bankErr) {
+                    console.warn("[createCustomConnectAccount] Add bank account failed (non-blocking)", { accountId: account.id, message: bankErr.message });
+                }
+            } else {
+                console.log("[createCustomConnectAccount] Bank details skipped (invalid)", { accountId: account.id, routingLen: routing.length, accountLen: accountNum.length });
+            }
+        }
 
         await db.collection("stripeAccounts").doc(uid).set({
             accountId: account.id,
@@ -106,6 +197,27 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         }).catch(() => {});
 
+        // In test mode, add a small amount to the new connected account balance (simulates first payment)
+        if (isTestMode) {
+            const testBalanceCents = 1000; // $10.00
+            try {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: testBalanceCents,
+                    currency: "usd",
+                    payment_method: "pm_card_visa",
+                    confirm: true,
+                    automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+                    transfer_data: { destination: account.id },
+                    description: "Welcome test credit",
+                    metadata: { testPayment: "true", userId: uid, welcomeCredit: "true" },
+                });
+                console.log("[createCustomConnectAccount] Test welcome balance added", { accountId: account.id, amount: testBalanceCents, pi: paymentIntent.id });
+            } catch (welcomeErr) {
+                console.warn("[createCustomConnectAccount] Test welcome balance failed (non-blocking)", { accountId: account.id, message: welcomeErr.message });
+            }
+        }
+
+        console.log("[createCustomConnectAccount] Success", { uid, accountId: account.id });
         res.json({
             accountId: account.id,
             success: true,
@@ -123,6 +235,14 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
                 source: "createCustomConnectAccount",
             });
         }
+        if (err.code === "postal_code_invalid" || (err.param && String(err.param).includes("postal_code"))) {
+            console.error("[createCustomConnectAccount] Stripe rejected postal code:", err.message);
+            return res.status(400).json({
+                error: "The ZIP code doesn't match a valid US address. Please check that your ZIP code matches your state (e.g. Florida ZIPs start with 32–34).",
+                code: "postal_code_invalid",
+                param: "zipCode",
+            });
+        }
         console.error("[createCustomConnectAccount] Error creating Custom Connect account:", err);
         res.status(500).json({ error: err.message });
     }
@@ -134,7 +254,6 @@ app.post("/createCustomConnectAccount", verifyFirebaseToken, async (req, res) =>
 // ============================================
 app.post("/createOnboardingLink", verifyFirebaseToken, async (req, res) => {
     const uid = req.user.uid;
-
     try {
         const doc = await db.collection("stripeAccounts").doc(uid).get();
         if (!doc.exists || !doc.data().accountId) {
@@ -512,6 +631,9 @@ app.post("/topUpIssuing", verifyFirebaseToken, async (req, res) => {
 // ============================================
 // STAGE 3 – CREATE CARDHOLDER (individual, KYC details)
 // ============================================
+// Valid E.164 test phone for Issuing cardholders (Stripe rejects placeholders like +10000000000)
+const ISSUING_TEST_PHONE = "+15555555555";
+
 app.post("/createIssuingCardholder", verifyFirebaseToken, async (req, res) => {
     const uid = req.user.uid;
     const { name, email, phone, line1, line2, city, state, postal_code, dob } = req.body;
@@ -520,6 +642,10 @@ app.post("/createIssuingCardholder", verifyFirebaseToken, async (req, res) => {
     }
     const [first_name, ...lastParts] = (name || "").trim().split(/\s+/);
     const last_name = lastParts.length ? lastParts.join(" ") : first_name;
+    const isTestMode = (process.env.STRIPE_SECRET_KEY || "").toString().startsWith("sk_test_");
+    const raw = (phone || "").toString().replace(/\D/g, "");
+    const isPlaceholderPhone = !phone || raw === "0000000000" || raw === "10000000000" || phone === "+10000000000";
+    const cardholderPhone = (isTestMode && isPlaceholderPhone) ? ISSUING_TEST_PHONE : (phone || undefined);
     try {
         const doc = await db.collection("stripeAccounts").doc(uid).get();
         if (!doc.exists || !doc.data().accountId) {
@@ -533,7 +659,7 @@ app.post("/createIssuingCardholder", verifyFirebaseToken, async (req, res) => {
             accountId,
             name: `${first_name} ${last_name}`,
             email,
-            phone,
+            phone: cardholderPhone,
             line1,
             line2,
             city,
@@ -566,7 +692,10 @@ app.post("/createVirtualCard", verifyFirebaseToken, async (req, res) => {
         if (!doc.exists || !doc.data().accountId) {
             return res.status(404).json({ error: "No Stripe account found" });
         }
-        const { accountId, cardholderId } = doc.data();
+        const { accountId, cardholderId, virtualCardId: existingCardId } = doc.data();
+        if (existingCardId) {
+            return res.status(400).json({ error: "You already have a virtual card.", code: "card_exists" });
+        }
         if (!cardholderId) {
             return res.status(400).json({ error: "Create cardholder first (createIssuingCardholder)" });
         }
@@ -785,7 +914,7 @@ app.get("/getAccountDetails", verifyFirebaseToken, async (req, res) => {
             return res.status(404).json({ error: "No Stripe account found" });
         }
 
-        const { accountId } = doc.data();
+        const { accountId, cardholderId, virtualCardId } = doc.data();
 
         // Retrieve full account details from Stripe
         const account = await stripe.accounts.retrieve(accountId);
@@ -819,6 +948,9 @@ app.get("/getAccountDetails", verifyFirebaseToken, async (req, res) => {
                 payouts: account.settings?.payouts,
                 payments: account.settings?.payments,
             },
+            // Issuing (from Firestore)
+            cardholderId: cardholderId || null,
+            virtualCardId: virtualCardId || null,
             // External accounts (bank accounts)
             external_accounts: externalAccounts.map(ea => ({
                 id: ea.id,
@@ -1048,9 +1180,9 @@ app.post("/acceptTermsOfService", verifyFirebaseToken, async (req, res) => {
 });
 
 // ============================================
-// 9) WEBHOOK HANDLER (Account Updates)
+// 9) WEBHOOK HANDLER (Account Updates) – route registered above before express.json()
 // ============================================
-app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+async function stripeWebhookHandler(req, res) {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     let event;
@@ -1110,7 +1242,7 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
     }
 
     res.json({ received: true });
-});
+}
 
 // ============================================
 // 7) GENERATE AI INVITATION POSTER
@@ -1337,10 +1469,10 @@ app.post("/testVerifyAccount", verifyFirebaseToken, async (req, res) => {
             // Settings including statement descriptors
             settings: {
                 payouts: {
-                    statement_descriptor: 'PIGGYBANK',
+                    statement_descriptor: 'CREDITKID',
                 },
                 payments: {
-                    statement_descriptor: 'PIGGYBANK GIFT',
+                    statement_descriptor: 'CREDITKID GIFT',
                 },
             },
         });
@@ -1436,7 +1568,7 @@ app.post("/testCreateTransaction", verifyFirebaseToken, async (req, res) => {
             paymentIntentId: paymentIntent.id,
             amount: paymentIntent.amount,
             status: paymentIntent.status,
-            message: `Test payment of $${(amount / 100).toFixed(2)} created! Refresh your banking screen to see it.`,
+            message: `Test payment of $${(amount / 100).toFixed(2)} created! Refresh your Credit screen to see it.`,
         });
     } catch (err) {
         console.error("Error creating test transaction:", err);
@@ -1507,10 +1639,129 @@ app.post("/testAddBalance", verifyFirebaseToken, async (req, res) => {
 });
 
 // ============================================
-// HEALTH CHECK
+// CHILD INVITE LINK (parent sends link via SMS; child opens link to claim account)
 // ============================================
-app.get("/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+const crypto = require("crypto");
+
+const CHILD_INVITE_SECRET = process.env.CHILD_INVITE_JWT_SECRET || "creditkid-child-invite-secret-change-me";
+const CHILD_INVITE_EXPIRY_DAYS = 30;
+const APP_SCHEME = "creditkidapp";
+
+function createChildInviteToken(eventId, creatorId) {
+    const payload = {
+        eventId,
+        creatorId,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + CHILD_INVITE_EXPIRY_DAYS * 24 * 60 * 60,
+    };
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const sig = crypto.createHmac("sha256", CHILD_INVITE_SECRET).update(payloadB64).digest("base64url");
+    return `${payloadB64}.${sig}`;
+}
+
+function verifyChildInviteToken(token) {
+    if (!token || typeof token !== "string") return null;
+    const parts = token.split(".");
+    if (parts.length !== 2) return null;
+    const [payloadB64, sig] = parts;
+    const expectedSig = crypto.createHmac("sha256", CHILD_INVITE_SECRET).update(payloadB64).digest("base64url");
+    if (expectedSig !== sig) return null;
+    try {
+        const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString());
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+        return payload;
+    } catch {
+        return null;
+    }
+}
+
+// Parent: get child invite link for an event (requires auth)
+app.post("/getChildInviteLink", verifyFirebaseToken, async (req, res) => {
+    const uid = req.user.uid;
+    const { eventId } = req.body || {};
+    if (!eventId) {
+        return res.status(400).json({ error: "eventId is required" });
+    }
+    try {
+        const eventRef = db.collection("events").doc(eventId);
+        const eventSnap = await eventRef.get();
+        if (!eventSnap.exists) {
+            return res.status(404).json({ error: "Event not found" });
+        }
+        const eventData = eventSnap.data();
+        if (eventData.creatorId !== uid) {
+            return res.status(403).json({ error: "Only the event creator can generate the child link" });
+        }
+        const token = createChildInviteToken(eventId, uid);
+        const link = `${APP_SCHEME}://child?token=${encodeURIComponent(token)}`;
+        const expiresAt = new Date(Date.now() + CHILD_INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+        return res.json({ link, expiresAt: expiresAt.toISOString(), token });
+    } catch (err) {
+        console.error("getChildInviteLink error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// Child: claim invite (no auth); creates anonymous user + childAccount, returns custom token
+app.post("/claimChildInvite", async (req, res) => {
+    const { token } = req.body || {};
+    const payload = verifyChildInviteToken(token);
+    if (!payload || !payload.eventId || !payload.creatorId) {
+        return res.status(400).json({ error: "Invalid or expired link. Ask your parent to send a new one." });
+    }
+    const { eventId, creatorId } = payload;
+    try {
+        const eventRef = db.collection("events").doc(eventId);
+        const eventSnap = await eventRef.get();
+        if (!eventSnap.exists) {
+            return res.status(404).json({ error: "Event not found" });
+        }
+        const eventData = eventSnap.data();
+
+        // Check if child account already exists for this event (same device / existing anonymous user can re-open)
+        const existingChild = await db.collection("childAccounts").where("eventId", "==", eventId).limit(1).get();
+        if (!existingChild.empty) {
+            const existing = existingChild.docs[0].data();
+            const customToken = await admin.auth().createCustomToken(existing.userId, { eventId, role: "child" });
+            return res.json({
+                customToken,
+                childAccountId: existingChild.docs[0].id,
+                eventId,
+                eventName: eventData.eventName,
+            });
+        }
+
+        const childId = db.collection("childAccounts").doc().id;
+        const uid = `child_${childId}`;
+        await admin.auth().createUser({
+            uid,
+            displayName: eventData.eventName ? `Child: ${eventData.eventName}` : "Child",
+            isAnonymous: false,
+        });
+        const customToken = await admin.auth().createCustomToken(uid, { eventId, role: "child" });
+
+        const now = admin.firestore.FieldValue.serverTimestamp();
+        await db.collection("childAccounts").doc(childId).set({
+            id: childId,
+            eventId,
+            userId: uid,
+            balanceCents: 0,
+            eventName: eventData.eventName || null,
+            creatorName: eventData.creatorName || null,
+            createdAt: now,
+            updatedAt: now,
+        });
+
+        return res.json({
+            customToken,
+            childAccountId: childId,
+            eventId,
+            eventName: eventData.eventName,
+        });
+    } catch (err) {
+        console.error("claimChildInvite error:", err);
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 // Export the Express app as a single Cloud Function

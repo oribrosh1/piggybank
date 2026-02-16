@@ -6,11 +6,14 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Share,
+    Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Users } from "lucide-react-native";
 import { getEvent } from "../../src/lib/eventService";
+import { getChildInviteLink } from "../../src/lib/api";
 import { Event, Guest } from "../../types/events";
 import { routes } from "../../types/routes";
 import {
@@ -36,6 +39,7 @@ export default function EventDashboard() {
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [showGuestModal, setShowGuestModal] = useState(false);
+    const [childLinkLoading, setChildLinkLoading] = useState(false);
 
     // Reload event data when screen comes into focus (after edit/add guests)
     useFocusEffect(
@@ -73,8 +77,24 @@ export default function EventDashboard() {
 
     const handleShare = () => {
         // TODO: Implement share functionality
-        // This would use React Native's Share API
     };
+
+    const handleSendChildLink = useCallback(async () => {
+        if (!id) return;
+        setChildLinkLoading(true);
+        try {
+            const { link } = await getChildInviteLink(id);
+            await Share.share({
+                message: `Open this link to see your CreditKid balance and gifts: ${link}`,
+                title: "CreditKid – Your balance & gifts",
+                url: Platform.OS === "ios" ? link : undefined,
+            });
+        } catch (err: any) {
+            Alert.alert("Error", err?.response?.data?.error || err?.message || "Could not create link.");
+        } finally {
+            setChildLinkLoading(false);
+        }
+    }, [id]);
 
     const handleEditEvent = () => {
         if (id) {
@@ -133,6 +153,8 @@ export default function EventDashboard() {
                     onSendInvites={handleManageGuests}
                     onAddGuests={handleAddGuests}
                     onShare={handleShare}
+                    onSendChildLink={handleSendChildLink}
+                    childLinkLoading={childLinkLoading}
                 />
 
                 {/* Event Details Card */}

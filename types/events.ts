@@ -31,7 +31,7 @@ export interface EventFormData {
     // Dietary selections
     kosherType?: string; // not-kosher, kosher-style, kosher, glatt-kosher
     mealType?: string; // dairy, meat, pareve
-    vegetarianType?: string; // none, vegetarian, vegan
+    vegetarianType?: string; // none, vegetarian, vegan, or by_request (when meal is meat: guests can request vegetarian)
     // Date/Time/Location
     date: string;
     time: string;
@@ -88,6 +88,24 @@ export interface Guest {
     // Payment info (when status is 'paid')
     paymentAmount?: number; // in cents
     paymentId?: string; // Stripe payment ID
+    /** Blessing/message from guest when they paid (website gift flow) */
+    blessing?: string;
+}
+
+/**
+ * Child account: created when child opens parent's invite link.
+ * One child account per event (one kid sees their event balance + gifts).
+ */
+export interface ChildAccount {
+    id: string;
+    eventId: string;
+    userId: string; // Firebase Auth UID (anonymous or custom token)
+    /** Balance in cents; updated when gifts are paid and when child spends (Issuing). */
+    balanceCents: number;
+    eventName?: string;
+    creatorName?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 /**
@@ -118,7 +136,7 @@ export interface Event {
     // Dietary selections
     kosherType?: string; // not-kosher, kosher-style, kosher, glatt-kosher
     mealType?: string; // dairy, meat, pareve
-    vegetarianType?: string; // none, vegetarian, vegan
+    vegetarianType?: string; // none, vegetarian, vegan, or by_request (when meal is meat: guests can request vegetarian)
     age?: string; // For birthday events
 
     // Date & Time
@@ -186,6 +204,7 @@ const guestToFirestore = (guest: Guest): DocumentData => {
     if (guest.paidAt) data.paidAt = guest.paidAt instanceof Date ? Timestamp.fromDate(guest.paidAt) : guest.paidAt;
     if (guest.paymentAmount) data.paymentAmount = guest.paymentAmount;
     if (guest.paymentId) data.paymentId = guest.paymentId;
+    if (guest.blessing) data.blessing = guest.blessing;
     return data;
 };
 
@@ -203,6 +222,7 @@ const guestFromFirestore = (data: DocumentData): Guest => ({
     paidAt: data.paidAt?.toDate?.() ?? undefined,
     paymentAmount: data.paymentAmount,
     paymentId: data.paymentId,
+    blessing: data.blessing,
 });
 
 export const eventConverter: FirestoreDataConverter<Event> = {

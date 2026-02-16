@@ -37,7 +37,7 @@ export default function AuthScreen({ navigation }: { navigation: any }) {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>PiggyBank</Text>
+        <Text style={styles.title}>CreditKid</Text>
         <Text style={styles.subtitle}>
           {isSignUp ? 'Create your account' : 'Welcome back'}
         </Text>

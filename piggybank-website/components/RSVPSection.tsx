@@ -288,7 +288,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-2xl">🐷</span>
+                        <span className="text-2xl"></span>
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-gray-900">
@@ -432,7 +432,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                             {/* Card content */}
                             <div className="relative z-10">
                                 <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1 inline-block mb-4">
-                                    <span className="text-white text-xs font-semibold">🐷 CreditKid Gift</span>
+                                    <span className="text-white text-xs font-semibold"> CreditKid Gift</span>
                                 </div>
 
                                 <div className="text-white mb-4">
@@ -578,7 +578,7 @@ export default function RSVPSection({ eventId, hostName, themeColor, eventName, 
                             {/* CreditKid fee */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xl">🐷</span>
+                                    <span className="text-xl"></span>
                                     <span className="text-gray-900 font-semibold">CreditKid</span>
                                 </div>
                                 <div className="flex items-center gap-2">

@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
                                 justifyContent: 'center',
                             }}
                         >
-                            <span style={{ fontSize: '28px' }}>🐷</span>
+                            <span style={{ fontSize: '28px' }}></span>
                         </div>
                         <span style={{ fontSize: '28px', fontWeight: 700, color: 'white' }}>
                             CreditKid

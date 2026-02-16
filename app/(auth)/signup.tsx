@@ -74,7 +74,7 @@ export default function SignUpScreen() {
             // Show success message
             let successMessage = initResult.message || 'Your account has been created successfully!';
             if (initResult.stripeAccount) {
-                successMessage += '\n\n🏦 Your payment account is ready! Complete the setup in the Banking tab to start receiving payments.';
+                successMessage += '\n\n🏦 Your payment account is ready! Complete the setup in the Credit tab to start receiving payments.';
             }
 
             Alert.alert(
@@ -165,7 +165,7 @@ export default function SignUpScreen() {
                                 fontWeight: '600',
                             }}
                         >
-                            Join PiggyBank and start managing your events
+                            Join CreditKid and start managing your events
                         </Text>
                     </View>
 

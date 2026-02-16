@@ -7,27 +7,45 @@
 /**
  * Create a Stripe Custom Connected Account (Stage 1).
  * @param {import("stripe").Stripe} stripe
- * @param {{ country: string, profileUrl: string }} opts
+ * @param {{ country: string, profileUrl: string, firstName: string, lastName: string, email: string, phone: string, dob: { day: number, month: number, year: number }, address: string, address2?: string, city: string, state: string, zipCode: string, ssnLast4: string }} opts
  * @returns {Promise<import("stripe").Stripe.Account>}
  */
 async function createCustomConnectAccount(stripe, opts) {
-    const { country = "US", profileUrl } = opts;
-    return stripe.accounts.create({
+    const { country = "US", profileUrl, firstName, lastName, email, phone, dob, address, address2, city, state, zipCode, ssnLast4 } = opts;
+    const individual = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        address: {
+            line1: address,
+            // line2: address2 || undefined,
+            city: city,
+            state: state,
+            postal_code: zipCode,
+            country: "US",
+        },
+    };
+    if (dob && typeof dob === "object" && dob.day != null && dob.month != null && dob.year != null) {
+        individual.dob = { day: dob.day, month: dob.month, year: dob.year };
+    }
+    if (ssnLast4) individual.ssn_last_4 = ssnLast4;
+
+    return await stripe.accounts.create({
         type: "custom",
         country,
         business_type: "individual",
         capabilities: {
             transfers: { requested: true },
             card_payments: { requested: true },
-            // card_issuing omitted until platform completes Issuing onboarding (Dashboard → Issuing).
-            // Use POST /updateAccountCapabilities to request it later.
         },
         business_profile: {
             mcc: "7399",
             url: profileUrl,
             product_description: "Personal event fundraising and family allowance management.",
         },
-        tos_acceptance: { service_agreement: "full" },
+        individual,
+        tos_acceptance: { service_agreement: "full" , date: Math.floor(Date.now() / 1000), ip: '0.0.0.0',},
         settings: {
             payouts: { statement_descriptor: "CREDITKID" },
             payments: { statement_descriptor: "CREDITKID GIFT" },
@@ -95,7 +113,7 @@ async function createIssuingCardholder(stripe, opts) {
             type: "individual",
             name: `${first_name} ${last_name}`,
             email,
-            phone: phone || undefined,
+            phone_number: phone || undefined,
             billing: {
                 address: {
                     line1,

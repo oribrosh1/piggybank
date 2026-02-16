@@ -257,9 +257,15 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                                             {event.mealType}
                                         </span>
                                     )}
-                                    {event.vegetarianType && event.vegetarianType !== 'None' && (
+                                    {event.vegetarianType && event.vegetarianType !== "none" && (
                                         <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
-                                            {event.vegetarianType}
+                                            {event.vegetarianType === "by_request"
+                                              ? "Vegetarian on request"
+                                              : event.vegetarianType === "vegetarian"
+                                                ? "Vegetarian"
+                                                : event.vegetarianType === "vegan"
+                                                  ? "Vegan"
+                                                  : event.vegetarianType}
                                         </span>
                                     )}
                                 </div>
@@ -290,7 +296,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                     <div className="bg-[#FAF5FF] rounded-3xl p-6 border-2 border-[#E9D5FF]">
                         <div className="flex items-center gap-3 mb-5">
                             <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center">
-                                <span className="text-2xl">🐷</span>
+                                <span className="text-2xl"></span>
                             </div>
                             <div>
                                 <h3 className="text-lg font-extrabold text-gray-900">Skip the Gift Card! 🎁</h3>
@@ -327,7 +333,7 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                     {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
                         <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                            <span className="text-3xl">🐷</span>
+                            <span className="text-3xl"></span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
                             Powered by CreditKid

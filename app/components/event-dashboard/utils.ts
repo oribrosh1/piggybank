@@ -47,6 +47,7 @@ export const getVegetarianLabel = (type?: string) => {
     switch (type) {
         case "vegetarian": return "🥬 Vegetarian";
         case "vegan": return "🌱 Vegan";
+        case "by_request": return "🌱 Vegetarian on request";
         default: return null;
     }
 };

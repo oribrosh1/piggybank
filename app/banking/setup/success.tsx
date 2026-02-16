@@ -60,8 +60,12 @@ export default function KYCVerificationScreen() {
     ).start();
   }, []);
 
-  const handleGoToBanking = () => {
+  const handleGoToCredit = () => {
     router.replace(routes.tabs.banking);
+  };
+
+  const handleGetVirtualCard = () => {
+    router.push(routes.banking.setup.issuingCard);
   };
 
   return (
@@ -257,7 +261,7 @@ export default function KYCVerificationScreen() {
                   lineHeight: 22,
                 }}
               >
-                Stripe will verify your identity. Once approved, you can receive payments to your balance and use your virtual card (Piggy Bank) when available.
+                Stripe will verify your identity. Once approved, you can receive payments to your balance and use your virtual card (CreditKid) when available.
               </Text>
             </View>
 
@@ -313,13 +317,13 @@ export default function KYCVerificationScreen() {
                 lineHeight: 20,
               }}
             >
-              💡 <Text style={{ fontWeight: "700" }}>Tip:</Text> You can check your verification status anytime in the Banking tab. We'll notify you once your account is approved!
+              💡 <Text style={{ fontWeight: "700" }}>Tip:</Text> You can check your verification status anytime in the Credit tab. We'll notify you once your account is approved!
             </Text>
           </View>
         </Animated.View>
       </ScrollView>
 
-      {/* Bottom Button - fixed */}
+      {/* Bottom Buttons - fixed */}
       <View
         style={{
           paddingHorizontal: 24,
@@ -336,7 +340,7 @@ export default function KYCVerificationScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={handleGoToBanking}
+          onPress={handleGetVirtualCard}
           style={{
             backgroundColor: "#8B5CF6",
             borderRadius: 16,
@@ -344,6 +348,7 @@ export default function KYCVerificationScreen() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
+            marginBottom: 12,
             shadowColor: "#8B5CF6",
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.3,
@@ -359,9 +364,34 @@ export default function KYCVerificationScreen() {
               marginRight: 8,
             }}
           >
-            Go to Banking
+            Get your virtual card
           </Text>
           <ArrowRight size={20} color="#FFFFFF" strokeWidth={3} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleGoToCredit}
+          style={{
+            backgroundColor: "transparent",
+            borderRadius: 16,
+            paddingVertical: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 2,
+            borderColor: "#8B5CF6",
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "700",
+              color: "#8B5CF6",
+              marginRight: 8,
+            }}
+          >
+            Go to Credit
+          </Text>
+          <ArrowRight size={18} color="#8B5CF6" strokeWidth={3} />
         </TouchableOpacity>
       </View>
     </View>
