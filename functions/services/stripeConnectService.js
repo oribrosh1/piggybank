@@ -91,12 +91,14 @@ function createStripeConnectService(stripe, stripeService) {
             state,
             zipCode: normalizedZip || zipCode,
             ssnLast4,
+            firebaseUserId: uid,
         });
 
         if (body.useTestDocument && isTestMode) {
             try {
                 await stripe.accounts.update(account.id, {
                     individual: { verification: { document: { front: "file_identity_document_success" } } },
+                    metadata: { firebase_user_id: uid },
                 });
             } catch (e) {
                 console.warn("[StripeConnectService] Test document attach failed", e.message);
@@ -111,7 +113,10 @@ function createStripeConnectService(stripe, stripeService) {
                         individual: { id_number: "000000000" },
                     },
                 });
-                await stripe.accounts.update(account.id, { account_token: accountToken.id });
+                await stripe.accounts.update(account.id, {
+                    account_token: accountToken.id,
+                    metadata: { firebase_user_id: uid },
+                });
             } catch (e) {
                 console.warn("[StripeConnectService] Test SSN token failed", e.message);
             }
@@ -193,6 +198,15 @@ function createStripeConnectService(stripe, stripeService) {
         const doc = await stripeAccountRepository.getByUid(uid);
         if (!doc) return { exists: false };
         const account = await stripe.accounts.retrieve(doc.accountId);
+        if (!account.metadata || !account.metadata.firebase_user_id) {
+            try {
+                await stripe.accounts.update(doc.accountId, {
+                    metadata: { firebase_user_id: uid },
+                });
+            } catch (e) {
+                console.warn("[StripeConnectService] Backfill metadata failed", e.message);
+            }
+        }
         const admin = require("firebase-admin");
         await stripeAccountRepository.update(uid, {
             charges_enabled: account.charges_enabled,
@@ -220,7 +234,7 @@ function createStripeConnectService(stripe, stripeService) {
             err.statusCode = 404;
             throw err;
         }
-        const account = await stripeService.updateAccountCapabilities(stripe, doc.accountId);
+        const account = await stripeService.updateAccountCapabilities(stripe, doc.accountId, { firebaseUserId: uid });
         return { accountId: account.id, capabilities: account.capabilities, success: true };
     }
 
@@ -345,6 +359,15 @@ function createStripeConnectService(stripe, stripeService) {
     async function handleWebhookAccountUpdated(account) {
         const row = await stripeAccountRepository.getByAccountId(account.id);
         if (!row) return;
+        if (!account.metadata || !account.metadata.firebase_user_id) {
+            try {
+                await stripe.accounts.update(account.id, {
+                    metadata: { firebase_user_id: row.uid },
+                });
+            } catch (e) {
+                console.warn("[StripeConnectService] Webhook backfill metadata failed", e.message);
+            }
+        }
         const admin = require("firebase-admin");
         const cardIssuingActive = account.capabilities?.card_issuing === "active";
         await stripeAccountRepository.update(row.uid, {

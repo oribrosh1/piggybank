@@ -7,11 +7,11 @@
 /**
  * Create a Stripe Custom Connected Account (Stage 1).
  * @param {import("stripe").Stripe} stripe
- * @param {{ country: string, profileUrl: string, firstName: string, lastName: string, email: string, phone: string, dob: { day: number, month: number, year: number }, address: string, address2?: string, city: string, state: string, zipCode: string, ssnLast4: string }} opts
+ * @param {{ country: string, profileUrl: string, firstName: string, lastName: string, email: string, phone: string, dob: { day: number, month: number, year: number }, address: string, address2?: string, city: string, state: string, zipCode: string, ssnLast4: string, firebaseUserId?: string }} opts
  * @returns {Promise<import("stripe").Stripe.Account>}
  */
 async function createCustomConnectAccount(stripe, opts) {
-    const { country = "US", profileUrl, firstName, lastName, email, phone, dob, address, address2, city, state, zipCode, ssnLast4 } = opts;
+    const { country = "US", profileUrl, firstName, lastName, email, phone, dob, address, address2, city, state, zipCode, ssnLast4, firebaseUserId } = opts;
     const individual = {
         first_name: firstName,
         last_name: lastName,
@@ -31,7 +31,7 @@ async function createCustomConnectAccount(stripe, opts) {
     }
     if (ssnLast4) individual.ssn_last_4 = ssnLast4;
 
-    return await stripe.accounts.create({
+    const createPayload = {
         type: "custom",
         country,
         business_type: "individual",
@@ -50,7 +50,11 @@ async function createCustomConnectAccount(stripe, opts) {
             payouts: { statement_descriptor: "CREDITKID" },
             payments: { statement_descriptor: "CREDITKID GIFT" },
         },
-    });
+    };
+    if (firebaseUserId) {
+        createPayload.metadata = { firebase_user_id: firebaseUserId };
+    }
+    return await stripe.accounts.create(createPayload);
 }
 
 /**
@@ -187,18 +191,24 @@ async function getCardDetails(stripe, opts) {
 
 /**
  * Update a Connect account to request capabilities (e.g. if they were not requested at creation).
+ * Optionally sets metadata.firebase_user_id if provided (backfill for existing accounts).
  * @param {import("stripe").Stripe} stripe
  * @param {string} accountId - Connect account ID (acct_xxx)
+ * @param {{ firebaseUserId?: string }} opts - optional; if firebaseUserId is set, metadata is included in the update
  * @returns {Promise<import("stripe").Stripe.Account>}
  */
-async function updateAccountCapabilities(stripe, accountId) {
-    return stripe.accounts.update(accountId, {
+async function updateAccountCapabilities(stripe, accountId, opts = {}) {
+    const payload = {
         capabilities: {
             card_issuing: { requested: true },
             transfers: { requested: true },
             card_payments: { requested: true }
         },
-    });
+    };
+    if (opts.firebaseUserId) {
+        payload.metadata = { firebase_user_id: opts.firebaseUserId };
+    }
+    return stripe.accounts.update(accountId, payload);
 }
 
 /**

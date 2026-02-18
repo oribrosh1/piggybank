@@ -75,8 +75,37 @@ export default function EventDashboard() {
         }
     };
 
+    const EVENT_WEB_BASE = process.env.EXPO_PUBLIC_WEBSITE_URL || "https://creditkid.vercel.app";
+    const eventLoginUrl = id ? `${EVENT_WEB_BASE}/event/${id}` : "";
+
     const handleShare = () => {
-        // TODO: Implement share functionality
+        Alert.alert("Share", "What would you like to share?", [
+            {
+                text: "Send login link",
+                onPress: () => {
+                    if (!eventLoginUrl || !event) return;
+                    Share.share({
+                        message: `You're invited to ${event.eventName}! RSVP and see details here: ${eventLoginUrl}`,
+                        title: `Invitation: ${event.eventName}`,
+                        url: Platform.OS === "ios" ? eventLoginUrl : undefined,
+                    });
+                },
+            },
+            {
+                text: "App details",
+                onPress: () => {
+                    const appMessage =
+                        "CreditKid – The gift card kids actually use.\nCreate events, invite guests, and receive gifts straight to your child's card. Download the app or visit: " +
+                        EVENT_WEB_BASE;
+                    Share.share({
+                        message: appMessage,
+                        title: "CreditKid – Gifts for kids, made simple",
+                        url: Platform.OS === "ios" ? EVENT_WEB_BASE : undefined,
+                    });
+                },
+            },
+            { text: "Cancel", style: "cancel" },
+        ]);
     };
 
     const handleSendChildLink = useCallback(async () => {
@@ -90,7 +119,13 @@ export default function EventDashboard() {
                 url: Platform.OS === "ios" ? link : undefined,
             });
         } catch (err: any) {
-            Alert.alert("Error", err?.response?.data?.error || err?.message || "Could not create link.");
+            const status = err?.response?.status;
+            const serverMessage = err?.response?.data?.error;
+            const message =
+                status === 404
+                    ? "Child link isn't available yet. Deploy the latest Cloud Functions (run in project root: firebase deploy --only functions), then try again."
+                    : serverMessage || err?.message || "Could not create link.";
+            Alert.alert("Error", message);
         } finally {
             setChildLinkLoading(false);
         }
