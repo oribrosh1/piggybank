@@ -61,24 +61,6 @@ export default function EventHeader({ event, topInset }: EventHeaderProps) {
           Turning {event.age} 🎉
         </Text>
       )}
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          marginTop: 16,
-          backgroundColor: "rgba(255,255,255,0.2)",
-          borderRadius: 12,
-          paddingVertical: 8,
-          paddingHorizontal: 14,
-          alignSelf: "flex-start",
-        }}
-      >
-        <Check size={16} color="#FFFFFF" strokeWidth={3} />
-        <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 6 }}>
-          Event Created
-        </Text>
-      </View>
     </View>
   );
 }

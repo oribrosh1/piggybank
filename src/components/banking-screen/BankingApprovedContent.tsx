@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from "react-native";
 import {
   CreditCard,
   CheckCircle,
@@ -17,6 +17,7 @@ import type { Router } from "expo-router";
 import { routes } from "@/types/routes";
 import type { GetBalanceResponse, GetAccountDetailsResponse, GetIssuingBalanceResponse } from "@/src/lib/api";
 import type { Transaction, Payout } from "@/src/lib/api";
+import { getAccountDetails, getBalance, getTransactions } from "@/src/lib/api";
 
 type BankingApprovedContentProps = {
   router: Router;
@@ -50,6 +51,138 @@ function txnTypeLabel(type: string): string {
   return type?.charAt(0).toUpperCase() + (type?.slice(1) || "");
 }
 
+async function fetchDetailsOrUseCache(cached: GetAccountDetailsResponse | null): Promise<GetAccountDetailsResponse | null> {
+  if (cached) return cached;
+  try {
+    return await getAccountDetails();
+  } catch (e) {
+    Alert.alert("Error", `Failed to fetch account details: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
+}
+
+async function inspectCapabilities(cached: GetAccountDetailsResponse | null) {
+  const details = await fetchDetailsOrUseCache(cached);
+  if (!details) return;
+  const caps = details.capabilities;
+  const lines = Object.entries(caps).map(([k, v]) => {
+    const icon = v === "active" ? "✅" : v === "pending" ? "⏳" : "❌";
+    return `${icon}  ${k.replace(/_/g, " ")}: ${v}`;
+  });
+  lines.push("", `Charges enabled: ${details.charges_enabled ? "Yes" : "No"}`, `Payouts enabled: ${details.payouts_enabled ? "Yes" : "No"}`);
+  Alert.alert("Account Capabilities", lines.join("\n"));
+}
+
+async function inspectBalance(cached: GetBalanceResponse | null) {
+  let balance = cached;
+  if (!balance) {
+    try { balance = await getBalance(); } catch (e) {
+      Alert.alert("Error", `Failed to fetch balance: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
+  }
+  const fmt = (arr: { amount: number; currency: string; source_types?: Record<string, number | undefined> }[]) =>
+    arr.map((b) => {
+      const sources = b.source_types ? Object.entries(b.source_types).filter(([, v]) => v !== undefined).map(([k, v]) => `  ${k}: $${((v ?? 0) / 100).toFixed(2)}`).join("\n") : "";
+      return `$${(b.amount / 100).toFixed(2)} ${b.currency.toUpperCase()}${sources ? "\n" + sources : ""}`;
+    }).join(", ") || "None";
+  Alert.alert("Balance Breakdown", `Available:\n${fmt(balance.available)}\n\nPending:\n${fmt(balance.pending)}`);
+}
+
+async function inspectTransfers(cached: Transaction[]) {
+  let txns = cached;
+  if (!txns || txns.length === 0) {
+    try {
+      const res = await getTransactions(20);
+      txns = res.transactions || [];
+    } catch (e) {
+      Alert.alert("Error", `Failed to fetch transactions: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
+  }
+  const transfers = txns.filter((t) => t.type === "transfer" || t.type === "payout" || t.type === "charge");
+  if (transfers.length === 0) return Alert.alert("Transfers", "No transactions found. Try adding a test payment first.");
+  const lines = transfers.map((t) => {
+    const date = new Date(t.created * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const sign = t.amount >= 0 ? "+" : "";
+    return `${t.type.toUpperCase()} | ${sign}$${(Math.abs(t.amount) / 100).toFixed(2)} | ${t.status} | ${date}\n  Fee: $${(t.fee / 100).toFixed(2)} | Net: $${(t.net / 100).toFixed(2)}`;
+  });
+  Alert.alert(`Transactions (${transfers.length})`, lines.join("\n\n"));
+}
+
+async function inspectProvidedData(cached: GetAccountDetailsResponse | null) {
+  const details = await fetchDetailsOrUseCache(cached);
+  if (!details) return;
+  const ind = details.individual;
+  const check = (val: unknown) => (val ? "✅" : "❌");
+  const lines = [
+    `--- Account ---`,
+    `${check(details.accountId)} Account ID: ${details.accountId || "—"}`,
+    `${check(details.type)} Type: ${details.type || "—"}`,
+    `${check(details.country)} Country: ${details.country || "—"}`,
+    `${check(details.business_type)} Business type: ${details.business_type || "—"}`,
+    `${check(details.details_submitted)} Details submitted: ${details.details_submitted ? "Yes" : "No"}`,
+    "",
+    `--- Individual ---`,
+    `${check(ind?.first_name)} First name: ${ind?.first_name || "—"}`,
+    `${check(ind?.last_name)} Last name: ${ind?.last_name || "—"}`,
+    `${check(ind?.email)} Email: ${ind?.email || "—"}`,
+    `${check(ind?.phone)} Phone: ${ind?.phone || "—"}`,
+    `${check(ind?.dob)} DOB: ${ind?.dob ? `${ind.dob.month}/${ind.dob.day}/${ind.dob.year}` : "—"}`,
+    "",
+    `--- Address ---`,
+    `${check(ind?.address?.line1)} Line 1: ${ind?.address?.line1 || "—"}`,
+    `${check(ind?.address?.line2)} Line 2: ${ind?.address?.line2 || "—"}`,
+    `${check(ind?.address?.city)} City: ${ind?.address?.city || "—"}`,
+    `${check(ind?.address?.state)} State: ${ind?.address?.state || "—"}`,
+    `${check(ind?.address?.postal_code)} Zip: ${ind?.address?.postal_code || "—"}`,
+    "",
+    `--- Verification ---`,
+    `Status: ${ind?.verification?.status || "—"}`,
+    `${check(ind?.verification?.document?.front)} ID doc front: ${ind?.verification?.document?.front ? "Uploaded" : "Missing"}`,
+    `${check(ind?.verification?.document?.back)} ID doc back: ${ind?.verification?.document?.back ? "Uploaded" : "Not required/missing"}`,
+    "",
+    `--- Bank Account ---`,
+    details.external_accounts.length > 0
+      ? details.external_accounts.map((b) => `✅ ${b.bank_name || "Bank"} ••••${b.last4} (${b.currency.toUpperCase()}) ${b.default_for_currency ? "[Default]" : ""}`).join("\n")
+      : "❌ No bank account linked",
+  ];
+  Alert.alert("Provided Data", lines.join("\n"));
+}
+
+async function inspectRequirements(cached: GetAccountDetailsResponse | null) {
+  const details = await fetchDetailsOrUseCache(cached);
+  if (!details) return;
+  const req = details.requirements;
+  const fmtList = (arr: string[]) => arr.length > 0 ? arr.map((r) => `  • ${r.replace(/_/g, " ").replace(/\./g, " > ")}`).join("\n") : "  None";
+
+  const allClear = req.currently_due.length === 0 && req.eventually_due.length === 0 && req.past_due.length === 0 && req.pending_verification.length === 0;
+
+  const lines = [
+    allClear ? "🎉 ALL CLEAR — No outstanding requirements!\n" : "⚠️ Action needed to fully activate:\n",
+    `🔴 Past due (overdue):`,
+    fmtList(req.past_due),
+    "",
+    `🟡 Currently due (needed now):`,
+    fmtList(req.currently_due),
+    "",
+    `🔵 Eventually due (needed later):`,
+    fmtList(req.eventually_due),
+    "",
+    `⏳ Pending verification:`,
+    fmtList(req.pending_verification),
+    "",
+    `Disabled reason: ${req.disabled_reason || "None"}`,
+    "",
+    `--- Capabilities ---`,
+    ...Object.entries(details.capabilities).map(([k, v]) => {
+      const icon = v === "active" ? "✅" : v === "pending" ? "⏳" : "❌";
+      return `${icon} ${k.replace(/_/g, " ")}: ${v}`;
+    }),
+  ];
+  Alert.alert("Requirements for Card Payments & Transfers", lines.join("\n"));
+}
+
 export default function BankingApprovedContent(p: BankingApprovedContentProps) {
   const available = formatBalance(p.balanceData, "available");
   const pending = formatBalance(p.balanceData, "pending");
@@ -74,7 +207,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
           elevation: 6,
         }}
       >
-        <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginRight: 8 }}>Add to{"\n"}Apple Pay</Text>
+        <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginRight: 8 }}>Add to Apple Pay</Text>
         <Text style={{ fontSize: 24, marginLeft: 6 }}>📱</Text>
       </TouchableOpacity>
 
@@ -119,7 +252,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
         </TouchableOpacity>
       )}
 
-      <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 }}>
+      {/* <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 }}>
         <Text style={{ fontSize: 14, fontWeight: "800", color: "#6B3AA0", marginBottom: 12 }}>💳 CARD BALANCE (Issuing)</Text>
         <Text style={{ fontSize: 24, fontWeight: "800", color: "#111827", marginBottom: 16 }}>
           {p.issuingBalance != null ? p.issuingBalance.issuingAvailableFormatted : "—"}
@@ -154,7 +287,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
             {p.issuingBalance?.canCreateCard ? "Create virtual card" : "Add funds above to create card"}
           </Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <View style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 20, padding: 20, marginBottom: 20, borderWidth: 2, borderColor: "rgba(255,255,255,0.2)" }}>
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
@@ -174,6 +307,14 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
               <Text style={{ fontSize: 22, fontWeight: "800", color: "#F59E0B" }}>${pending}</Text>
             </View>
           </View>
+          {parseFloat(pending) > 0 && (
+            <View style={{ backgroundColor: "#FFFBEB", borderRadius: 10, padding: 12, marginTop: 12, borderWidth: 1, borderColor: "#FDE68A" }}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#92400E", marginBottom: 4 }}>Why is my balance pending?</Text>
+              <Text style={{ fontSize: 11, color: "#92400E", lineHeight: 16, fontWeight: "500" }}>
+                For your security, new accounts have a 7-day hold on incoming payments before they become available.
+              </Text>
+            </View>
+          )}
         </View>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -221,10 +362,24 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
                     <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
                       {new Date(txn.created * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </Text>
+                    {txn.amount >= 0 && txn.available_on > 0 && (
+                      <Text style={{ fontSize: 10, fontWeight: "600", color: txn.available_on * 1000 <= Date.now() ? "#10B981" : "#F59E0B", marginTop: 2 }}>
+                        {txn.available_on * 1000 <= Date.now()
+                          ? "Available now"
+                          : `Available ${new Date(txn.available_on * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                      </Text>
+                    )}
                   </View>
-                  <Text style={{ fontSize: 15, fontWeight: "800", color: txn.amount >= 0 ? "#10B981" : "#EF4444" }}>
-                    {txn.amount >= 0 ? "+" : ""}${(Math.abs(txn.amount) / 100).toFixed(2)}
-                  </Text>
+                  <View style={{ alignItems: "flex-end" }}>
+                    <Text style={{ fontSize: 15, fontWeight: "800", color: txn.amount >= 0 ? "#10B981" : "#EF4444" }}>
+                      {txn.amount >= 0 ? "+" : ""}${(Math.abs(txn.amount) / 100).toFixed(2)}
+                    </Text>
+                    {txn.amount >= 0 && txn.fee > 0 && (
+                      <Text style={{ fontSize: 10, color: "#9CA3AF", fontWeight: "500" }}>
+                        Fee: ${(txn.fee / 100).toFixed(2)}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               ))}
             </View>
@@ -253,7 +408,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
             </View>
             <View>
               <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>Pending</Text>
-              <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>Processing (1-2 business days)</Text>
+              <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>Usually 7 days for new accounts</Text>
             </View>
           </View>
           <Text style={{ fontSize: 18, fontWeight: "800", color: "#F59E0B" }}>${pending}</Text>
@@ -418,6 +573,26 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => p.onTestAddBalance(10000)} style={{ backgroundColor: "#6366F1", borderRadius: 10, paddingVertical: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>+ Add $100 Test Balance</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 1, backgroundColor: "#E879F9", marginVertical: 16, opacity: 0.5 }} />
+          <Text style={{ fontSize: 13, fontWeight: "800", color: "#7C3AED", marginBottom: 10 }}>🔍 ACCOUNT INSPECTOR</Text>
+          <View style={{ gap: 8 }}>
+            <TouchableOpacity onPress={() => inspectCapabilities(p.accountDetails)} style={{ backgroundColor: "#0284C7", borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>🛡️ Check Capabilities</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => inspectBalance(p.balanceData)} style={{ backgroundColor: "#0D9488", borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>💰 Check Balance</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => inspectTransfers(p.transactions)} style={{ backgroundColor: "#D97706", borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>🔄 Check Transfers & Transactions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => inspectProvidedData(p.accountDetails)} style={{ backgroundColor: "#4338CA", borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>📋 Check Provided Data</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => inspectRequirements(p.accountDetails)} style={{ backgroundColor: "#BE185D", borderRadius: 10, paddingVertical: 11, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: "#FFFFFF" }}>📝 Requirements for Card Payments & Transfers</Text>
             </TouchableOpacity>
           </View>
         </View>

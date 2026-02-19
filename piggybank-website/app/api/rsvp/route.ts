@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         guests[guestIndex] = updatedGuest;
 
         // Update guest stats
-        const guestStats = eventData?.guestStats || { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, totalPaid: 0 };
+        const guestStats = eventData?.guestStats || { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 };
 
         // Recalculate stats
         const newStats = {
@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
             invited: guests.filter((g: any) => g.status === 'invited').length,
             confirmed: guests.filter((g: any) => g.status === 'confirmed').length,
             paid: guests.filter((g: any) => g.status === 'paid').length,
+            invalidNumber: guests.filter((g: any) => g.status === 'invalid_phone').length,
+            notComing: guests.filter((g: any) => g.status === 'declined').length,
             totalPaid: guestStats.totalPaid,
         };
 

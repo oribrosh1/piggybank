@@ -592,14 +592,14 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Support</a>
-              <a href="#" className="hover:text-white transition-colors">Contact</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="mailto:support@creditkid.com" className="hover:text-white transition-colors">Support</a>
+              <a href="mailto:support@creditkid.com" className="hover:text-white transition-colors">Contact</a>
             </div>
 
             <div className="text-sm text-gray-400">
-              © 2025 CreditKid. All rights reserved.
+              © 2026 CreditKid. All rights reserved.
             </div>
           </div>
         </div>

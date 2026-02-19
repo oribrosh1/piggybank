@@ -159,8 +159,8 @@ export default function ChildScreen() {
 
     if (!isChild && !token) {
         return (
-            <View style={styles.centered}>
-                <Gift size={48} color="#6B3AA0" strokeWidth={2} style={{ marginBottom: 16 }} />
+            <View style={styles.centered} >
+                <Gift size={48} color="#6B3AA0" strokeWidth={2}  />
                 <Text style={styles.welcomeTitle}>Welcome to CreditKid</Text>
                 <Text style={styles.welcomeSubtitle}>
                     Open the link your parent sent you by SMS to see your balance and gifts.

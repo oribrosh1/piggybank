@@ -183,6 +183,125 @@ function createStripeController(stripeConnectService) {
         }
     }
 
+    async function getBalance(req, res) {
+        try {
+            const result = await stripeConnectService.getBalance(req.user.uid);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function getTransactions(req, res) {
+        try {
+            const limit = parseInt(req.query.limit) || 10;
+            const starting_after = req.query.starting_after || undefined;
+            const result = await stripeConnectService.getTransactions(req.user.uid, limit, starting_after);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function getAccountDetails(req, res) {
+        try {
+            const result = await stripeConnectService.getAccountDetails(req.user.uid);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function getPayouts(req, res) {
+        try {
+            const limit = parseInt(req.query.limit) || 10;
+            const starting_after = req.query.starting_after || undefined;
+            const result = await stripeConnectService.getPayouts(req.user.uid, limit, starting_after);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function createPayout(req, res) {
+        const { amount, currency } = req.body;
+        if (!amount || amount < 1) {
+            return res.status(400).json({ error: "Amount required (minimum 1 cent)" });
+        }
+        try {
+            const result = await stripeConnectService.createPayout(req.user.uid, amount, currency);
+            res.json(result);
+        } catch (err) {
+            if (err.code === "balance_insufficient") {
+                return res.status(400).json({ error: "Insufficient balance for payout.", code: err.code });
+            }
+            handleError(err, res);
+        }
+    }
+
+    async function addBankAccount(req, res) {
+        const { account_holder_name, routing_number, account_number } = req.body;
+        if (!account_holder_name || !routing_number || !account_number) {
+            return res.status(400).json({ error: "Missing required fields: account_holder_name, routing_number, account_number" });
+        }
+        try {
+            const result = await stripeConnectService.addBankAccount(req.user.uid, req.body);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function updateAccountInfo(req, res) {
+        try {
+            const result = await stripeConnectService.updateAccountInfo(req.user.uid, req.body);
+            res.json(result);
+        } catch (err) {
+            if (err.code === "postal_code_invalid" || (err.param && String(err.param).includes("postal_code"))) {
+                return res.status(400).json({ error: "Invalid ZIP code.", code: "postal_code_invalid" });
+            }
+            handleError(err, res);
+        }
+    }
+
+    async function acceptTermsOfService(req, res) {
+        try {
+            const result = await stripeConnectService.acceptTermsOfService(req.user.uid, req.body.ip);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function testVerifyAccount(req, res) {
+        try {
+            const result = await stripeConnectService.testVerifyAccount(req.user.uid);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function testCreateTransaction(req, res) {
+        try {
+            const { amount } = req.body;
+            const result = await stripeConnectService.testCreateTransaction(req.user.uid, amount);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
+    async function testAddBalance(req, res) {
+        try {
+            const { amount } = req.body;
+            const result = await stripeConnectService.testAddBalance(req.user.uid, amount);
+            res.json(result);
+        } catch (err) {
+            handleError(err, res);
+        }
+    }
+
     return {
         createCustomConnectAccount,
         createOnboardingLink,
@@ -194,6 +313,17 @@ function createStripeController(stripeConnectService) {
         createVirtualCard,
         getCardDetails,
         createTestAuthorization,
+        getBalance,
+        getTransactions,
+        getAccountDetails,
+        getPayouts,
+        createPayout,
+        addBankAccount,
+        updateAccountInfo,
+        acceptTermsOfService,
+        testVerifyAccount,
+        testCreateTransaction,
+        testAddBalance,
     };
 }
 

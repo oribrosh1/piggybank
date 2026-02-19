@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import {
     View,
     Text,
@@ -33,8 +33,16 @@ interface AIPosterGeneratorProps {
     onPosterGenerated?: (posterUrl: string) => void;
 }
 
-export default function AIPosterGenerator({ event, delay = 750, onPosterGenerated }: AIPosterGeneratorProps) {
+export interface AIPosterGeneratorRef {
+    open: () => void;
+}
+
+const AIPosterGenerator = forwardRef<AIPosterGeneratorRef, AIPosterGeneratorProps>(function AIPosterGenerator(
+    { event, delay = 750, onPosterGenerated },
+    ref
+) {
     const [showModal, setShowModal] = useState(false);
+    useImperativeHandle(ref, () => ({ open: () => setShowModal(true) }), []);
     const [generating, setGenerating] = useState(false);
     const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(event.posterPrompt || null);
     const [posterUrl, setPosterUrl] = useState<string | null>(event.posterUrl || null);
@@ -547,5 +555,7 @@ export default function AIPosterGenerator({ event, delay = 750, onPosterGenerate
             </Modal>
         </>
     );
-}
+});
+
+export default AIPosterGenerator;
 

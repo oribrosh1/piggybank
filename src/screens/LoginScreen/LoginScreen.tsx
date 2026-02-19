@@ -6,6 +6,7 @@ import {
   Animated,
   Platform,
   Modal,
+  Linking,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,6 +14,9 @@ import * as LocalAuthentication from "expo-local-authentication";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLoginScreen } from "./useLoginScreen";
+
+const TERMS_URL = "https://creditkid.vercel.app/terms";
+const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -439,7 +443,10 @@ export default function LoginScreen() {
             lineHeight: 14,
           }}
         >
-          By continuing, you agree to our <Text style={{ fontWeight: "700" }}>Terms & Privacy Policy</Text>
+          By continuing, you agree to our{" "}
+          <Text style={{ fontWeight: "700", textDecorationLine: "underline" }} onPress={() => Linking.openURL(TERMS_URL)}>Terms of Service</Text>
+          {" & "}
+          <Text style={{ fontWeight: "700", textDecorationLine: "underline" }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>
         </Text>
       </View>
 

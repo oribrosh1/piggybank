@@ -1,25 +1,39 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Users, TrendingUp } from "lucide-react-native";
+import { TrendingUp } from "lucide-react-native";
 import { Event } from "@/types/events";
+import type { GuestStatus } from "@/types/events";
 
 interface GuestStatsCardProps {
     event: Event;
     delay?: number;
     onViewAll?: () => void;
+    /** When a breakdown segment is pressed, open guest list filtered to that status */
+    onViewSegment?: (segment: GuestStatus) => void;
 }
 
-export default function GuestStatsCard({ event, delay = 550, onViewAll }: GuestStatsCardProps) {
-    const stats = event.guestStats;
-    const total = event.totalGuests;
+const BREAKDOWN: Array<{
+    label: string;
+    key: keyof import("@/types/events").GuestStats;
+    segment: import("@/types/events").GuestStatus;
+    emoji: string;
+    color: string;
+    bg: string;
+}> = [
+    { label: "Invited", key: "invited", segment: "invited", emoji: "📤", color: "#1D4ED8", bg: "#DBEAFE" },
+    { label: "Not invited", key: "added", segment: "added", emoji: "⏳", color: "#B91C1C", bg: "#FEE2E2" },
+    { label: "Coming", key: "confirmed", segment: "confirmed", emoji: "🎉", color: "#047857", bg: "#D1FAE5" },
+    { label: "Gifted", key: "paid", segment: "paid", emoji: "🎁", color: "#0F766E", bg: "#CCFBF1" },
+    { label: "Invalid number", key: "invalidNumber", segment: "invalid_phone", emoji: "📵", color: "#B45309", bg: "#FEF3C7" },
+    { label: "Not coming", key: "notComing", segment: "declined", emoji: "🙁", color: "#475569", bg: "#F1F5F9" },
+];
 
-    // Calculate percentages for the progress bar
-    const getPercentage = (value: number) => (total > 0 ? (value / total) * 100 : 0);
-
-    const confirmedPercentage = getPercentage(stats.confirmed + stats.paid);
-    const invitedPercentage = getPercentage(stats.invited);
-    const paidPercentage = getPercentage(stats.paid);
+export default function GuestStatsCard({ event, delay = 550, onViewAll, onViewSegment }: GuestStatsCardProps) {
+    const stats = event.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 };
+    const total = event.totalGuests ?? stats.total ?? 0;
+    const rsvpRate =
+        total > 0 ? Math.round(((stats.confirmed + stats.paid) / total) * 100) : 0;
 
     return (
         <Animated.View
@@ -33,34 +47,51 @@ export default function GuestStatsCard({ event, delay = 550, onViewAll }: GuestS
                 style={{
                     backgroundColor: "#FFFFFF",
                     borderRadius: 24,
-                    padding: 20,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.08,
-                    shadowRadius: 16,
-                    elevation: 4,
+                    overflow: "hidden",
+                    shadowColor: "#6B21A8",
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: 0.12,
+                    shadowRadius: 20,
+                    elevation: 6,
                 }}
             >
-                {/* Header */}
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                {/* Header strip – same as popup */}
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingTop: 16,
+                        paddingBottom: 14,
+                        paddingHorizontal: 20,
+                        backgroundColor: "#FAF5FF",
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#EDE9FE",
+                    }}
+                >
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
                         <View
                             style={{
                                 width: 44,
                                 height: 44,
                                 borderRadius: 14,
-                                backgroundColor: "#EDE9FE",
+                                backgroundColor: "#8B5CF6",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                shadowColor: "#8B5CF6",
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.35,
+                                shadowRadius: 6,
+                                elevation: 3,
                             }}
                         >
-                            <TrendingUp size={22} color="#8B5CF6" strokeWidth={2.5} />
+                            <TrendingUp size={22} color="#FFFFFF" strokeWidth={2.5} />
                         </View>
-                        <View style={{ marginLeft: 12 }}>
-                            <Text style={{ fontSize: 18, fontWeight: "800", color: "#111827" }}>
+                        <View style={{ marginLeft: 14 }}>
+                            <Text style={{ fontSize: 18, fontWeight: "800", color: "#1F2937", letterSpacing: -0.3 }}>
                                 Guest Stats
                             </Text>
-                            <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "500", marginTop: 2 }}>
+                            <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "600", marginTop: 2 }}>
                                 Track your RSVPs
                             </Text>
                         </View>
@@ -70,250 +101,139 @@ export default function GuestStatsCard({ event, delay = 550, onViewAll }: GuestS
                             onPress={onViewAll}
                             style={{
                                 backgroundColor: "#F3F4F6",
-                                borderRadius: 10,
-                                paddingVertical: 8,
-                                paddingHorizontal: 14,
+                                borderRadius: 12,
+                                paddingVertical: 10,
+                                paddingHorizontal: 16,
                             }}
                         >
-                            <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280" }}>View All</Text>
+                            <Text style={{ fontSize: 13, fontWeight: "700", color: "#6B7280" }}>View All</Text>
                         </TouchableOpacity>
                     )}
                 </View>
 
-                {/* Main Stats Row */}
-                <View
-                    style={{
-                        flexDirection: "row",
-                        backgroundColor: "#F9FAFB",
-                        borderRadius: 20,
-                        padding: 16,
-                        marginBottom: 10,
-                    }}
-                >
-                    {/* Total Guests - Large */}
-                    <View style={{ flex: 1, alignItems: "center", borderRightWidth: 1, borderRightColor: "#E5E7EB" }}>
+                <View style={{ padding: 20, paddingTop: 18 }}>
+                    {/* Hero stats – two cards, same as popup */}
+                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 18 }}>
                         <View
                             style={{
-                                width: 64,
-                                height: 64,
-                                borderRadius: 32,
-                                backgroundColor: "#8B5CF6",
+                                flex: 1,
+                                backgroundColor: "#F5F3FF",
+                                borderRadius: 16,
+                                paddingVertical: 16,
+                                paddingHorizontal: 12,
                                 alignItems: "center",
-                                justifyContent: "center",
-                                marginBottom: 8,
+                                borderWidth: 1,
+                                borderColor: "#EDE9FE",
                             }}
                         >
-                            <Text style={{ fontSize: 24, fontWeight: "900", color: "#FFFFFF" }}>
+                            <Text style={{ fontSize: 28, fontWeight: "900", color: "#7C3AED", letterSpacing: -0.5 }}>
                                 {total}
                             </Text>
-                        </View>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: "#374151" }}>Total</Text>
-                        <Text style={{ fontSize: 11, color: "#9CA3AF", fontWeight: "500" }}>Guests</Text>
-                    </View>
-
-                    {/* RSVP Rate */}
-                    <View style={{ flex: 1, alignItems: "center" }}>
-                        <View
-                            style={{
-                                width: 64,
-                                height: 64,
-                                borderRadius: 32,
-                                backgroundColor: "#10B981",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginBottom: 8,
-                            }}
-                        >
-                            <Text style={{ fontSize: 20, fontWeight: "900", color: "#FFFFFF" }}>
-                                {total > 0 ? Math.round(confirmedPercentage) : 0}%
+                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#6D28D9", marginTop: 4, letterSpacing: 0.5 }}>
+                                TOTAL GUESTS
                             </Text>
                         </View>
-                        <Text style={{ fontSize: 13, fontWeight: "700", color: "#374151" }}>RSVP</Text>
-                        <Text style={{ fontSize: 11, color: "#9CA3AF", fontWeight: "500" }}>Rate</Text>
-                    </View>
-                </View>
-
-                {/* Stats Pipeline */}
-                <View style={{ gap: 12 }}>
-                    {/* Row 1: Not Invited & Invited */}
-                    <View style={{ flexDirection: "row", gap: 12 }}>
-                        {/* Not Invited - Waiting */}
                         <View
                             style={{
                                 flex: 1,
-                                backgroundColor: stats.added > 0 ? "#FEF2F2" : "#F9FAFB",
-                                borderRadius: 20,
-                                padding: 16,
-                                flexDirection: "row",
+                                backgroundColor: "#ECFDF5",
+                                borderRadius: 16,
+                                paddingVertical: 16,
+                                paddingHorizontal: 12,
                                 alignItems: "center",
+                                borderWidth: 1,
+                                borderColor: "#D1FAE5",
                             }}
                         >
-                            <View
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 24,
-                                    backgroundColor: stats.added > 0 ? "#FEE2E2" : "#E5E7EB",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <Text style={{ fontSize: 22 }}>⏳</Text>
-                            </View>
-                            <View style={{ marginLeft: 12, flex: 1 }}>
-                                <Text style={{ fontSize: 24, fontWeight: "900", color: stats.added > 0 ? "#DC2626" : "#9CA3AF" }}>
-                                    {stats.added}
-                                </Text>
-                                <Text style={{ fontSize: 12, fontWeight: "600", color: stats.added > 0 ? "#EF4444" : "#9CA3AF" }}>
-                                    Waiting
-                                </Text>
-                            </View>
-                            {stats.added > 0 && (
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#EF4444" }} />
-                            )}
-                        </View>
-
-                        {/* Invited - Sent */}
-                        <View
-                            style={{
-                                flex: 1,
-                                backgroundColor: stats.invited > 0 ? "#EFF6FF" : "#F9FAFB",
-                                borderRadius: 20,
-                                padding: 16,
-                                flexDirection: "row",
-                                alignItems: "center",
-                            }}
-                        >
-                            <View
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 24,
-                                    backgroundColor: stats.invited > 0 ? "#DBEAFE" : "#E5E7EB",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <Text style={{ fontSize: 22 }}>📤</Text>
-                            </View>
-                            <View style={{ marginLeft: 12, flex: 1 }}>
-                                <Text style={{ fontSize: 24, fontWeight: "900", color: stats.invited > 0 ? "#1D4ED8" : "#9CA3AF" }}>
-                                    {stats.invited}
-                                </Text>
-                                <Text style={{ fontSize: 12, fontWeight: "600", color: stats.invited > 0 ? "#3B82F6" : "#9CA3AF" }}>
-                                    Sent
-                                </Text>
-                            </View>
+                            <Text style={{ fontSize: 28, fontWeight: "900", color: "#059669", letterSpacing: -0.5 }}>
+                                {rsvpRate}%
+                            </Text>
+                            <Text style={{ fontSize: 11, fontWeight: "700", color: "#047857", marginTop: 4, letterSpacing: 0.5 }}>
+                                RSVP RATE
+                            </Text>
                         </View>
                     </View>
 
-                    {/* Row 2: Confirmed & Paid */}
-                    <View style={{ flexDirection: "row", gap: 12 }}>
-                        {/* Confirmed - Coming */}
-                        <View
-                            style={{
-                                flex: 1,
-                                backgroundColor: stats.confirmed > 0 ? "#ECFDF5" : "#F9FAFB",
-                                borderRadius: 20,
-                                padding: 16,
-                                flexDirection: "row",
-                                alignItems: "center",
-                            }}
-                        >
-                            <View
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 24,
-                                    backgroundColor: stats.confirmed > 0 ? "#D1FAE5" : "#E5E7EB",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <Text style={{ fontSize: 22 }}>🎉</Text>
+                    {/* Breakdown – 3 rows x 2, updated colors per card */}
+                    <Text style={{ fontSize: 11, fontWeight: "800", color: "#9CA3AF", marginBottom: 8, letterSpacing: 0.8 }}>
+                        BREAKDOWN
+                    </Text>
+                    <View style={{ gap: 10 }}>
+                        {[BREAKDOWN.slice(0, 2), BREAKDOWN.slice(2, 4), BREAKDOWN.slice(4, 6)].map((row, rowIdx) => (
+                            <View key={rowIdx} style={{ flexDirection: "row", gap: 10 }}>
+                                {row.map(({ label, key, segment, emoji, color, bg }) => {
+                                    const value = stats[key] ?? 0;
+                                    const handlePress = () => onViewSegment?.(segment);
+                                    const content = (
+                                        <>
+                                            <Text style={{ fontSize: 18 }}>{emoji}</Text>
+                                            <View style={{ marginLeft: 10, flex: 1 }}>
+                                                <Text style={{ fontSize: 14, fontWeight: "700", color: "#374151" }} numberOfLines={1}>
+                                                    {label}
+                                                </Text>
+                                                <Text style={{ fontSize: 18, fontWeight: "800", color }}>{value}</Text>
+                                            </View>
+                                        </>
+                                    );
+                                    const cellStyle = {
+                                        flex: 1,
+                                        flexDirection: "row" as const,
+                                        alignItems: "center" as const,
+                                        paddingVertical: 10,
+                                        paddingHorizontal: 12,
+                                        backgroundColor: bg,
+                                        borderRadius: 14,
+                                        borderWidth: 1,
+                                        borderColor: color,
+                                    };
+                                    return onViewSegment ? (
+                                        <TouchableOpacity key={segment} onPress={handlePress} style={cellStyle} activeOpacity={0.7}>
+                                            {content}
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <View key={segment} style={cellStyle}>
+                                            {content}
+                                        </View>
+                                    );
+                                })}
                             </View>
-                            <View style={{ marginLeft: 12, flex: 1 }}>
-                                <Text style={{ fontSize: 24, fontWeight: "900", color: stats.confirmed > 0 ? "#059669" : "#9CA3AF" }}>
-                                    {stats.confirmed}
-                                </Text>
-                                <Text style={{ fontSize: 12, fontWeight: "600", color: stats.confirmed > 0 ? "#10B981" : "#9CA3AF" }}>
-                                    Coming
-                                </Text>
-                            </View>
-                            {stats.confirmed > 0 && (
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#10B981" }} />
-                            )}
-                        </View>
+                        ))}
+                    </View>
 
-                        {/* Paid - Gifted */}
+                    {/* Total received */}
+                    {(stats.totalPaid ?? 0) > 0 && (
                         <View
                             style={{
-                                flex: 1,
-                                backgroundColor: stats.paid > 0 ? "#FFFBEB" : "#F9FAFB",
-                                borderRadius: 20,
-                                padding: 16,
+                                marginTop: 16,
+                                backgroundColor: "#FFFBEB",
+                                borderRadius: 14,
+                                paddingVertical: 12,
+                                paddingHorizontal: 14,
                                 flexDirection: "row",
                                 alignItems: "center",
+                                justifyContent: "space-between",
+                                borderLeftWidth: 4,
+                                borderLeftColor: "#F59E0B",
                             }}
                         >
-                            <View
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 24,
-                                    backgroundColor: stats.paid > 0 ? "#FEF3C7" : "#E5E7EB",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
+                            <View style={{ flexDirection: "row", alignItems: "center" }}>
                                 <Text style={{ fontSize: 22 }}>🎁</Text>
+                                <View style={{ marginLeft: 10 }}>
+                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#92400E" }}>
+                                        Total Gifts Received
+                                    </Text>
+                                    <Text style={{ fontSize: 11, color: "#B45309", marginTop: 1 }}>
+                                        From {stats.paid} guest{stats.paid !== 1 ? "s" : ""}
+                                    </Text>
+                                </View>
                             </View>
-                            <View style={{ marginLeft: 12, flex: 1 }}>
-                                <Text style={{ fontSize: 24, fontWeight: "900", color: stats.paid > 0 ? "#D97706" : "#9CA3AF" }}>
-                                    {stats.paid}
-                                </Text>
-                                <Text style={{ fontSize: 12, fontWeight: "600", color: stats.paid > 0 ? "#F59E0B" : "#9CA3AF" }}>
-                                    Gifted
-                                </Text>
-                            </View>
-                            {stats.paid > 0 && (
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#F59E0B" }} />
-                            )}
+                            <Text style={{ fontSize: 20, fontWeight: "900", color: "#D97706" }}>
+                                ${((stats.totalPaid ?? 0) / 100).toFixed(0)}
+                            </Text>
                         </View>
-                    </View>
+                    )}
                 </View>
-
-                {/* Total Received (if any payments) */}
-                {stats.totalPaid > 0 && (
-                    <View
-                        style={{
-                            marginTop: 16,
-                            backgroundColor: "#FEF3C7",
-                            borderRadius: 16,
-                            padding: 16,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                        }}
-                    >
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <Text style={{ fontSize: 28, marginRight: 12 }}>🎁</Text>
-                            <View>
-                                <Text style={{ fontSize: 13, fontWeight: "600", color: "#92400E" }}>
-                                    Total Gifts Received
-                                </Text>
-                                <Text style={{ fontSize: 11, color: "#B45309", marginTop: 2 }}>
-                                    From {stats.paid} guest{stats.paid !== 1 ? "s" : ""}
-                                </Text>
-                            </View>
-                        </View>
-                        <Text style={{ fontSize: 24, fontWeight: "900", color: "#D97706" }}>
-                            ${(stats.totalPaid / 100).toFixed(0)}
-                        </Text>
-                    </View>
-                )}
             </View>
         </Animated.View>
     );
 }
-

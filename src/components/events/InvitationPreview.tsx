@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
 import {
     View,
     Text,
@@ -27,6 +27,10 @@ interface InvitationPreviewProps {
     delay?: number;
 }
 
+export interface InvitationPreviewRef {
+    open: () => void;
+}
+
 // Sample templates matching the website
 const TEMPLATES = [
     { id: "1", name: "Balloons", emoji: "🎈", colors: ["#F472B6", "#A855F7"] },
@@ -37,8 +41,12 @@ const TEMPLATES = [
     { id: "6", name: "Party", emoji: "🎉", colors: ["#4ADE80", "#14B8A6"] },
 ];
 
-export default function InvitationPreview({ event, delay = 800 }: InvitationPreviewProps) {
+const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProps>(function InvitationPreview(
+    { event, delay = 800 },
+    ref
+) {
     const [showPreview, setShowPreview] = useState(false);
+    useImperativeHandle(ref, () => ({ open: () => setShowPreview(true) }), []);
     const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0]);
 
     const getEventTypeEmoji = () => {
@@ -638,5 +646,7 @@ export default function InvitationPreview({ event, delay = 800 }: InvitationPrev
             </Modal>
         </>
     );
-}
+});
+
+export default InvitationPreview;
 

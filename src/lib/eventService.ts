@@ -206,7 +206,7 @@ export async function getUserEventsStats(): Promise<EventSummary[]> {
                 address1: data.address1,
                 address2: data.address2,
                 totalGuests: data.totalGuests || 0,
-                guestStats: data.guestStats || { pending: 0, invited: 0, confirmed: 0, declined: 0, paid: 0, totalPaid: 0 },
+                guestStats: data.guestStats || { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
                 status: data.status,
                 stripeAccountId: data.stripeAccountId,
                 posterUrl: data.posterUrl,

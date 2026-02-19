@@ -45,19 +45,23 @@ export interface EventFormData {
  * - invited: Invitation sent via SMS
  * - confirmed: Guest confirmed attendance (RSVP'd yes)
  * - paid: Guest confirmed and paid
+ * - invalid_phone: Phone invalid or SMS delivery failed
+ * - declined: Guest declined (not coming)
  */
-export type GuestStatus = 'added' | 'invited' | 'confirmed' | 'paid';
+export type GuestStatus = 'added' | 'invited' | 'confirmed' | 'paid' | 'invalid_phone' | 'declined';
 
 /**
  * Aggregated guest statistics (stored on event for quick access)
  */
 export interface GuestStats {
     total: number;
-    added: number;      // Added but not invited
-    invited: number;    // Invited but not confirmed
-    confirmed: number;  // Confirmed but not paid
-    paid: number;       // Confirmed and paid
-    totalPaid: number;  // Total amount paid (in cents)
+    added: number;         // Added but not invited
+    invited: number;       // Invited but not confirmed
+    confirmed: number;     // Confirmed but not paid
+    paid: number;          // Confirmed and paid
+    invalidNumber: number; // Invalid phone or delivery failed
+    notComing: number;     // Declined
+    totalPaid: number;     // Total amount paid (in cents)
 }
 
 /**
@@ -70,6 +74,8 @@ export function calculateGuestStats(guests: Guest[]): GuestStats {
         invited: guests.filter(g => g.status === 'invited').length,
         confirmed: guests.filter(g => g.status === 'confirmed').length,
         paid: guests.filter(g => g.status === 'paid').length,
+        invalidNumber: guests.filter(g => g.status === 'invalid_phone').length,
+        notComing: guests.filter(g => g.status === 'declined').length,
         totalPaid: guests.reduce((sum, g) => sum + (g.paymentAmount || 0), 0),
     };
 }
@@ -310,7 +316,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             posterPrompt: data.posterPrompt,
             guests: (data.guests ?? []).map(guestFromFirestore),
             totalGuests: data.totalGuests ?? 0,
-            guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, totalPaid: 0 },
+            guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
             stripeAccountId: data.stripeAccountId,
             status: data.status ?? 'active',
             createdAt: data.createdAt?.toDate?.() ?? new Date(),
@@ -362,7 +368,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             posterPrompt: data.posterPrompt,
             // NOTE: guests array is NOT fetched - use guestStats instead
             totalGuests: data.totalGuests ?? 0,
-            guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, totalPaid: 0 },
+            guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
             stripeAccountId: data.stripeAccountId,
             status: data.status ?? 'active',
             createdAt: data.createdAt?.toDate?.() ?? new Date(),

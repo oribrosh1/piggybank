@@ -225,6 +225,131 @@ async function createTestAuthorization(stripe, opts) {
     );
 }
 
+/**
+ * Retrieve the connected account's balance (available + pending).
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ */
+async function getConnectBalance(stripe, accountId) {
+    return stripe.balance.retrieve({ stripeAccount: accountId });
+}
+
+/**
+ * List balance transactions for a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {{ limit?: number, starting_after?: string }} opts
+ */
+async function getBalanceTransactions(stripe, accountId, opts = {}) {
+    const params = { limit: opts.limit || 10 };
+    if (opts.starting_after) params.starting_after = opts.starting_after;
+    return stripe.balanceTransactions.list(params, { stripeAccount: accountId });
+}
+
+/**
+ * Retrieve full account object for a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ */
+async function getFullAccount(stripe, accountId) {
+    return stripe.accounts.retrieve(accountId);
+}
+
+/**
+ * List payouts for a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {{ limit?: number, starting_after?: string }} opts
+ */
+async function listPayouts(stripe, accountId, opts = {}) {
+    const params = { limit: opts.limit || 10 };
+    if (opts.starting_after) params.starting_after = opts.starting_after;
+    return stripe.payouts.list(params, { stripeAccount: accountId });
+}
+
+/**
+ * Create a payout from connected account to their bank.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {{ amount: number, currency?: string }} opts
+ */
+async function createPayout(stripe, accountId, opts) {
+    return stripe.payouts.create(
+        { amount: opts.amount, currency: opts.currency || "usd" },
+        { stripeAccount: accountId }
+    );
+}
+
+/**
+ * Add an external bank account to a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {{ account_holder_name: string, account_holder_type?: string, routing_number: string, account_number: string, country?: string, currency?: string }} opts
+ */
+async function addBankAccount(stripe, accountId, opts) {
+    return stripe.accounts.createExternalAccount(accountId, {
+        external_account: {
+            object: "bank_account",
+            country: opts.country || "US",
+            currency: opts.currency || "usd",
+            account_holder_name: opts.account_holder_name,
+            account_holder_type: opts.account_holder_type || "individual",
+            routing_number: opts.routing_number,
+            account_number: opts.account_number,
+        },
+    });
+}
+
+/**
+ * Update individual/business info on a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {object} payload
+ */
+async function updateAccountInfo(stripe, accountId, payload) {
+    const update = {};
+    const individual = {};
+
+    if (payload.first_name) individual.first_name = payload.first_name;
+    if (payload.last_name) individual.last_name = payload.last_name;
+    if (payload.email) individual.email = payload.email;
+    if (payload.phone) individual.phone = payload.phone;
+    if (payload.dob) individual.dob = payload.dob;
+    if (payload.address) individual.address = payload.address;
+    if (payload.ssn_last_4) individual.ssn_last_4 = payload.ssn_last_4;
+    if (payload.id_number) individual.id_number = payload.id_number;
+
+    if (Object.keys(individual).length > 0) update.individual = individual;
+
+    const bp = {};
+    if (payload.business_profile_mcc) bp.mcc = payload.business_profile_mcc;
+    if (payload.business_profile_url) bp.url = payload.business_profile_url;
+    if (payload.business_profile_product_description) bp.product_description = payload.business_profile_product_description;
+    if (payload.business_profile_support_phone) bp.support_phone = payload.business_profile_support_phone;
+    if (Object.keys(bp).length > 0) update.business_profile = bp;
+
+    if (payload.statement_descriptor) {
+        update.settings = { payments: { statement_descriptor: payload.statement_descriptor } };
+    }
+
+    return stripe.accounts.update(accountId, update);
+}
+
+/**
+ * Accept TOS for a connected account.
+ * @param {import("stripe").Stripe} stripe
+ * @param {string} accountId
+ * @param {string} [ip]
+ */
+async function acceptTos(stripe, accountId, ip) {
+    return stripe.accounts.update(accountId, {
+        tos_acceptance: {
+            date: Math.floor(Date.now() / 1000),
+            ip: ip || "0.0.0.0",
+        },
+    });
+}
+
 module.exports = {
     createCustomConnectAccount,
     createAccountLink,
@@ -235,4 +360,12 @@ module.exports = {
     getCardDetails,
     updateAccountCapabilities,
     createTestAuthorization,
+    getConnectBalance,
+    getBalanceTransactions,
+    getFullAccount,
+    listPayouts,
+    createPayout,
+    addBankAccount,
+    updateAccountInfo,
+    acceptTos,
 };

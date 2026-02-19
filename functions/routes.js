@@ -18,6 +18,21 @@ function registerRoutes(app, opts) {
     app.get("/getCardDetails", verifyFirebaseToken, stripeController.getCardDetails);
     app.post("/createTestAuthorization", verifyFirebaseToken, stripeController.createTestAuthorization);
 
+    // ----- Balance, Transactions, Account Details, Payouts -----
+    app.get("/getBalance", verifyFirebaseToken, stripeController.getBalance);
+    app.get("/getTransactions", verifyFirebaseToken, stripeController.getTransactions);
+    app.get("/getAccountDetails", verifyFirebaseToken, stripeController.getAccountDetails);
+    app.get("/getPayouts", verifyFirebaseToken, stripeController.getPayouts);
+    app.post("/createPayout", verifyFirebaseToken, stripeController.createPayout);
+    app.post("/addBankAccount", verifyFirebaseToken, stripeController.addBankAccount);
+    app.post("/updateAccountInfo", verifyFirebaseToken, stripeController.updateAccountInfo);
+    app.post("/acceptTermsOfService", verifyFirebaseToken, stripeController.acceptTermsOfService);
+
+    // ----- Test mode only -----
+    app.post("/testVerifyAccount", verifyFirebaseToken, stripeController.testVerifyAccount);
+    app.post("/testCreateTransaction", verifyFirebaseToken, stripeController.testCreateTransaction);
+    app.post("/testAddBalance", verifyFirebaseToken, stripeController.testAddBalance);
+
     // ----- Poster (protected) -----
     app.post("/generatePoster", verifyFirebaseToken, posterController.generatePoster);
 

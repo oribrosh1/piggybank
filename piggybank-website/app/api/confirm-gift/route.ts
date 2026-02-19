@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
             invited: guests.filter((g: any) => g.status === 'invited').length,
             confirmed: guests.filter((g: any) => g.status === 'confirmed').length,
             paid: guests.filter((g: any) => g.status === 'paid').length,
+            invalidNumber: guests.filter((g: any) => g.status === 'invalid_phone').length,
+            notComing: guests.filter((g: any) => g.status === 'declined').length,
             totalPaid: guests
                 .filter((g: any) => g.status === 'paid')
                 .reduce((sum: number, g: any) => sum + (g.paymentAmount || 0), 0),

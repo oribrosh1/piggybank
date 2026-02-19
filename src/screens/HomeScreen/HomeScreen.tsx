@@ -1,6 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight } from "lucide-react-native";
+
+const TERMS_URL = "https://creditkid.vercel.app/terms";
+const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
 import { useHomeScreen } from "./useHomeScreen";
 import {
   StepCard,
@@ -127,6 +130,18 @@ export default function HomeScreen() {
         </View>
 
         <GiftCardsSection />
+
+        <View style={{ marginTop: 32, paddingTop: 20, borderTopWidth: 1, borderTopColor: "#E5E7EB", alignItems: "center", gap: 8 }}>
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            <TouchableOpacity onPress={() => Linking.openURL(TERMS_URL)}>
+              <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "600" }}>Terms of Service</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL(PRIVACY_URL)}>
+              <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "600" }}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontSize: 11, color: "#D1D5DB", fontWeight: "500" }}>© 2026 CreditKid</Text>
+        </View>
       </ScrollView>
     </View>
   );

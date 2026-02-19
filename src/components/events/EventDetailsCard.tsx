@@ -17,7 +17,7 @@ export default function EventDetailsCard({ event, delay = 300, onEdit }: EventDe
             entering={FadeInDown.delay(delay).duration(400)}
             style={{
                 marginHorizontal: 24,
-                marginTop: 24,
+                marginTop: 16,
                 backgroundColor: "#FFFFFF",
                 borderRadius: 20,
                 padding: 20,
