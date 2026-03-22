@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  ScrollView,
   TouchableOpacity,
   TextInput,
   Animated,

@@ -286,21 +286,15 @@ export interface CreateOnboardingLinkResponse {
     success: boolean;
 }
 
-export interface GetIssuingBalanceResponse {
-    issuingAvailable: number;
-    issuingAvailableFormatted: string;
+export interface GetFinancialAccountBalanceResponse {
+    balance: Record<string, unknown>;
     currency: string;
-    canCreateCard: boolean;
+    status: string;
+    features: Record<string, unknown>;
     success: boolean;
 }
 
-export interface TopUpIssuingPayload {
-    amount: number; // cents
-}
-
-export interface TopUpIssuingResponse {
-    topupId: string;
-    amount: number;
+export interface RetryProvisioningResponse {
     status: string;
     success: boolean;
 }
@@ -335,14 +329,36 @@ export interface CreateVirtualCardResponse {
     success: boolean;
 }
 
-/** STAGE 4 – Server-side card details (number, CVC); never stored in DB */
+/** STAGE 4 – Card metadata (last4 only — full number never leaves Stripe; used via Apple Pay) */
 export interface GetCardDetailsResponse {
     last4: string;
     exp_month: number;
     exp_year: number;
     brand?: string;
-    number?: string;
-    cvc?: string;
+    success: boolean;
+}
+
+/** Card details with Apple/Google Wallet provisioning fields */
+export interface GetCardDetailsWithWalletResponse {
+    last4: string;
+    exp_month: number;
+    exp_year: number;
+    brand?: string;
+    cardId: string;
+    primaryAccountIdentifier: string | null;
+    walletStatus: {
+        apple_pay: 'eligible' | 'ineligible';
+    };
+    success: boolean;
+}
+
+/** Push provisioning ephemeral key for Apple/Google Wallet */
+export interface CreatePushProvisioningEphemeralKeyPayload {
+    apiVersion?: string;
+}
+
+export interface CreatePushProvisioningEphemeralKeyResponse {
+    ephemeralKey: Record<string, unknown>;
     success: boolean;
 }
 
@@ -384,34 +400,37 @@ async function authHeaders(): Promise<{ Authorization: string }> {
 
 export interface GetChildInviteLinkResponse {
     link: string;
+    pin: string;
     expiresAt: string;
     token: string;
 }
 
 export interface ClaimChildInviteResponse {
-    customToken: string;
     childAccountId: string;
     eventId: string;
     eventName?: string;
+    ephemeralKeySecret?: string | null;
+    cardLast4?: string | null;
 }
 
-/** Parent: get SMS link for child to open (requires auth). */
-export async function getChildInviteLink(eventId: string): Promise<GetChildInviteLinkResponse> {
+/** Parent: get SMS link for child to open (requires auth). Also accepts child's phone. */
+export async function getChildInviteLink(eventId: string, childPhone: string): Promise<GetChildInviteLinkResponse> {
     const headers = await authHeaders();
     const res = await axios.post<GetChildInviteLinkResponse>(
         `${BASE}/getChildInviteLink`,
-        { eventId },
+        { eventId, childPhone },
         { headers }
     );
     return res.data;
 }
 
-/** Child: claim invite with token from link (no auth). Returns customToken to sign in. */
-export async function claimChildInvite(token: string): Promise<ClaimChildInviteResponse> {
+/** Child: claim invite with token + PIN (requires Firebase Phone Auth). */
+export async function claimChildInvite(token: string, pin: string): Promise<ClaimChildInviteResponse> {
+    const headers = await authHeaders();
     const res = await axios.post<ClaimChildInviteResponse>(
         `${BASE}/claimChildInvite`,
-        { token },
-        { headers: { 'Content-Type': 'application/json' } }
+        { token, pin },
+        { headers }
     );
     return res.data;
 }
@@ -490,27 +509,25 @@ export async function createOnboardingLink(): Promise<CreateOnboardingLinkRespon
 }
 
 /**
- * STAGE 2.5 – Get Issuing balance; canCreateCard when > $0
+ * Get Treasury Financial Account balance
  */
-export async function getIssuingBalance(): Promise<GetIssuingBalanceResponse> {
+export async function getFinancialAccountBalance(): Promise<GetFinancialAccountBalanceResponse> {
     const headers = await authHeaders();
-    const res = await axios.get<GetIssuingBalanceResponse>(
-        `${BASE}/getIssuingBalance`,
+    const res = await axios.get<GetFinancialAccountBalanceResponse>(
+        `${BASE}/getFinancialAccountBalance`,
         { headers }
     );
     return res.data;
 }
 
 /**
- * STAGE 2.5 – Top-up Issuing balance (from linked bank)
+ * Retry a failed provisioning task
  */
-export async function topUpIssuing(
-    payload: TopUpIssuingPayload
-): Promise<TopUpIssuingResponse> {
+export async function retryProvisioning(): Promise<RetryProvisioningResponse> {
     const headers = await authHeaders();
-    const res = await axios.post<TopUpIssuingResponse>(
-        `${BASE}/topUpIssuing`,
-        payload,
+    const res = await axios.post<RetryProvisioningResponse>(
+        `${BASE}/retryProvisioning`,
+        {},
         { headers }
     );
     return res.data;
@@ -547,12 +564,39 @@ export async function createVirtualCard(
 }
 
 /**
- * STAGE 4 – Fetch card sensitive details (number, CVV) securely from server. Never stored in DB.
+ * STAGE 4 – Fetch card metadata (last4, expiry, brand). Full card number never leaves Stripe.
  */
 export async function getCardDetails(): Promise<GetCardDetailsResponse> {
     const headers = await authHeaders();
     const res = await axios.get<GetCardDetailsResponse>(
         `${BASE}/getCardDetails`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * Get card details including Apple Wallet provisioning fields (primaryAccountIdentifier).
+ */
+export async function getCardDetailsWithWallet(): Promise<GetCardDetailsWithWalletResponse> {
+    const headers = await authHeaders();
+    const res = await axios.get<GetCardDetailsWithWalletResponse>(
+        `${BASE}/getCardDetailsWithWallet`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * Create an ephemeral key for push provisioning a card to Apple/Google Wallet.
+ */
+export async function createPushProvisioningEphemeralKey(
+    payload: CreatePushProvisioningEphemeralKeyPayload = {}
+): Promise<CreatePushProvisioningEphemeralKeyResponse> {
+    const headers = await authHeaders();
+    const res = await axios.post<CreatePushProvisioningEphemeralKeyResponse>(
+        `${BASE}/createPushProvisioningEphemeralKey`,
+        payload,
         { headers }
     );
     return res.data;

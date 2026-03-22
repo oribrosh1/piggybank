@@ -7,14 +7,15 @@ import {
     Modal,
     StyleSheet,
     ScrollView,
+    TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Gift, Send, X, Shield, ArrowRight, Smartphone, CreditCard, BarChart3 } from "lucide-react-native";
+import { Gift, Send, X, Shield, ArrowRight, Smartphone, CreditCard, BarChart3, Phone } from "lucide-react-native";
 
 interface ChildLinkCardProps {
     delay?: number;
-    onSendLink: () => void;
+    onSendLink: (childPhone: string) => void;
     loading?: boolean;
 }
 
@@ -55,13 +56,24 @@ const STEPS = [
 
 export default function ChildLinkCard({ delay = 320, onSendLink, loading = false }: ChildLinkCardProps) {
     const [showExplainModal, setShowExplainModal] = useState(false);
+    const [childPhone, setChildPhone] = useState("");
+    const [phoneError, setPhoneError] = useState<string | null>(null);
     const insets = useSafeAreaInsets();
 
-    const closeModal = () => setShowExplainModal(false);
+    const closeModal = () => {
+        setShowExplainModal(false);
+        setPhoneError(null);
+    };
 
     const handleGetLink = () => {
+        const digits = childPhone.replace(/\D/g, "");
+        if (digits.length < 10) {
+            setPhoneError("Enter your child's phone number (at least 10 digits).");
+            return;
+        }
+        setPhoneError(null);
         closeModal();
-        onSendLink();
+        onSendLink(childPhone);
     };
 
     return (
@@ -125,7 +137,7 @@ export default function ChildLinkCard({ delay = 320, onSendLink, loading = false
                     {/* Scrollable content */}
                     <ScrollView
                         style={styles.scrollArea}
-                        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(24, insets.bottom + 100) }]}
+                        contentContainerStyle={[styles.scrollContent, ]}
                         showsVerticalScrollIndicator={true}
                     >
                         {/* Hero */}
@@ -177,11 +189,37 @@ export default function ChildLinkCard({ delay = 320, onSendLink, loading = false
                             })}
                         </View>
 
+                        {/* Child phone input */}
+                        <Text style={styles.sectionLabel}>YOUR CHILD'S PHONE</Text>
+                        <View style={styles.phoneInputWrap}>
+                            <View style={styles.phoneIconWrap}>
+                                <Phone size={18} color="#0D9488" strokeWidth={2} />
+                            </View>
+                            <TextInput
+                                style={styles.phoneInput}
+                                placeholder="(555) 123-4567"
+                                placeholderTextColor="#94A3B8"
+                                keyboardType="phone-pad"
+                                value={childPhone}
+                                onChangeText={(t) => {
+                                    setChildPhone(t);
+                                    if (phoneError) setPhoneError(null);
+                                }}
+                                autoComplete="tel"
+                            />
+                        </View>
+                        {phoneError && (
+                            <Text style={styles.phoneError}>{phoneError}</Text>
+                        )}
+                        <Text style={styles.phoneHint}>
+                            Your child must verify this exact number to claim the invite.
+                        </Text>
+
                         {/* Security note */}
-                        <View style={styles.securityNote}>
+                        <View style={[styles.securityNote, { marginTop: 16 }]}>
                             <Shield size={16} color="#0D9488" strokeWidth={2} />
                             <Text style={styles.securityText}>
-                                The link is encrypted, single-use, and expires in 15 minutes.
+                                The link is PIN-protected, single-use, and phone-verified.
                             </Text>
                         </View>
                     </ScrollView>
@@ -448,6 +486,42 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#64748B",
         lineHeight: 19,
+    },
+
+    // Phone input
+    phoneInputWrap: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FFFFFF",
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
+        paddingHorizontal: 14,
+        marginBottom: 6,
+    },
+    phoneIconWrap: {
+        marginRight: 10,
+    },
+    phoneInput: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#0F172A",
+        paddingVertical: 14,
+    },
+    phoneError: {
+        fontSize: 13,
+        color: "#EF4444",
+        fontWeight: "600",
+        marginBottom: 4,
+        marginLeft: 4,
+    },
+    phoneHint: {
+        fontSize: 12,
+        color: "#94A3B8",
+        fontWeight: "500",
+        marginLeft: 4,
+        lineHeight: 17,
     },
 
     // Security note

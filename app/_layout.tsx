@@ -1,16 +1,28 @@
 import { useAuth } from "@/src/utils/auth/useAuth";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { Linking } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useAuthStore } from "@/src/utils/auth/store";
 SplashScreen.preventAutoHideAsync();
+
+function parseChildDeepLink(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    if (url.includes("/child") || url.includes("creditkidapp://child")) {
+      const parsed = new URL(url.replace("creditkidapp://", "https://dummy/"));
+      return parsed.searchParams.get("token");
+    }
+  } catch (_) {}
+  return null;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      // cacheTime: 1000 * 60 * 30, // 30 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -19,6 +31,8 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const { initiate, isReady } = useAuth();
+  const router = useRouter();
+  const prevAuth = useRef<any>(null);
 
   console.log('🎨 RootLayout: isReady =', isReady);
 
@@ -26,10 +40,8 @@ export default function RootLayout() {
     console.log('🎨 RootLayout: Calling initiate()');
     const unsubscribe = initiate();
 
-    // Safety timeout: If auth doesn't become ready in 3 seconds, force it
     const timeoutId = setTimeout(() => {
       console.log('⚠️ RootLayout: Auth timeout - forcing isReady to true');
-      // Import useAuthStore to force update (don't call useAuth hook here!)
       const { useAuthStore } = require('../src/utils/auth/store');
       const currentState = useAuthStore.getState();
       if (!currentState.isReady) {
@@ -37,7 +49,6 @@ export default function RootLayout() {
       }
     }, 3000);
 
-    // Cleanup auth listener on unmount
     return () => {
       clearTimeout(timeoutId);
       if (unsubscribe && typeof unsubscribe === 'function') {
@@ -47,8 +58,38 @@ export default function RootLayout() {
     };
   }, [initiate]);
 
+  // Handle deep links arriving while the app is in the foreground
   useEffect(() => {
-    // Always hide splash screen after a short delay, don't wait for auth
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      const token = parseChildDeepLink(url);
+      if (!token) return;
+
+      const { auth } = useAuthStore.getState();
+      if (auth) {
+        router.replace(`/child?token=${encodeURIComponent(token)}` as any);
+      } else {
+        useAuthStore.getState().setPendingChildToken(token);
+      }
+    });
+    return () => subscription.remove();
+  }, [router]);
+
+  // After login/signup, redirect to /child if a pending token is waiting
+  const auth = useAuthStore((s) => s.auth);
+  const pendingChildToken = useAuthStore((s) => s.pendingChildToken);
+
+  useEffect(() => {
+    const justLoggedIn = auth && !prevAuth.current;
+    prevAuth.current = auth;
+
+    if (justLoggedIn && pendingChildToken) {
+      const token = pendingChildToken;
+      useAuthStore.getState().setPendingChildToken(null);
+      router.replace(`/child?token=${encodeURIComponent(token)}` as any);
+    }
+  }, [auth, pendingChildToken, router]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       console.log('🎨 RootLayout: Hiding splash screen');
       SplashScreen.hideAsync();

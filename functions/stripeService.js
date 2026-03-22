@@ -75,31 +75,44 @@ async function createAccountLink(stripe, opts) {
 }
 
 /**
- * Get issuing balance for a connected account (Stage 3).
+ * Create a Treasury Financial Account for a connected account.
  * @param {import("stripe").Stripe} stripe
  * @param {string} accountId
- * @returns {Promise<{ issuingAvailable: number, currency: string }>}
+ * @returns {Promise<import("stripe").Stripe.Treasury.FinancialAccount>}
  */
-async function getIssuingBalance(stripe, accountId) {
-    const balance = await stripe.balance.retrieve({ stripeAccount: accountId });
-    const issuing = balance.issuing || { available: [{ amount: 0, currency: "usd" }] };
-    const availableCents = (issuing.available && issuing.available[0]) ? issuing.available[0].amount : 0;
-    const currency = (issuing.available && issuing.available[0]) ? issuing.available[0].currency : "usd";
-    return { issuingAvailable: availableCents, currency };
+async function createFinancialAccount(stripe, accountId) {
+    return stripe.treasury.financialAccounts.create(
+        {
+            supported_currencies: ["usd"],
+            features: {
+                card_issuing: { requested: true },
+                deposit_insurance: { requested: true },
+                financial_addresses: { aba: { requested: true } },
+                intra_stripe_flows: { requested: true },
+            },
+        },
+        { stripeAccount: accountId }
+    );
 }
 
 /**
- * Top up issuing balance from linked bank (Stage 3).
+ * Get balance of a Treasury Financial Account.
  * @param {import("stripe").Stripe} stripe
- * @param {{ accountId: string, amount: number }} opts
- * @returns {Promise<import("stripe").Stripe.Topup>}
+ * @param {string} accountId
+ * @param {string} financialAccountId
+ * @returns {Promise<{ balance: object, currency: string }>}
  */
-async function topUpIssuing(stripe, opts) {
-    const { accountId, amount } = opts;
-    return stripe.topups.create(
-        { amount: Number(amount), currency: "usd", description: "CreditKid Issuing balance top-up" },
+async function getFinancialAccountBalance(stripe, accountId, financialAccountId) {
+    const fa = await stripe.treasury.financialAccounts.retrieve(
+        financialAccountId,
         { stripeAccount: accountId }
     );
+    return {
+        balance: fa.balance || {},
+        currency: "usd",
+        status: fa.status,
+        features: fa.features,
+    };
 }
 
 /**
@@ -109,7 +122,7 @@ async function topUpIssuing(stripe, opts) {
  * @returns {Promise<import("stripe").Stripe.Issuing.Cardholder>}
  */
 async function createIssuingCardholder(stripe, opts) {
-    const { accountId, name, email, phone, line1, line2, city, state, postal_code, dob } = opts;
+    const { accountId, name, email, phone, line1, line2, city, state, postal_code, dob, tosIp } = opts;
     const [first_name, ...lastParts] = (name || "").trim().split(/\s+/);
     const last_name = lastParts.length ? lastParts.join(" ") : first_name;
     return stripe.issuing.cardholders.create(
@@ -132,6 +145,12 @@ async function createIssuingCardholder(stripe, opts) {
                 first_name,
                 last_name,
                 dob: dob ? (typeof dob === "object" ? dob : { day: 1, month: 1, year: 1990 }) : undefined,
+                card_issuing: {
+                    user_terms_acceptance: {
+                        date: Math.floor(Date.now() / 1000),
+                        ip: tosIp || "127.0.0.1",
+                    },
+                },
             },
         },
         { stripeAccount: accountId }
@@ -145,24 +164,25 @@ async function createIssuingCardholder(stripe, opts) {
  * @returns {Promise<import("stripe").Stripe.Issuing.Card>}
  */
 async function createVirtualCard(stripe, opts) {
-    const { accountId, cardholderId, spendingLimitAmount = 50000, spendingLimitInterval = "per_authorization" } = opts;
-    return stripe.issuing.cards.create(
-        {
-            cardholder: cardholderId,
-            type: "virtual",
-            currency: "usd",
-            status: "active",
-            spending_controls: {
-                spending_limits: [
-                    {
-                        amount: Math.min(Number(spendingLimitAmount) || 50000, 50000),
-                        interval: spendingLimitInterval,
-                    },
-                ],
-            },
+    const { accountId, cardholderId, financialAccountId, spendingLimitAmount = 50000, spendingLimitInterval = "per_authorization" } = opts;
+    const payload = {
+        cardholder: cardholderId,
+        type: "virtual",
+        currency: "usd",
+        status: "active",
+        spending_controls: {
+            spending_limits: [
+                {
+                    amount: Math.min(Number(spendingLimitAmount) || 50000, 50000),
+                    interval: spendingLimitInterval,
+                },
+            ],
         },
-        { stripeAccount: accountId }
-    );
+    };
+    if (financialAccountId) {
+        payload.financial_account = financialAccountId;
+    }
+    return stripe.issuing.cards.create(payload, { stripeAccount: accountId });
 }
 
 /**
@@ -175,18 +195,15 @@ async function getCardDetails(stripe, opts) {
     const { accountId, cardId } = opts;
     const card = await stripe.issuing.cards.retrieve(
         cardId,
-        { expand: ["number", "cvc"] },
+        {},
         { stripeAccount: accountId }
     );
-    const out = {
+    return {
         last4: card.last4,
         exp_month: card.exp_month,
         exp_year: card.exp_year,
         brand: card.brand,
     };
-    if (card.number) out.number = card.number;
-    if (card.cvc) out.cvc = card.cvc;
-    return out;
 }
 
 /**
@@ -202,7 +219,8 @@ async function updateAccountCapabilities(stripe, accountId, opts = {}) {
         capabilities: {
             card_issuing: { requested: true },
             transfers: { requested: true },
-            card_payments: { requested: true }
+            card_payments: { requested: true },
+            treasury: { requested: true },
         },
     };
     if (opts.firebaseUserId) {
@@ -350,14 +368,55 @@ async function acceptTos(stripe, accountId, ip) {
     });
 }
 
+/**
+ * Create an ephemeral key scoped to an Issuing card (for Apple/Google Wallet push provisioning).
+ * The apiVersion must match the Stripe mobile SDK version used on the client.
+ * @param {import("stripe").Stripe} stripe
+ * @param {{ accountId: string, cardId: string, apiVersion?: string }} opts
+ * @returns {Promise<object>} Full ephemeral key JSON (pass to mobile SDK as-is)
+ */
+async function createIssuingEphemeralKey(stripe, opts) {
+    const { accountId, cardId, apiVersion = "2024-11-20.acacia" } = opts;
+    return stripe.ephemeralKeys.create(
+        { issuing_card: cardId },
+        { apiVersion, stripeAccount: accountId }
+    );
+}
+
+/**
+ * Retrieve card with wallet provisioning fields (primaryAccountIdentifier for Apple Wallet).
+ * @param {import("stripe").Stripe} stripe
+ * @param {{ accountId: string, cardId: string }} opts
+ */
+async function getCardDetailsWithWallet(stripe, opts) {
+    const { accountId, cardId } = opts;
+    const card = await stripe.issuing.cards.retrieve(
+        cardId,
+        { expand: ["wallets"] },
+        { stripeAccount: accountId }
+    );
+    return {
+        last4: card.last4,
+        exp_month: card.exp_month,
+        exp_year: card.exp_year,
+        brand: card.brand,
+        primaryAccountIdentifier: card.wallets?.apple_pay?.primary_account_identifier || null,
+        walletStatus: {
+            apple_pay: card.wallets?.apple_pay?.eligible ? "eligible" : "ineligible",
+        },
+    };
+}
+
 module.exports = {
     createCustomConnectAccount,
     createAccountLink,
-    getIssuingBalance,
-    topUpIssuing,
+    createFinancialAccount,
+    getFinancialAccountBalance,
     createIssuingCardholder,
     createVirtualCard,
     getCardDetails,
+    getCardDetailsWithWallet,
+    createIssuingEphemeralKey,
     updateAccountCapabilities,
     createTestAuthorization,
     getConnectBalance,

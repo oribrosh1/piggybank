@@ -2,64 +2,81 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users collection - users can read/write their own document
+    // Users — own document only
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Allow parents to read their children's profiles
-      allow read: if request.auth != null;
     }
     
-    // Events collection - authenticated users can create, owners can edit
-    // Child users (role=='child') can only read their linked event (eventId claim)
+    // Events — authenticated users can create, owners can edit
+    // Child users (role=='child') can only read their linked event
     match /events/{eventId} {
       allow read: if request.auth != null &&
-        (request.auth.token.role != 'child' || resource.id == request.auth.token.eventId);
+        (request.auth.token.get('role', '') != 'child' || resource.id == request.auth.token.eventId);
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && 
         (resource.data.creatorId == request.auth.uid || resource.data.hostId == request.auth.uid);
     }
 
-    // Child accounts - child can read their own doc (by userId)
+    // Child accounts — child can read their own doc only; writes are server-only
     match /childAccounts/{childAccountId} {
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create, update, delete: if false;
     }
     
-    // Families collection
+    // Families — members can read, parents can modify
     match /families/{familyId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid in resource.data.parentIds;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null && 
         request.auth.uid in resource.data.parentIds;
     }
     
-    // Virtual Cards collection
+    // Virtual Cards — owner-only access; writes are server-only
     match /virtualCards/{cardId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && 
-        resource.data.createdBy == request.auth.uid;
+      allow read: if request.auth != null && resource.data.createdBy == request.auth.uid;
+      allow create, update, delete: if false;
     }
     
-    // Transactions collection
+    // Transactions — owner-only access; writes are server-only
     match /transactions/{transactionId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow read: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || resource.data.createdBy == request.auth.uid);
+      allow create, update, delete: if false;
     }
     
-    // Gifts/Transactions subcollection under events
+    // Gifts subcollection — scoped to event owner
     match /events/{eventId}/gifts/{giftId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.creatorId == request.auth.uid;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.creatorId == request.auth.uid;
     }
     
-    // Invitations collection
+    // Invitations — recipient or sender can read; sender can modify
     match /invitations/{inviteId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null &&
+        (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow update, delete: if request.auth != null &&
+        resource.data.senderId == request.auth.uid;
+    }
+
+    // Provisioning tasks — own doc read-only; writes are server-only
+    match /provisioningTasks/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Stripe accounts — own doc read-only; writes are server-only
+    match /stripeAccounts/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Child invite tokens — server-managed only
+    match /childInviteTokens/{tokenId} {
+      allow read, write: if false;
     }
   }
 }

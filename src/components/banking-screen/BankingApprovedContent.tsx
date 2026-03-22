@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Platform, Image } from "react-native";
 import {
   CreditCard,
   CheckCircle,
@@ -15,28 +15,27 @@ import {
 } from "lucide-react-native";
 import type { Router } from "expo-router";
 import { routes } from "@/types/routes";
-import type { GetBalanceResponse, GetAccountDetailsResponse, GetIssuingBalanceResponse } from "@/src/lib/api";
+import type { GetBalanceResponse, GetAccountDetailsResponse } from "@/src/lib/api";
 import type { Transaction, Payout } from "@/src/lib/api";
 import { getAccountDetails, getBalance, getTransactions } from "@/src/lib/api";
+import { useAppleWallet, type AppleWalletStatus } from "@/src/hooks/useAppleWallet";
 
 type BankingApprovedContentProps = {
   router: Router;
   accountDetails: GetAccountDetailsResponse | null;
   balanceData: GetBalanceResponse | null;
-  issuingBalance: GetIssuingBalanceResponse | null;
   transactions: Transaction[];
   payouts: Payout[];
   loadingTransactions: boolean;
   requestingPayout: boolean;
-  toppingUp: boolean;
   creatingCard: boolean;
   onRefresh: () => void;
-  onTopUp: (cents: number) => void;
   onCreateCard: () => void;
   onRequestPayout: () => void;
   onTestVerify: () => void;
   onTestAddBalance: (cents: number) => void;
   onTestCreateTransaction: () => void;
+  hasVirtualCard?: boolean;
 };
 
 function formatBalance(balanceData: GetBalanceResponse | null, key: "available" | "pending"): string {
@@ -188,28 +187,90 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
   const pending = formatBalance(p.balanceData, "pending");
   const hasBalance = (p.balanceData?.available?.[0]?.amount ?? 0) > 0;
 
+  const wallet = useAppleWallet();
+
+  useEffect(() => {
+    if (p.hasVirtualCard && wallet.isSupported && wallet.status === "idle") {
+      wallet.checkEligibility();
+    }
+  }, [p.hasVirtualCard, wallet.isSupported, wallet.status]);
+
+  const showWalletButton =
+    Platform.OS === "ios" &&
+    p.hasVirtualCard &&
+    wallet.status !== "already_added" &&
+    wallet.status !== "unavailable";
+
+  const walletButtonLabel = (): string => {
+    switch (wallet.status) {
+      case "checking":
+        return "Checking...";
+      case "provisioning":
+        return "Adding to Wallet...";
+      case "success":
+        return "Added to Apple Wallet";
+      case "already_added":
+        return "Already in Wallet";
+      default:
+        return "Add to Apple Wallet";
+    }
+  };
+
   return (
     <View>
-      <TouchableOpacity
-        onPress={() => alert("Add to Apple Pay Wallet")}
-        style={{
-          backgroundColor: "#000000",
-          borderRadius: 14,
-          paddingVertical: 16,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 20,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 6,
-        }}
-      >
-        <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginRight: 8 }}>Add to Apple Pay</Text>
-        <Text style={{ fontSize: 24, marginLeft: 6 }}>📱</Text>
-      </TouchableOpacity>
+      {showWalletButton && (
+        <TouchableOpacity
+          onPress={wallet.addToWallet}
+          disabled={wallet.loading || wallet.status === "success"}
+          style={{
+            backgroundColor: wallet.status === "success" ? "#10B981" : "#000000",
+            borderRadius: 14,
+            paddingVertical: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 6,
+            opacity: wallet.loading ? 0.7 : 1,
+          }}
+        >
+          {wallet.loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+          ) : wallet.status === "success" ? (
+            <CheckCircle size={20} color="#FFFFFF" strokeWidth={2.5} style={{ marginRight: 8 }} />
+          ) : (
+            <Wallet size={20} color="#FFFFFF" strokeWidth={2.5} style={{ marginRight: 8 }} />
+          )}
+          <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>
+            {walletButtonLabel()}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {wallet.status === "already_added" && (
+        <View
+          style={{
+            backgroundColor: "rgba(16, 185, 129, 0.15)",
+            borderRadius: 14,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: "rgba(16, 185, 129, 0.3)",
+          }}
+        >
+          <CheckCircle size={16} color="#10B981" strokeWidth={2.5} />
+          <Text style={{ fontSize: 13, fontWeight: "600", color: "#10B981", marginLeft: 8 }}>
+            Card is in Apple Wallet
+          </Text>
+        </View>
+      )}
 
       <View style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", borderRadius: 14, padding: 16, borderWidth: 2, borderColor: "rgba(16, 185, 129, 0.3)", marginBottom: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>

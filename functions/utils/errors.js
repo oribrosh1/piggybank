@@ -20,8 +20,14 @@ function handleError(err, res) {
         if (err.param) payload.param = err.param;
         return res.status(err.statusCode).json(payload);
     }
+    if (err.statusCode && err.statusCode >= 400 && err.statusCode < 500) {
+        const payload = { error: err.message };
+        if (err.code) payload.code = err.code;
+        if (err.param) payload.param = err.param;
+        return res.status(err.statusCode).json(payload);
+    }
     console.error("Unhandled error:", err);
-    return res.status(500).json({ error: err.message || "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
 }
 
 module.exports = { AppError, handleError };

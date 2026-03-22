@@ -23,12 +23,16 @@ import {
   FileCheck,
   Landmark,
 } from "lucide-react-native";
-import GooglePlacesTextInput from "react-native-google-places-textinput";
+import GooglePlacesTextInput, { GooglePlacesTextInputRef } from "react-native-google-places-textinput";
 import {
   usePersonalInfoScreen,
   ID_DOCUMENT_OPTIONS,
   TOTAL_STEPS,
+  TEST_ROUTING,
+  TEST_ACCOUNT,
+  TEST_ACCOUNT_LAST4,
 } from "./usePersonalInfoScreen";
+import { Ref } from "react";
 
 export default function PersonalInfoScreen() {
   const insets = useSafeAreaInsets();
@@ -53,6 +57,7 @@ export default function PersonalInfoScreen() {
     tosAccepted,
     setTosAccepted,
     errors,
+    setErrors,
     focusedField,
     setFocusedField,
     loading,
@@ -528,7 +533,7 @@ export default function PersonalInfoScreen() {
                     Test: use 000000 on Stripe’s verification screen.
                   </Text>
                   <TouchableOpacity
-                    onPress={() => setFormData((prev) => ({ ...prev, phone: "(000) 000-0000" }))}
+                    onPress={() => handlePhoneChange("0000000000")}
                     style={{ paddingVertical: 4, paddingHorizontal: 8, backgroundColor: "#EDE9FE", borderRadius: 8 }}
                   >
                     <Text style={{ fontSize: 12, fontWeight: "600", color: "#6D28D9" }}>Use test number</Text>
@@ -739,7 +744,7 @@ export default function PersonalInfoScreen() {
                 🏠 Street Address
               </Text>
               <GooglePlacesTextInput
-                ref={addressPlacesRef}
+                ref={addressPlacesRef as Ref<GooglePlacesTextInputRef>}
                 scrollEnabled={false}
                 placeHolderText="Enter your address..."
                 value={formData.address}

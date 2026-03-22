@@ -7,6 +7,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import firebase from "@/src/firebase";
 import { routes } from "@/types/routes";
+import { getPostLoginRoute } from "@/src/utils/auth/store";
 import { initializeUserProfile } from "@/src/lib/userService";
 
 const GoogleAuthProvider =
@@ -148,7 +149,7 @@ export function useLoginScreen() {
       if (result.success) {
         try {
           await firebase.auth().signInWithEmailAndPassword(savedEmail, savedPassword);
-          router.replace(routes.tabs.home);
+          router.replace(getPostLoginRoute());
         } catch (firebaseErr: unknown) {
           console.log("❌ Login: Firebase sign in error:", firebaseErr);
           Alert.alert("Sign In Failed", "Your credentials may have expired. Please sign in again.", [
@@ -216,7 +217,7 @@ export function useLoginScreen() {
         });
       }
 
-      router.replace(routes.tabs.home);
+      router.replace(getPostLoginRoute());
     } catch (error: unknown) {
       console.log("❌ Apple Sign In error:", error);
       const code = (error as { code?: string }).code;
@@ -231,7 +232,7 @@ export function useLoginScreen() {
   const handleSignIn = () => {
     const isDevMode = process.env.EXPO_PUBLIC_ENV === "dev";
     if (isDevMode) {
-      router.replace(routes.tabs.home);
+      router.replace(getPostLoginRoute());
     } else {
       handleBiometricAuth();
     }
@@ -259,7 +260,7 @@ export function useLoginScreen() {
       const googleCredential = GoogleAuthProvider.credential(idToken);
       await firebase.auth().signInWithCredential(googleCredential);
 
-      router.replace(routes.tabs.home);
+      router.replace(getPostLoginRoute());
     } catch (err: unknown) {
       console.log("❌ Google Sign-In error:", err);
 

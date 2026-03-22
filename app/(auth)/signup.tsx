@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import firebase from "@/src/firebase";
 import { routes } from "@/types/routes";
+import { getPostLoginRoute } from "@/src/utils/auth/store";
 import { initializeUserProfile } from "@/src/lib/userService";
 
 export default function SignUpScreen() {
@@ -83,7 +84,7 @@ export default function SignUpScreen() {
                 [
                     {
                         text: 'Get Started',
-                        onPress: () => router.replace(routes.tabs.home)
+                        onPress: () => router.replace(getPostLoginRoute())
                     }
                 ]
             );

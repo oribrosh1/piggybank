@@ -13,9 +13,8 @@ import {
   getPayouts,
   Payout,
   createPayout,
-  getIssuingBalance,
-  GetIssuingBalanceResponse,
-  topUpIssuing,
+  getFinancialAccountBalance,
+  GetFinancialAccountBalanceResponse,
   createIssuingCardholder,
   createVirtualCard,
   testCreateTransaction,
@@ -35,14 +34,13 @@ export function useBankingScreen() {
   const [accountData, setAccountData] = useState<AccountStatusResponse | null>(null);
   const [accountDetails, setAccountDetails] = useState<GetAccountDetailsResponse | null>(null);
   const [balanceData, setBalanceData] = useState<GetBalanceResponse | null>(null);
-  const [issuingBalance, setIssuingBalance] = useState<GetIssuingBalanceResponse | null>(null);
+  const [financialBalance, setFinancialBalance] = useState<GetFinancialAccountBalanceResponse | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
-  const [toppingUp, setToppingUp] = useState(false);
   const [creatingCard, setCreatingCard] = useState(false);
   const [kycStatus, setKycStatus] = useState<KycStatus>("no_account");
   const [refreshing, setRefreshing] = useState(false);
@@ -89,7 +87,7 @@ export function useBankingScreen() {
         setUserProfile(null);
         setBalanceData(null);
         setTransactions([]);
-        setIssuingBalance(null);
+        setFinancialBalance(null);
         return;
       }
 
@@ -102,7 +100,7 @@ export function useBankingScreen() {
         setTransactions([]);
         setAccountDetails(null);
         setPayouts([]);
-        setIssuingBalance(null);
+        setFinancialBalance(null);
         return;
       }
 
@@ -146,22 +144,22 @@ export function useBankingScreen() {
           console.warn("Could not fetch payouts:", e);
         }
         try {
-          const issuing = await getIssuingBalance();
-          setIssuingBalance(issuing);
+          const faBalance = await getFinancialAccountBalance();
+          setFinancialBalance(faBalance);
         } catch (e) {
-          console.warn("Could not fetch issuing balance:", e);
-          setIssuingBalance(null);
+          console.warn("Could not fetch financial account balance:", e);
+          setFinancialBalance(null);
         }
       } else if (pending) {
         setKycStatus("pending");
         setBalanceData(null);
         setTransactions([]);
-        setIssuingBalance(null);
+        setFinancialBalance(null);
       } else {
         setKycStatus("rejected");
         setBalanceData(null);
         setTransactions([]);
-        setIssuingBalance(null);
+        setFinancialBalance(null);
       }
     } catch (error) {
       console.error("Error fetching account data:", error);
@@ -194,24 +192,7 @@ export function useBankingScreen() {
     alert("Card number copied!");
   };
 
-  const handleTopUp = async (amountCents: number) => {
-    try {
-      setToppingUp(true);
-      await topUpIssuing({ amount: amountCents });
-      alert(`$${(amountCents / 100).toFixed(2)} added to card balance.`);
-      onRefresh();
-    } catch (err: unknown) {
-      const message = err && typeof err === "object" && "response" in err
-        ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-        : undefined;
-      alert(message || "Failed to add funds");
-    } finally {
-      setToppingUp(false);
-    }
-  };
-
   const handleCreateCard = async () => {
-    if (!issuingBalance?.canCreateCard) return;
     const ind = accountDetails?.individual;
     if (
       !ind?.first_name ||
@@ -335,14 +316,13 @@ export function useBankingScreen() {
     accountData,
     accountDetails,
     balanceData,
-    issuingBalance,
+    financialBalance,
     userProfile,
     transactions,
     payouts,
     loading,
     loadingTransactions,
     requestingPayout,
-    toppingUp,
     creatingCard,
     kycStatus,
     refreshing,
@@ -354,7 +334,6 @@ export function useBankingScreen() {
     handleSetupCredit,
     toggleCardVisibility,
     handleCopyCardNumber,
-    handleTopUp,
     handleCreateCard,
     handleRequestPayout,
     handleTestVerify,

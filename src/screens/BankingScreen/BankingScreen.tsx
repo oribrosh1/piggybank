@@ -77,20 +77,18 @@ export default function BankingScreen() {
                 router={hook.router}
                 accountDetails={hook.accountDetails}
                 balanceData={hook.balanceData}
-                issuingBalance={hook.issuingBalance}
                 transactions={hook.transactions}
                 payouts={hook.payouts}
                 loadingTransactions={hook.loadingTransactions}
                 requestingPayout={hook.requestingPayout}
-                toppingUp={hook.toppingUp}
                 creatingCard={hook.creatingCard}
                 onRefresh={hook.onRefresh}
-                onTopUp={hook.handleTopUp}
                 onCreateCard={hook.handleCreateCard}
                 onRequestPayout={hook.handleRequestPayout}
                 onTestVerify={hook.handleTestVerify}
                 onTestAddBalance={hook.handleTestAddBalance}
                 onTestCreateTransaction={hook.handleTestCreateTransaction}
+                hasVirtualCard={!!hook.accountDetails?.virtualCardId}
               />
             </>
           )}

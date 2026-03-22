@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
+import type { ExternalPathString } from "expo-router";
 
 export const authKey = `${process.env.EXPO_PUBLIC_PROJECT_GROUP_ID || 'piggybank'}-jwt`;
 
 interface AuthStoreState {
   isReady: boolean;
   auth: any | null;
+  pendingChildToken: string | null;
   setAuth: (auth: any | null) => void;
+  setPendingChildToken: (token: string | null) => void;
 }
 
 interface AuthModalState {
@@ -22,6 +25,7 @@ interface AuthModalState {
 export const useAuthStore = create<AuthStoreState>((set) => ({
   isReady: false,
   auth: null,
+  pendingChildToken: null,
   setAuth: (auth: AuthStoreState['auth'] | null) => {
     if (auth) {
       SecureStore.setItemAsync(authKey, JSON.stringify(auth));
@@ -30,7 +34,22 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
     }
     set({ auth });
   },
+  setPendingChildToken: (token: string | null) => set({ pendingChildToken: token }),
 }));
+
+/**
+ * Returns the route to navigate to after login/signup.
+ * If a pending child invite token exists, consumes it and returns the /child route.
+ * Otherwise returns the home tab route.
+ */
+export function getPostLoginRoute(): ExternalPathString {
+  const { pendingChildToken } = useAuthStore.getState();
+  if (pendingChildToken) {
+    useAuthStore.setState({ pendingChildToken: null });
+    return `/child?token=${encodeURIComponent(pendingChildToken)}` as ExternalPathString;
+  }
+  return "/(tabs)/home" as ExternalPathString;
+}
 
 /**
  * This store manages the state of the authentication modal.

@@ -1,3 +1,12 @@
+const { withEntitlementsPlist } = require("expo/config-plugins");
+
+const withAppleWalletEntitlement = (config) => {
+    return withEntitlementsPlist(config, (mod) => {
+        mod.modResults["com.apple.developer.payment-pass-provisioning"] = true;
+        return mod;
+    });
+};
+
 module.exports = {
     expo: {
         name: "CreditKid",
@@ -17,10 +26,12 @@ module.exports = {
                 usesNonExemptEncryption: false,
                 googleMapsApiKey: "AIzaSyBMN7YRo_mlOKjOpZudJxP9lZx_Dm87yso"
             },
-            // usesAppleSignIn: true, // Requires paid Apple Developer account ($99/yr)
             supportsTablet: true,
             bundleIdentifier: "com.oribrosh.piggybank",
-            googleServicesFile: "./GoogleService-Info.plist"
+            googleServicesFile: "./GoogleService-Info.plist",
+            entitlements: {
+                "com.apple.developer.payment-pass-provisioning": true,
+            },
         },
         android: {
             adaptiveIcon: {
@@ -64,7 +75,7 @@ module.exports = {
             [
                 "@stripe/stripe-react-native",
                 {
-                    // merchantIdentifier: "merchant.com.oribrosh.piggybank", // Apple Pay requires paid account
+                    merchantIdentifier: "merchant.com.oribrosh.piggybank",
                     enableGooglePay: true
                 }
             ],
@@ -92,7 +103,8 @@ module.exports = {
                 {
                     contactsPermission: "Allow $(PRODUCT_NAME) to access your contacts."
                 }
-            ]
+            ],
+            withAppleWalletEntitlement,
         ],
         experiments: {
             typedRoutes: true

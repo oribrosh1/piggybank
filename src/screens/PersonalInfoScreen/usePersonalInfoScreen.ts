@@ -395,6 +395,7 @@ export function usePersonalInfoScreen() {
     tosAccepted,
     setTosAccepted,
     errors,
+    setErrors,
     focusedField,
     setFocusedField,
     loading,

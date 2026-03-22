@@ -128,16 +128,28 @@ export default function EventDashboard() {
         });
     };
 
-    const handleSendChildLink = useCallback(async () => {
+    const handleSendChildLink = useCallback(async (childPhone: string) => {
         if (!id) return;
         setChildLinkLoading(true);
         try {
-            const { link } = await getChildInviteLink(id);
-            await Share.share({
-                message: `Open this link to see your CreditKid balance and gifts: ${link}`,
-                title: "CreditKid – Your balance & gifts",
-                url: Platform.OS === "ios" ? link : undefined,
-            });
+            const { link, pin } = await getChildInviteLink(id, childPhone);
+
+            Alert.alert(
+                "Link created!",
+                `Your child's PIN is:\n\n${pin}\n\nShare this PIN with your child separately (not in the link). They'll need it to verify their identity.`,
+                [
+                    {
+                        text: "Share Link",
+                        onPress: async () => {
+                            await Share.share({
+                                message: `Open this link to see your CreditKid balance and gifts: ${link}`,
+                                title: "CreditKid – Your balance & gifts",
+                                url: Platform.OS === "ios" ? link : undefined,
+                            });
+                        },
+                    },
+                ]
+            );
         } catch (err: any) {
             const status = err?.response?.status;
             const serverMessage = err?.response?.data?.error;
@@ -208,8 +220,6 @@ export default function EventDashboard() {
                     onSendInvites={handleManageGuests}
                     onAddGuests={handleAddGuests}
                     onShare={handleShare}
-                    onSendChildLink={handleSendChildLink}
-                    childLinkLoading={childLinkLoading}
                     onEditEvent={handleEditEvent}
                     onViewGuestStats={() => setShowGuestStatsModal(true)}
                     onOpenFeatures={() => setShowFeaturesModal(true)}

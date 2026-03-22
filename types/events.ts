@@ -164,6 +164,9 @@ export interface Event {
     // Guest Stats (denormalized for quick access - updated when guests change)
     guestStats: GuestStats;
 
+    // Child phone (set when parent creates invite link)
+    childPhone?: string;
+
     // Stripe Connect Account (for payments)
     stripeAccountId?: string;
 
@@ -273,6 +276,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
         if (event.mealType) data.mealType = event.mealType;
         if (event.vegetarianType) data.vegetarianType = event.vegetarianType;
         if (event.age) data.age = event.age;
+        if (event.childPhone) data.childPhone = event.childPhone;
         if (event.stripeAccountId) data.stripeAccountId = event.stripeAccountId;
         if (event.posterUrl) data.posterUrl = event.posterUrl;
         if (event.posterPrompt) data.posterPrompt = event.posterPrompt;
@@ -314,6 +318,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            childPhone: data.childPhone,
             guests: (data.guests ?? []).map(guestFromFirestore),
             totalGuests: data.totalGuests ?? 0,
             guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
@@ -366,6 +371,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            childPhone: data.childPhone,
             // NOTE: guests array is NOT fetched - use guestStats instead
             totalGuests: data.totalGuests ?? 0,
             guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },

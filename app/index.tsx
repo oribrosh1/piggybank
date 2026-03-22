@@ -17,7 +17,7 @@ function parseChildDeepLink(url: string | null): string | null {
 }
 
 export default function Index() {
-  const { isReady, auth } = useAuthStore();
+  const { isReady, auth, pendingChildToken, setPendingChildToken } = useAuthStore();
   const [canRedirect, setCanRedirect] = useState(false);
   const [childToken, setChildToken] = useState<string | null>(null);
 
@@ -26,7 +26,10 @@ export default function Index() {
   useEffect(() => {
     Linking.getInitialURL().then((url) => {
       const token = parseChildDeepLink(url);
-      if (token) setChildToken(token);
+      if (token) {
+        setPendingChildToken(token);
+        setChildToken(token);
+      }
     });
   }, []);
 
@@ -38,17 +41,21 @@ export default function Index() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Don't render anything until we can redirect
   if (!canRedirect) {
     return null;
   }
 
-  // Child invite link: send to child screen (claim + dashboard)
-  if (childToken) {
-    return <SafeAreaView><Redirect href={`/child?token=${encodeURIComponent(childToken)}`} /></SafeAreaView>;
+  const tokenToUse = childToken || pendingChildToken;
+
+  if (tokenToUse && auth) {
+    setPendingChildToken(null);
+    return <SafeAreaView><Redirect href={`/child?token=${encodeURIComponent(tokenToUse)}`} /></SafeAreaView>;
   }
 
-  // Redirect based on auth status
+  if (tokenToUse && !auth) {
+    return <SafeAreaView><Redirect href={routes.auth.login} /></SafeAreaView>;
+  }
+
   console.log('📍 Index: Redirecting...', auth ? 'to tabs' : 'to login');
 
   if (auth) {

@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import firebase from "@/src/firebase";
 import { routes } from "@/types/routes";
+import { getPostLoginRoute } from "@/src/utils/auth/store";
 
 export default function EmailSignInScreen() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function EmailSignInScreen() {
         Alert.alert(
           'Success',
           'Account created! You can now use Face ID to sign in.',
-          [{ text: 'OK', onPress: () => router.replace(routes.tabs.home) }]
+          [{ text: 'OK', onPress: () => router.replace(getPostLoginRoute()) }]
         );
       } else {
         // Sign in existing user
@@ -57,7 +58,7 @@ export default function EmailSignInScreen() {
         await SecureStore.setItemAsync('userEmail', email);
         await SecureStore.setItemAsync('userPassword', password);
 
-        router.replace(routes.tabs.home);
+        router.replace(getPostLoginRoute());
       }
     } catch (error: any) {
       console.error('Auth error:', error);

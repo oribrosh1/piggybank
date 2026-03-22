@@ -1,3 +1,4 @@
+const admin = require("firebase-admin");
 const stripeAccountRepository = require("../repositories/stripeAccountRepository");
 const userRepository = require("../repositories/userRepository");
 
@@ -23,9 +24,10 @@ function normalizeUSZip(zipCode) {
 
 /**
  * @param {import("stripe").Stripe} stripe
- * @param {object} stripeService - module with createCustomConnectAccount, createAccountLink, getIssuingBalance, etc.
+ * @param {object} stripeService
+ * @param {object} [provisioningService] - optional, injected for fire-and-forget provisioning
  */
-function createStripeConnectService(stripe, stripeService) {
+function createStripeConnectService(stripe, stripeService, provisioningService) {
     async function getOrCreateProfileSlug(uid) {
         const user = await userRepository.getById(uid);
         let profileSlug = user?.profileSlug;
@@ -143,7 +145,6 @@ function createStripeConnectService(stripe, stripeService) {
             }
         }
 
-        const admin = require("firebase-admin");
         await stripeAccountRepository.set(uid, {
             accountId: account.id,
             country,
@@ -171,7 +172,33 @@ function createStripeConnectService(stripe, stripeService) {
             }
         }
 
-        return { accountId: account.id, success: true, existing: false };
+        if (provisioningService) {
+            const db = admin.firestore();
+            await db.collection("provisioningTasks").doc(uid).set({
+                uid,
+                accountId: account.id,
+                status: "phase1",
+                step: "Starting provisioning...",
+                retryCount: 0,
+                body: {
+                    firstName, lastName, email, phone,
+                    address, city, state, zipCode,
+                    dob: dobObj,
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            provisioningService.runProvisioning(uid, account.id, {
+                firstName, lastName, email, phone,
+                address, city, state, zipCode,
+                dob: dobObj,
+            }).catch(async (err) => {
+                console.error(`[StripeConnectService] fire-and-forget provisioning failed uid=${uid}: ${err.message}`);
+            });
+        }
+
+        return { accountId: account.id, status: "provisioning", success: true, existing: false };
     }
 
     async function createOnboardingLink(uid) {
@@ -207,7 +234,6 @@ function createStripeConnectService(stripe, stripeService) {
                 console.warn("[StripeConnectService] Backfill metadata failed", e.message);
             }
         }
-        const admin = require("firebase-admin");
         await stripeAccountRepository.update(uid, {
             charges_enabled: account.charges_enabled,
             payouts_enabled: account.payouts_enabled,
@@ -238,32 +264,62 @@ function createStripeConnectService(stripe, stripeService) {
         return { accountId: account.id, capabilities: account.capabilities, success: true };
     }
 
-    async function getIssuingBalance(uid) {
+    async function getFinancialAccountBalance(uid) {
         const doc = await stripeAccountRepository.getByUid(uid);
         if (!doc || !doc.accountId) {
             const err = new Error("No Stripe account found");
             err.statusCode = 404;
             throw err;
         }
-        const { issuingAvailable: availableCents, currency } = await stripeService.getIssuingBalance(stripe, doc.accountId);
-        return {
-            issuingAvailable: availableCents,
-            issuingAvailableFormatted: (availableCents / 100).toFixed(2),
-            currency,
-            canCreateCard: availableCents > 0,
-            success: true,
-        };
+        if (!doc.financialAccountId) {
+            const err = new Error("No financial account found. Provisioning may still be in progress.");
+            err.statusCode = 404;
+            throw err;
+        }
+        const result = await stripeService.getFinancialAccountBalance(stripe, doc.accountId, doc.financialAccountId);
+        return { ...result, success: true };
     }
 
-    async function topUpIssuing(uid, amount) {
+    async function retryProvisioning(uid) {
+        if (!provisioningService) {
+            const err = new Error("Provisioning service not available");
+            err.statusCode = 500;
+            throw err;
+        }
+        const db = admin.firestore();
+        const taskDoc = await db.collection("provisioningTasks").doc(uid).get();
+        if (!taskDoc.exists) {
+            const err = new Error("No provisioning task found");
+            err.statusCode = 404;
+            throw err;
+        }
+        const task = taskDoc.data();
+        if (task.status !== "failed") {
+            const err = new Error("Can only retry failed tasks");
+            err.statusCode = 400;
+            throw err;
+        }
+
         const doc = await stripeAccountRepository.getByUid(uid);
         if (!doc || !doc.accountId) {
             const err = new Error("No Stripe account found");
             err.statusCode = 404;
             throw err;
         }
-        const topup = await stripeService.topUpIssuing(stripe, { accountId: doc.accountId, amount: Number(amount) });
-        return { topupId: topup.id, amount: topup.amount, status: topup.status, success: true };
+
+        await db.collection("provisioningTasks").doc(uid).update({
+            status: "phase1",
+            step: "Retrying provisioning...",
+            error: admin.firestore.FieldValue.delete(),
+            retryCount: (task.retryCount || 0) + 1,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        provisioningService.runProvisioning(uid, doc.accountId, task.body || {}).catch((err) => {
+            console.error(`[StripeConnectService] retry provisioning failed uid=${uid}: ${err.message}`);
+        });
+
+        return { status: "retrying", success: true };
     }
 
     async function createIssuingCardholder(uid, body) {
@@ -302,16 +358,10 @@ function createStripeConnectService(stripe, stripeService) {
             err.statusCode = 400;
             throw err;
         }
-        const { issuingAvailable } = await stripeService.getIssuingBalance(stripe, doc.accountId);
-        if (issuingAvailable <= 0) {
-            const err = new Error("Insufficient issuing balance. Add funds before creating a card.");
-            err.code = "insufficient_funds";
-            err.statusCode = 400;
-            throw err;
-        }
         const card = await stripeService.createVirtualCard(stripe, {
             accountId: doc.accountId,
             cardholderId: doc.cardholderId,
+            financialAccountId: doc.financialAccountId || undefined,
             ...body,
         });
         await stripeAccountRepository.update(uid, { virtualCardId: card.id });
@@ -368,7 +418,6 @@ function createStripeConnectService(stripe, stripeService) {
                 console.warn("[StripeConnectService] Webhook backfill metadata failed", e.message);
             }
         }
-        const admin = require("firebase-admin");
         const cardIssuingActive = account.capabilities?.card_issuing === "active";
         await stripeAccountRepository.update(row.uid, {
             charges_enabled: account.charges_enabled,
@@ -673,16 +722,48 @@ function createStripeConnectService(stripe, stripeService) {
         };
     }
 
+    async function createPushProvisioningEphemeralKey(uid, body = {}) {
+        const doc = await stripeAccountRepository.getByUid(uid);
+        if (!doc || !doc.accountId || !doc.virtualCardId) {
+            const err = new Error("No card found. Create a virtual card first.");
+            err.code = "no_card";
+            err.statusCode = 404;
+            throw err;
+        }
+        const ephemeralKey = await stripeService.createIssuingEphemeralKey(stripe, {
+            accountId: doc.accountId,
+            cardId: doc.virtualCardId,
+            apiVersion: body.apiVersion || undefined,
+        });
+        return { ephemeralKey, success: true };
+    }
+
+    async function getCardDetailsWithWallet(uid) {
+        const doc = await stripeAccountRepository.getByUid(uid);
+        if (!doc || !doc.accountId || !doc.virtualCardId) {
+            const err = new Error("No card found. Create a virtual card first.");
+            err.statusCode = 404;
+            throw err;
+        }
+        const details = await stripeService.getCardDetailsWithWallet(stripe, {
+            accountId: doc.accountId,
+            cardId: doc.virtualCardId,
+        });
+        return { ...details, cardId: doc.virtualCardId, success: true };
+    }
+
     return {
         createCustomConnectAccount,
         createOnboardingLink,
         getAccountStatus,
         updateAccountCapabilities,
-        getIssuingBalance,
-        topUpIssuing,
+        getFinancialAccountBalance,
+        retryProvisioning,
         createIssuingCardholder,
         createVirtualCard,
         getCardDetails,
+        getCardDetailsWithWallet,
+        createPushProvisioningEphemeralKey,
         createTestAuthorization,
         handleWebhookAccountUpdated,
         parseDobString,

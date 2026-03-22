@@ -5,6 +5,7 @@ const { AppError, handleError } = require("../utils/errors");
 async function generatePoster(req, res) {
     const { eventId } = req.body;
     const uid = req.user?.uid;
+    console.log(`[generatePoster] uid=${uid} eventId=${eventId}`);
 
     if (!eventId) {
         return res.status(400).json({ error: "Missing eventId" });
@@ -20,6 +21,7 @@ async function generatePoster(req, res) {
         }
 
         const { posterPrompt, posterUrl } = await aiService.generatePoster(eventId, event);
+        console.log(`[generatePoster] success uid=${uid} eventId=${eventId} hasUrl=${!!posterUrl}`);
 
         res.json({
             success: true,
@@ -30,6 +32,7 @@ async function generatePoster(req, res) {
                 : "Poster prompt saved. Image generation unavailable or failed; you can use the prompt elsewhere.",
         });
     } catch (err) {
+        console.error(`[generatePoster] error uid=${uid} eventId=${eventId} message=${err.message}`);
         if (err instanceof AppError) {
             return res.status(err.statusCode).json({ error: err.message, ...(err.code && { code: err.code }) });
         }
