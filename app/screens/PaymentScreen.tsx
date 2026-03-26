@@ -15,7 +15,7 @@ import { createPaymentIntent, CreatePaymentIntentResponse } from "@/src/lib/api"
 import { STRIPE_PUBLISHABLE_KEY } from "@/src/lib/config";
 
 export default function PaymentScreen({ route, navigation }: { route: any, navigation: any }) {
-  const { accountId } = route.params || {};
+  void route;
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [amount, setAmount] = useState('10.00');
   const [loading, setLoading] = useState(false);
@@ -31,14 +31,9 @@ export default function PaymentScreen({ route, navigation }: { route: any, navig
   }, []);
 
   async function handleCreatePaymentIntent() {
-    if (!accountId) {
-      Alert.alert('Error', 'No account ID provided');
-      return;
-    }
-
     const amountInCents = Math.round(parseFloat(amount) * 100);
-    if (isNaN(amountInCents) || amountInCents <= 0) {
-      Alert.alert('Error', 'Please enter a valid amount');
+    if (isNaN(amountInCents) || amountInCents < 50) {
+      Alert.alert('Error', 'Enter a valid amount (minimum $0.50).');
       return;
     }
 
@@ -47,11 +42,16 @@ export default function PaymentScreen({ route, navigation }: { route: any, navig
       const res: CreatePaymentIntentResponse = await createPaymentIntent({
         amount: amountInCents,
         currency: 'usd',
-        connectedAccountId: accountId
+        description: 'CreditKid wallet top-up',
       });
 
       setClientSecret(res.clientSecret);
-      Alert.alert('Ready', 'Payment intent created. Enter card details to pay.');
+      const fee = res.platformFeeCents != null ? (res.platformFeeCents / 100).toFixed(2) : '?';
+      const total = res.totalChargedCents != null ? (res.totalChargedCents / 100).toFixed(2) : '?';
+      Alert.alert(
+        'Ready',
+        `Total charge about $${total} (includes ~$${fee} platform fee). Enter card details to pay.`
+      );
     } catch (error: any) {
       console.error('Error creating payment intent:', error);
       Alert.alert('Error', error.message || 'Failed to create payment intent');

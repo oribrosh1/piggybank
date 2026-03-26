@@ -1,3 +1,7 @@
+/**
+ * Guest gift checkout: resolves host `stripeAccountId` from `events/{eventId}` then `users/{creatorId}`,
+ * matching Cloud Function `onEventCreated` + `syncStripeAccountToCreatorEvents` (functions).
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase-admin';

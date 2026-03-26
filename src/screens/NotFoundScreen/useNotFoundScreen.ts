@@ -8,9 +8,9 @@ export interface RouteOption {
 }
 
 const AVAILABLE_ROUTES: RouteOption[] = [
-  { name: "Credit", path: routes.tabs.banking },
-  { name: "Create Event", path: routes.tabs.createEvent },
-  { name: "Events", path: routes.tabs.myEvents },
+  { name: "Gifts", path: routes.tabs.gifts },
+  { name: "Kids", path: routes.tabs.kids },
+  { name: "My event", path: routes.tabs.myEvent },
   { name: "Profile", path: routes.tabs.profile },
   { name: "Login", path: routes.auth.login },
 ];

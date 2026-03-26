@@ -12,13 +12,29 @@ import {
 
 export type EventType = "birthday" | "barMitzvah" | "batMitzvah" | "other";
 
+/** Preset visual themes for AI poster generation (step 3) */
+export type PosterThemeId = "space_explorer" | "neon_disco" | "magical_forest";
+
+/** One saved AI poster image version (collection `eventPosterVersions`) */
+export interface EventPosterVersionRow {
+    id: string;
+    accountId: string;
+    eventId: string;
+    posterUrl: string | null;
+    versionNumber: number;
+    posterPrompt?: string | null;
+    posterThemeId?: PosterThemeId | null;
+    createdAt?: Date;
+}
+
 // Event category for dress code options
 export type EventCategory = "party" | "formal";
 
 // Form data used in event-details.tsx
 export interface EventFormData {
     age: string;
-    eventName: string;
+    /** Honoree first name (shown on poster & invitations). */
+    childName: string;
     // Event category (party vs formal event)
     eventCategory?: EventCategory;
     // Optional event details (Party only)
@@ -37,6 +53,10 @@ export interface EventFormData {
     time: string;
     address1: string;
     address2: string;
+    /**
+     * When true, user skipped party/theme/catering in step 2 — they get a standard (non–AI) invitation look until they add details.
+     */
+    optionalDetailsLater?: boolean;
 }
 
 /**
@@ -96,6 +116,8 @@ export interface Guest {
     paymentId?: string; // Stripe payment ID
     /** Blessing/message from guest when they paid (website gift flow) */
     blessing?: string;
+    /** Gift card design id from website (`1`–`12`), used to render the blessing card */
+    templateId?: string;
 }
 
 /**
@@ -128,7 +150,10 @@ export interface Event {
 
     // Event Details
     eventType: EventType;
+    /** Derived display title for lists, invites, and legacy UIs (e.g. "Emma's 8th Birthday"). */
     eventName: string;
+    /** Honoree name as entered at creation (preferred for UI). */
+    childName?: string;
     // Event category and attire (Party only)
     eventCategory?: EventCategory;
     partyType?: string; // Pool, Beach, Garden, Indoor, Other
@@ -156,6 +181,10 @@ export interface Event {
     // AI Generated Poster
     posterUrl?: string; // URL to AI-generated invitation poster
     posterPrompt?: string; // The prompt used to generate the poster
+    /** Skipped optional details at creation — basic template until details added or AI run */
+    optionalDetailsLater?: boolean;
+    /** Last selected AI poster theme from create flow or regenerate */
+    posterThemeId?: PosterThemeId;
 
     // Guests
     guests: Guest[];
@@ -169,6 +198,10 @@ export interface Event {
 
     // Stripe Connect Account (for payments)
     stripeAccountId?: string;
+    /** Set by onEventCreated when host had no Connect account yet */
+    needsBankingSetup?: boolean;
+    /** When false, scheduled reminder SMS cron skips this event (default: reminders on) */
+    reminderSmsEnabled?: boolean;
 
     // Status
     status: 'draft' | 'active' | 'completed' | 'cancelled';
@@ -276,10 +309,15 @@ export const eventConverter: FirestoreDataConverter<Event> = {
         if (event.mealType) data.mealType = event.mealType;
         if (event.vegetarianType) data.vegetarianType = event.vegetarianType;
         if (event.age) data.age = event.age;
+        if (event.childName) data.childName = event.childName;
         if (event.childPhone) data.childPhone = event.childPhone;
         if (event.stripeAccountId) data.stripeAccountId = event.stripeAccountId;
         if (event.posterUrl) data.posterUrl = event.posterUrl;
         if (event.posterPrompt) data.posterPrompt = event.posterPrompt;
+        if (event.optionalDetailsLater === true) data.optionalDetailsLater = true;
+        if (event.posterThemeId) data.posterThemeId = event.posterThemeId;
+        if (event.needsBankingSetup === true) data.needsBankingSetup = true;
+        if (event.reminderSmsEnabled === false) data.reminderSmsEnabled = false;
 
         return data;
     },
@@ -300,6 +338,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             creatorEmail: data.creatorEmail ?? null,
             eventType: data.eventType,
             eventName: data.eventName,
+            childName: data.childName,
             eventCategory: data.eventCategory,
             partyType: data.partyType,
             otherPartyType: data.otherPartyType,
@@ -318,11 +357,15 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            optionalDetailsLater: data.optionalDetailsLater === true,
+            posterThemeId: data.posterThemeId,
             childPhone: data.childPhone,
             guests: (data.guests ?? []).map(guestFromFirestore),
             totalGuests: data.totalGuests ?? 0,
             guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
             stripeAccountId: data.stripeAccountId,
+            needsBankingSetup: data.needsBankingSetup === true,
+            reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
             status: data.status ?? 'active',
             createdAt: data.createdAt?.toDate?.() ?? new Date(),
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
@@ -353,6 +396,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             creatorEmail: data.creatorEmail ?? null,
             eventType: data.eventType,
             eventName: data.eventName,
+            childName: data.childName,
             eventCategory: data.eventCategory,
             partyType: data.partyType,
             otherPartyType: data.otherPartyType,
@@ -371,11 +415,15 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            optionalDetailsLater: data.optionalDetailsLater === true,
+            posterThemeId: data.posterThemeId,
             childPhone: data.childPhone,
             // NOTE: guests array is NOT fetched - use guestStats instead
             totalGuests: data.totalGuests ?? 0,
             guestStats: data.guestStats ?? { total: 0, added: 0, invited: 0, confirmed: 0, paid: 0, invalidNumber: 0, notComing: 0, totalPaid: 0 },
             stripeAccountId: data.stripeAccountId,
+            needsBankingSetup: data.needsBankingSetup === true,
+            reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
             status: data.status ?? 'active',
             createdAt: data.createdAt?.toDate?.() ?? new Date(),
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),

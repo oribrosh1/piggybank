@@ -26,7 +26,7 @@ export default function EventHeader({ event, topInset }: EventHeaderProps) {
       }}
     >
       <TouchableOpacity
-        onPress={() => router.push(routes.tabs.myEvents)}
+        onPress={() => router.push(routes.tabs.myEvent)}
         style={{
           flexDirection: "row",
           alignItems: "center",

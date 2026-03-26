@@ -1,6 +1,18 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Calendar } from "lucide-react-native";
+import { FOREST, INPUT_BG } from "./designInviteTheme";
+
+function formatTimeTo24h(timeStr: string): string {
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return timeStr;
+  let h = parseInt(m[1], 10);
+  const min = m[2];
+  const ap = m[3].toUpperCase();
+  if (ap === "PM" && h !== 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${min}`;
+}
 
 type EventDetailsDateTimeCardProps = {
   dateValue: string;
@@ -16,88 +28,69 @@ type EventDetailsDateTimeCardProps = {
 
 export default function EventDetailsDateTimeCard(props: EventDetailsDateTimeCardProps) {
   const p = props;
+  const hasError = !!(p.dateError || p.timeError);
+  const borderColor = p.dateFocused || p.timeFocused ? FOREST : hasError ? "#EF4444" : "#E5E7EB";
+
   return (
-    <View
-      style={{
-        marginBottom: 24,
-        backgroundColor: "#FFFFFF",
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
-        borderWidth: 2,
-        borderColor: "#F3F4F6",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 24 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#E0F7F2", alignItems: "center", justifyContent: "center" }}>
-          <Calendar size={22} color="#06D6A0" strokeWidth={2.5} />
-        </View>
-        <Text style={{ fontSize: 17, fontWeight: "800", color: "#111827", marginLeft: 14 }}>When is it happening?</Text>
-      </View>
-
-      <TouchableOpacity
-        onPress={p.onDatePress}
+    <View style={{ marginBottom: 20 }}>
+      <Text
         style={{
-          marginBottom: 18,
-          backgroundColor: p.dateFocused ? "#F0FDFA" : "#F9FAFB",
-          borderRadius: 16,
-          padding: 18,
-          borderWidth: 2,
-          borderColor: p.dateFocused ? "#06D6A0" : p.dateError ? "#EF4444" : "#E5E7EB",
+          fontSize: 11,
+          fontWeight: "800",
+          color: FOREST,
+          letterSpacing: 1.2,
+          marginBottom: 8,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6B7280", marginBottom: 8, textTransform: "uppercase" }}>📅 DATE</Text>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: p.dateValue ? "#111827" : "#9CA3AF" }}>
-              {p.dateValue ? p.formatDateDisplay(p.dateValue) : "Select event date"}
-            </Text>
-          </View>
-          <View style={{ backgroundColor: "#E0F7F2", borderRadius: 12, width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 20 }}>📆</Text>
-          </View>
-        </View>
-        {p.dateError && <Text style={{ fontSize: 11, color: "#EF4444", marginTop: 10, fontWeight: "600" }}>{p.dateError}</Text>}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={p.onTimePress}
+        DATE & TIME
+      </Text>
+      <View
         style={{
-          marginBottom: 20,
-          backgroundColor: p.timeFocused ? "#F0FDFA" : "#F9FAFB",
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: INPUT_BG,
           borderRadius: 16,
-          padding: 18,
           borderWidth: 2,
-          borderColor: p.timeFocused ? "#06D6A0" : p.timeError ? "#EF4444" : "#E5E7EB",
+          borderColor,
+          paddingHorizontal: 14,
+          paddingVertical: 4,
+          minHeight: 52,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 12, fontWeight: "700", color: "#6B7280", marginBottom: 8, textTransform: "uppercase" }}>⏰ TIME</Text>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: p.timeValue ? "#111827" : "#9CA3AF" }}>{p.timeValue || "Select event time"}</Text>
-          </View>
-          <View style={{ backgroundColor: "#E0F7F2", borderRadius: 12, width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 20 }}>🕐</Text>
-          </View>
-        </View>
-        {p.timeError && <Text style={{ fontSize: 11, color: "#EF4444", marginTop: 10, fontWeight: "600" }}>{p.timeError}</Text>}
-      </TouchableOpacity>
-
-      <View style={{ backgroundColor: "#F0FDFA", borderRadius: 14, padding: 16, borderLeftWidth: 4, borderLeftColor: "#06D6A0" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ backgroundColor: "#06D6A0", borderRadius: 18, width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 16 }}>💡</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 13, color: "#047857", lineHeight: 19, fontWeight: "700", marginBottom: 4 }}>You can change the date and time later</Text>
-            <Text style={{ fontSize: 13, color: "#059669", fontWeight: "600", lineHeight: 18 }}>All guests will be notified via SMS automatically</Text>
-          </View>
-        </View>
+        <TouchableOpacity style={{ flex: 1, paddingVertical: 12 }} onPress={p.onDatePress} activeOpacity={0.85}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "700",
+              color: p.dateValue ? "#111827" : "#9CA3AF",
+            }}
+            numberOfLines={1}
+          >
+            {p.dateValue ? p.formatDateDisplay(p.dateValue) : "Date"}
+          </Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 15, fontWeight: "700", color: "#9CA3AF", paddingHorizontal: 4 }}>•</Text>
+        <TouchableOpacity style={{ flex: 1, paddingVertical: 12 }} onPress={p.onTimePress} activeOpacity={0.85}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "700",
+              color: p.timeValue ? "#111827" : "#9CA3AF",
+            }}
+            numberOfLines={1}
+          >
+            {p.timeValue ? formatTimeTo24h(p.timeValue) : "Time"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={p.onDatePress} style={{ padding: 8 }}>
+          <Calendar size={22} color={FOREST} strokeWidth={2.2} />
+        </TouchableOpacity>
       </View>
+      {(p.dateError || p.timeError) && (
+        <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 6, fontWeight: "600" }}>
+          {p.dateError || p.timeError}
+        </Text>
+      )}
     </View>
   );
 }

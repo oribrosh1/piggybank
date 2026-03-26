@@ -28,6 +28,7 @@ import GooglePlacesTextInput from "react-native-google-places-textinput";
 import { routes } from "@/types/routes";
 import { Event, EventFormData, EventCategory } from "@/types/events";
 import { getEvent, updateEvent } from "@/src/lib/eventService";
+import { buildEventTitleFromChild, honoreeNameFromEvent } from "@/src/lib/eventTitle";
 
 export default function EditEventScreen() {
     const insets = useSafeAreaInsets();
@@ -39,7 +40,7 @@ export default function EditEventScreen() {
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState<EventFormData>({
         age: "",
-        eventName: "",
+        childName: "",
         eventCategory: undefined,
         partyType: "",
         otherPartyType: "",
@@ -81,7 +82,7 @@ export default function EditEventScreen() {
             setEvent(eventData);
             setFormData({
                 age: eventData.age || "",
-                eventName: eventData.eventName,
+                childName: honoreeNameFromEvent(eventData),
                 eventCategory: eventData.eventCategory,
                 partyType: eventData.partyType || "",
                 otherPartyType: eventData.otherPartyType || "",
@@ -103,10 +104,8 @@ export default function EditEventScreen() {
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
-        if (event?.eventType === "birthday" && !formData.age.trim())
-            newErrors.age = "Age is required";
-        if (!formData.eventName.trim())
-            newErrors.eventName = "Event name is required";
+        if (!formData.age.trim()) newErrors.age = "Age is required";
+        if (!formData.childName.trim()) newErrors.childName = "Name is required";
         if (!formData.date.trim()) newErrors.date = "Date is required";
         if (!formData.time.trim()) newErrors.time = "Time is required";
         if (!formData.address1.trim()) newErrors.address1 = "Address is required";
@@ -119,8 +118,18 @@ export default function EditEventScreen() {
 
         setSaving(true);
         try {
+            const childName = formData.childName.trim();
+            const derivedTitle = buildEventTitleFromChild(childName, event.eventType, formData.age);
+            const addedOptionalDetails = !!(
+                formData.theme?.trim() ||
+                formData.partyType ||
+                formData.kosherType ||
+                formData.mealType ||
+                formData.eventCategory
+            );
             const result = await updateEvent(id, {
-                eventName: formData.eventName,
+                childName,
+                eventName: derivedTitle,
                 eventCategory: formData.eventCategory,
                 partyType: formData.partyType,
                 otherPartyType: formData.otherPartyType,
@@ -136,6 +145,7 @@ export default function EditEventScreen() {
                 time: formData.time,
                 address1: formData.address1,
                 address2: formData.address2,
+                optionalDetailsLater: addedOptionalDetails ? false : (event.optionalDetailsLater ?? false),
             });
 
             if (result.success) {
@@ -262,56 +272,55 @@ export default function EditEventScreen() {
 
                     {/* Form Content */}
                     <View style={{ backgroundColor: "#FFFFFF", paddingHorizontal: 24, paddingTop: 28 }}>
-                        {/* Age Field (only for birthdays) */}
-                        {isBirthday && (
-                            <View style={{ marginBottom: 24 }}>
-                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center" }}>
-                                        <Text style={{ fontSize: 20 }}>🎉</Text>
-                                    </View>
-                                    <Text style={{ fontSize: 14, fontWeight: "700", color: "#6B7280", marginLeft: 12, textTransform: "uppercase" }}>
-                                        Turning Age
-                                    </Text>
+                        {/* Turning age */}
+                        <View style={{ marginBottom: 24 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ fontSize: 20 }}>🎉</Text>
                                 </View>
-                                <View style={{ backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, borderWidth: 2, borderColor: focusedField === "age" ? "#8B5CF6" : "#E5E7EB" }}>
-                                    <TextInput
-                                        style={{ fontSize: 28, fontWeight: "800", color: "#8B5CF6", textAlign: "center", paddingVertical: 8 }}
-                                        placeholder="16"
-                                        placeholderTextColor="#D1D5DB"
-                                        value={formData.age}
-                                        onChangeText={(v) => handleInputChange("age", v)}
-                                        onFocus={() => setFocusedField("age")}
-                                        onBlur={() => setFocusedField(null)}
-                                        keyboardType="number-pad"
-                                        maxLength={3}
-                                    />
-                                </View>
-                                {errors.age && <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: "600" }}>⚠️ {errors.age}</Text>}
+                                <Text style={{ fontSize: 14, fontWeight: "700", color: "#6B7280", marginLeft: 12, textTransform: "uppercase" }}>
+                                    Turning Age
+                                </Text>
                             </View>
-                        )}
+                            <View style={{ backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, borderWidth: 2, borderColor: focusedField === "age" ? "#8B5CF6" : "#E5E7EB" }}>
+                                <TextInput
+                                    style={{ fontSize: 28, fontWeight: "800", color: "#8B5CF6", textAlign: "center", paddingVertical: 8 }}
+                                    placeholder="16"
+                                    placeholderTextColor="#D1D5DB"
+                                    value={formData.age}
+                                    onChangeText={(v) => handleInputChange("age", v)}
+                                    onFocus={() => setFocusedField("age")}
+                                    onBlur={() => setFocusedField(null)}
+                                    keyboardType="number-pad"
+                                    maxLength={3}
+                                />
+                            </View>
+                            {errors.age ? <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: "600" }}>⚠️ {errors.age}</Text> : null}
+                        </View>
 
-                        {/* Event Name */}
+                        {/* Child name */}
                         <View style={{ marginBottom: 24 }}>
                             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                                 <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center" }}>
                                     <Sparkles size={18} color="#8B5CF6" strokeWidth={2.5} />
                                 </View>
                                 <Text style={{ fontSize: 14, fontWeight: "700", color: "#6B7280", marginLeft: 12, textTransform: "uppercase" }}>
-                                    Event Name
+                                    Child&apos;s name
                                 </Text>
                             </View>
-                            <View style={{ borderRadius: 20, paddingHorizontal: 20, paddingVertical: 18, borderWidth: 2, backgroundColor: "#F9FAFB", borderColor: focusedField === "eventName" ? "#8B5CF6" : "#E5E7EB" }}>
+                            <View style={{ borderRadius: 20, paddingHorizontal: 20, paddingVertical: 18, borderWidth: 2, backgroundColor: "#F9FAFB", borderColor: focusedField === "childName" ? "#8B5CF6" : "#E5E7EB" }}>
                                 <TextInput
                                     style={{ fontSize: 20, fontWeight: "700", color: "#111827", paddingVertical: 6 }}
-                                    placeholder="Emma's Birthday"
+                                    placeholder="Emma"
                                     placeholderTextColor="#D1D5DB"
-                                    value={formData.eventName}
-                                    onChangeText={(v) => handleInputChange("eventName", v)}
-                                    onFocus={() => setFocusedField("eventName")}
+                                    value={formData.childName}
+                                    onChangeText={(v) => handleInputChange("childName", v)}
+                                    onFocus={() => setFocusedField("childName")}
                                     onBlur={() => setFocusedField(null)}
+                                    autoCapitalize="words"
                                 />
                             </View>
-                            {errors.eventName && <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: "600" }}>⚠️ {errors.eventName}</Text>}
+                            {errors.childName ? <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: "600" }}>⚠️ {errors.childName}</Text> : null}
                         </View>
 
                         {/* Event Details Card */}

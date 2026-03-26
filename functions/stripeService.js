@@ -58,6 +58,73 @@ async function createCustomConnectAccount(stripe, opts) {
 }
 
 /**
+ * Create a Custom Connect account with only identity basics (email + name from Firebase Auth).
+ * KYC (address, DOB, SSN, bank) is collected by Stripe Account Links (hosted onboarding), not in-app.
+ * @param {import("stripe").Stripe} stripe
+ * @param {{ country?: string, profileUrl: string, email: string, firstName: string, lastName: string, firebaseUserId?: string }} opts
+ * @returns {Promise<import("stripe").Stripe.Account>}
+ */
+async function createMinimalCustomConnectAccount(stripe, opts) {
+    const { country = "US", profileUrl, email, firstName, lastName, firebaseUserId } = opts;
+    if (!email) {
+        const err = new Error("Email is required to create a Stripe Connect account");
+        err.statusCode = 400;
+        throw err;
+    }
+    const fn = (firstName || "Account").trim() || "Account";
+    const ln = (lastName || "Holder").trim() || "Holder";
+    const individual = {
+        email,
+        first_name: fn,
+        last_name: ln,
+    };
+    const createPayload = {
+        type: "custom",
+        country,
+        email,
+        business_type: "individual",
+        capabilities: {
+            transfers: { requested: true },
+            card_payments: { requested: true },
+        },
+        business_profile: {
+            mcc: "7399",
+            url: profileUrl,
+            product_description: "Personal event fundraising and family allowance management.",
+        },
+        individual,
+        tos_acceptance: { service_agreement: "full", date: Math.floor(Date.now() / 1000), ip: "0.0.0.0" },
+        settings: {
+            payouts: { statement_descriptor: "CREDITKID" },
+            payments: { statement_descriptor: "CREDITKID GIFT" },
+        },
+    };
+    if (firebaseUserId) {
+        createPayload.metadata = { firebase_user_id: firebaseUserId };
+    }
+    try {
+        return await stripe.accounts.create(createPayload);
+    } catch (firstErr) {
+        const msg = String(firstErr?.message || "");
+        const needsAddress =
+            firstErr?.code === "parameter_missing" ||
+            /address|postal|individual/i.test(msg);
+        if (!needsAddress) throw firstErr;
+        createPayload.individual = {
+            ...individual,
+            address: {
+                line1: "Pending verification",
+                city: "San Francisco",
+                state: "CA",
+                postal_code: "94102",
+                country: "US",
+            },
+        };
+        return await stripe.accounts.create(createPayload);
+    }
+}
+
+/**
  * Create an Account Link for hosted onboarding (Stage 2).
  * @param {import("stripe").Stripe} stripe
  * @param {{ accountId: string, returnUrl: string, refreshUrl: string }} opts
@@ -204,6 +271,17 @@ async function getCardDetails(stripe, opts) {
         exp_year: card.exp_year,
         brand: card.brand,
     };
+}
+
+/**
+ * Full Issuing card from Stripe (last4, status, spending_controls, etc.) for parent APIs.
+ * @param {import("stripe").Stripe} stripe
+ * @param {{ accountId: string, cardId: string }} opts
+ * @returns {Promise<import("stripe").Stripe.Issuing.Card>}
+ */
+async function getIssuingCard(stripe, opts) {
+    const { accountId, cardId } = opts;
+    return stripe.issuing.cards.retrieve(cardId, {}, { stripeAccount: accountId });
 }
 
 /**
@@ -409,12 +487,14 @@ async function getCardDetailsWithWallet(stripe, opts) {
 
 module.exports = {
     createCustomConnectAccount,
+    createMinimalCustomConnectAccount,
     createAccountLink,
     createFinancialAccount,
     getFinancialAccountBalance,
     createIssuingCardholder,
     createVirtualCard,
     getCardDetails,
+    getIssuingCard,
     getCardDetailsWithWallet,
     createIssuingEphemeralKey,
     updateAccountCapabilities,

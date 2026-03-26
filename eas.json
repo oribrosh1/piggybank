@@ -6,7 +6,10 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "FIREBASE_APP_CHECK_DEBUG_TOKEN": "REPLACE_WITH_TOKEN_FROM_FIREBASE_CONSOLE"
+      }
     },
     "preview": {
       "distribution": "internal"

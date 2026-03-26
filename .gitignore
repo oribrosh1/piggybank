@@ -26,3 +26,12 @@ expo-env.d.ts
 
 /ios
 /android
+
+# Poster integration test downloads
+functions/tests/temp-images/*
+!functions/tests/temp-images/.gitkeep
+
+firebaseserviceAccountKey.json
+firestore.rules
+
+google-services.json

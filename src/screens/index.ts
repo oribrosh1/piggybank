@@ -3,6 +3,7 @@
 export { default as BankingScreen } from "./BankingScreen/BankingScreen";
 export { default as BankingSuccessScreen } from "./BankingSuccessScreen/BankingSuccessScreen";
 export { default as EventDetailsScreen } from "./EventDetailsScreen/EventDetailsScreen";
+export { default as EventPosterScreen } from "./EventPosterScreen/EventPosterScreen";
 export { default as HomeScreen } from "./HomeScreen/HomeScreen";
 export { default as IdentityVerificationScreen } from "./IdentityVerificationScreen/IdentityVerificationScreen";
 export { default as LoginScreen } from "./LoginScreen/LoginScreen";

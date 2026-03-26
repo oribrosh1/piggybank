@@ -1,10 +1,13 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { MessageSquare, UserPlus, Share2, Gift, Edit3, Users, Sparkles, Bell, Zap } from "lucide-react-native";
+import { Bell, UserPlus, Share2, Users, Zap } from "lucide-react-native";
 
 interface QuickActionsProps {
   delay?: number;
+  /** Opens SMS reminder schedule (replaces legacy send-invites entry point). */
+  onSetReminderSchedule?: () => void;
+  /** @deprecated Use onSetReminderSchedule */
   onSendInvites?: () => void;
   onAddGuests?: () => void;
   onShare?: () => void;
@@ -52,6 +55,7 @@ const tealBtn = {
 
 export default function QuickActions({
   delay = 200,
+  onSetReminderSchedule,
   onSendInvites,
   onAddGuests,
   onShare,
@@ -71,10 +75,14 @@ export default function QuickActions({
         QUICK ACTIONS
       </Text>
       <View style={rowStyle}>
-        <TouchableOpacity onPress={onSendInvites} style={primaryBtn}>
-          <MessageSquare size={18} color="#FFFFFF" strokeWidth={2} />
-          <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFFFFF", marginTop: 4 }} numberOfLines={1}>
-            Send Invites
+        <TouchableOpacity
+          onPress={onSetReminderSchedule ?? onSendInvites}
+          style={primaryBtn}
+          disabled={!onSetReminderSchedule && !onSendInvites}
+        >
+          <Bell size={18} color="#FFFFFF" strokeWidth={2} />
+          <Text style={{ fontSize: 11, fontWeight: "700", color: "#FFFFFF", marginTop: 4 }} numberOfLines={2}>
+            Set Reminder Schedule
           </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onAddGuests} style={secondaryBtn}>

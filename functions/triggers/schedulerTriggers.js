@@ -1,3 +1,9 @@
+/**
+ * Scheduled guest SMS (Twilio). Runs daily 9:00 America/Los_Angeles.
+ * Sends for events whose date is today or in two days (fixed schedule).
+ * Opt out per event: set `events/{eventId}.reminderSmsEnabled` to false.
+ * Custom per-user date/time scheduling is not implemented (would need Cloud Tasks or similar).
+ */
 const admin = require("firebase-admin");
 const twilio = require("twilio");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -48,6 +54,7 @@ exports.sendEventReminderSMS = onSchedule(
         for (const doc of snapshot.docs) {
             const eventId = doc.id;
             const event = doc.data();
+            if (event.reminderSmsEnabled === false) continue;
             const eventDate = parseEventDate(event.date || event.eventDate);
             if (!eventDate) continue;
 

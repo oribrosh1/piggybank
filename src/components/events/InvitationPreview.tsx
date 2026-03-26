@@ -25,6 +25,8 @@ import { formatDate } from "./utils";
 interface InvitationPreviewProps {
     event: Event;
     delay?: number;
+    /** Hide inline card; use ref.open() only (e.g. from Features). */
+    hideTrigger?: boolean;
 }
 
 export interface InvitationPreviewRef {
@@ -42,7 +44,7 @@ const TEMPLATES = [
 ];
 
 const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProps>(function InvitationPreview(
-    { event, delay = 800 },
+    { event, delay = 800, hideTrigger = false },
     ref
 ) {
     const [showPreview, setShowPreview] = useState(false);
@@ -70,6 +72,7 @@ const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProp
     return (
         <>
             {/* Preview Card Button */}
+            {!hideTrigger && (
             <Animated.View
                 entering={FadeInDown.delay(delay).duration(400)}
                 style={{
@@ -166,6 +169,7 @@ const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProp
                     </View>
                 </TouchableOpacity>
             </Animated.View>
+            )}
 
             {/* Full Preview Modal */}
             <Modal

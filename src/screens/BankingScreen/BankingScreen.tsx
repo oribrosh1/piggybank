@@ -89,6 +89,7 @@ export default function BankingScreen() {
                 onTestAddBalance={hook.handleTestAddBalance}
                 onTestCreateTransaction={hook.handleTestCreateTransaction}
                 hasVirtualCard={!!hook.accountDetails?.virtualCardId}
+                cardIssuingActive={hook.accountData?.capabilities?.card_issuing === "active"}
               />
             </>
           )}

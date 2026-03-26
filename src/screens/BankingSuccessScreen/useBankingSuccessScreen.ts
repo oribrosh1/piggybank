@@ -57,7 +57,7 @@ export function useBankingSuccessScreen() {
     }, [scaleAnim, fadeAnim, pulseAnim]);
 
     const handleGoToCredit = () => {
-        router.replace(routes.tabs.banking);
+        router.replace(routes.tabs.home);
     };
 
     const handleGetVirtualCard = () => {

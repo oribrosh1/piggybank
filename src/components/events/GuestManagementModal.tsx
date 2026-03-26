@@ -38,8 +38,8 @@ interface GuestManagementModalProps {
     onClose: () => void;
     event: Event;
     onSendInvites?: (selectedGuests: Guest[]) => void;
-    /** When set, guest list opens filtered (confirmed → coming, paid → paid) */
-    initialFilter?: "added" | "invited" | "confirmed" | "paid";
+    /** When set, guest list opens filtered (confirmed → coming, paid → paid, invalid_phone → invalid) */
+    initialFilter?: "added" | "invited" | "confirmed" | "paid" | "invalid_phone";
     /** Called when user taps Add guest (e.g. navigate to add-guests screen); modal typically closes first */
     onAddGuest?: () => void;
 }
@@ -82,6 +82,7 @@ export default function GuestManagementModal({
             const mapped: SortOption =
                 initialFilter === "confirmed" ? "coming" :
                 initialFilter === "paid" ? "paid" :
+                initialFilter === "invalid_phone" ? "invalid_phone" :
                 initialFilter;
             setSelectedFilters(new Set([mapped]));
         }

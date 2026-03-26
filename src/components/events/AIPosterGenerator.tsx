@@ -24,13 +24,25 @@ import {
     Type,
 } from "lucide-react-native";
 import { Event } from "@/types/events";
-import { generateEventPoster, saveEventPoster } from "@/src/lib/eventService";
+import { generateEventPoster, saveEventPoster, updateEvent } from "@/src/lib/eventService";
 import { formatDate } from "./utils";
+
+function eventHasOptionalDetailsForAi(e: Event): boolean {
+  return !!(
+    e.theme?.trim() ||
+    e.partyType ||
+    e.kosherType ||
+    e.mealType ||
+    e.eventCategory
+  );
+}
 
 interface AIPosterGeneratorProps {
     event: Event;
     delay?: number;
     onPosterGenerated?: (posterUrl: string) => void;
+    /** When true, only the modal is mounted (no inline card). Use with hero + ref.open(). */
+    hideTrigger?: boolean;
 }
 
 export interface AIPosterGeneratorRef {
@@ -38,7 +50,7 @@ export interface AIPosterGeneratorRef {
 }
 
 const AIPosterGenerator = forwardRef<AIPosterGeneratorRef, AIPosterGeneratorProps>(function AIPosterGenerator(
-    { event, delay = 750, onPosterGenerated },
+    { event, delay = 750, onPosterGenerated, hideTrigger = false },
     ref
 ) {
     const [showModal, setShowModal] = useState(false);
@@ -59,15 +71,30 @@ const AIPosterGenerator = forwardRef<AIPosterGeneratorRef, AIPosterGeneratorProp
     };
 
     const handleGenerate = async () => {
+        if (
+            event.optionalDetailsLater &&
+            !event.posterUrl &&
+            !eventHasOptionalDetailsForAi(event)
+        ) {
+            Alert.alert(
+                "AI poster",
+                "Add party mode, theme, or catering in Edit event first. Then you can generate an AI poster.",
+                [{ text: "OK" }]
+            );
+            return;
+        }
         setGenerating(true);
         try {
-            const result = await generateEventPoster(event.id);
+            const result = await generateEventPoster(event.id, event.posterThemeId);
 
             if (result.success) {
                 setGeneratedPrompt(result.posterPrompt || null);
                 if (result.posterUrl) {
                     setPosterUrl(result.posterUrl);
                     onPosterGenerated?.(result.posterUrl);
+                    if (event.optionalDetailsLater) {
+                        await updateEvent(event.id, { optionalDetailsLater: false });
+                    }
                 }
                 Alert.alert(
                     "Success! 🎨",
@@ -107,6 +134,7 @@ const AIPosterGenerator = forwardRef<AIPosterGeneratorRef, AIPosterGeneratorProp
     return (
         <>
             {/* Card Button */}
+            {!hideTrigger && (
             <Animated.View
                 entering={FadeInDown.delay(delay).duration(400)}
                 style={{
@@ -206,6 +234,7 @@ const AIPosterGenerator = forwardRef<AIPosterGeneratorRef, AIPosterGeneratorProp
                     )}
                 </TouchableOpacity>
             </Animated.View>
+            )}
 
             {/* Full Modal */}
             <Modal

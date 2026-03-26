@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { Animated } from "react-native";
+import { Alert, Animated } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { routes } from "@/types/routes";
-import { EventFormData } from "@/types/events";
+import { EventFormData, CreateEventData, EventType } from "@/types/events";
+import { createEvent } from "@/src/lib/eventService";
 
 const initialFormData: EventFormData = {
   age: "",
-  eventName: "",
+  childName: "",
   eventCategory: undefined,
   partyType: "",
   otherPartyType: "",
@@ -21,6 +22,7 @@ const initialFormData: EventFormData = {
   time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
   address1: "",
   address2: "",
+  optionalDetailsLater: false,
 };
 
 export function useEventDetailsScreen() {
@@ -35,6 +37,7 @@ export function useEventDetailsScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [showEventDetails, setShowEventDetails] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
   const googlePlacesRef = useRef<unknown>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -42,7 +45,7 @@ export function useEventDetailsScreen() {
 
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: 0.4,
+      toValue: 0.5,
       duration: 800,
       useNativeDriver: false,
     }).start();
@@ -51,12 +54,12 @@ export function useEventDetailsScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [progressAnim, fadeAnim]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-    if (eventType === "birthday" && !formData.age.trim()) newErrors.age = "Age is required";
-    if (!formData.eventName.trim()) newErrors.eventName = "Event name is required";
+    if (!formData.childName.trim()) newErrors.childName = "Name is required";
+    if (!formData.age.trim()) newErrors.age = "Age is required";
     if (!formData.date.trim()) newErrors.date = "Date is required";
     if (!formData.time.trim()) newErrors.time = "Time is required";
     if (!formData.address1.trim()) newErrors.address1 = "Address is required";
@@ -64,15 +67,36 @@ export function useEventDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
-    if (validateForm()) {
-      router.push({
-        pathname: routes.createEvent.selectGuests,
-        params: {
-          eventType: (eventType as "birthday" | "bar-mitzvah" | "bat-mitzvah" | "wedding") ?? "birthday",
-          ...formData,
-        },
-      });
+  const setOptionalDetailsLater = (v: boolean) => {
+    setFormData((prev) => ({ ...prev, optionalDetailsLater: v }));
+  };
+
+  const handleContinue = async () => {
+    if (!validateForm()) return;
+    setIsCreating(true);
+    try {
+      const eventData: CreateEventData = {
+        eventType: ((eventType as string) ?? "birthday") as EventType,
+        formData,
+        guests: [],
+      };
+      const result = await createEvent(eventData);
+      if (result.success && result.eventId) {
+        router.push({
+          pathname: routes.createEvent.eventPoster,
+          params: {
+            eventId: result.eventId,
+            childName: formData.childName.trim(),
+            eventType: (eventType as string) ?? "birthday",
+          },
+        });
+      } else {
+        Alert.alert("Error", result.error || "Could not create event. Please try again.");
+      }
+    } catch (e: unknown) {
+      Alert.alert("Error", (e as Error).message || "Something went wrong.");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -92,10 +116,9 @@ export function useEventDetailsScreen() {
     const [year, month, day] = dateString.split("-");
     const date = new Date(parseInt(year!, 10), parseInt(month!, 10) - 1, parseInt(day!, 10));
     return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
       month: "short",
       day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -118,7 +141,7 @@ export function useEventDetailsScreen() {
   };
 
   const isBirthday = eventType === "birthday";
-  const isBarBatMitzvah = eventType === "bar-mitzvah" || eventType === "bat-mitzvah";
+  const isBarBatMitzvah = eventType === "barMitzvah" || eventType === "batMitzvah";
   const isPartyMode = isBirthday || formData.eventCategory === "party";
 
   const progressWidth = progressAnim.interpolate({
@@ -156,5 +179,7 @@ export function useEventDetailsScreen() {
     isBirthday,
     isBarBatMitzvah,
     isPartyMode,
+    setOptionalDetailsLater,
+    isCreating,
   };
 }

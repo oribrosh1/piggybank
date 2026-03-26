@@ -36,6 +36,8 @@ type BankingApprovedContentProps = {
   onTestAddBalance: (cents: number) => void;
   onTestCreateTransaction: () => void;
   hasVirtualCard?: boolean;
+  /** When false, virtual card / Issuing CTAs are disabled until Stripe activates card_issuing */
+  cardIssuingActive?: boolean;
 };
 
 function formatBalance(balanceData: GetBalanceResponse | null, key: "available" | "pending"): string {
@@ -195,6 +197,8 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
     }
   }, [p.hasVirtualCard, wallet.isSupported, wallet.status]);
 
+  const cardIssuingOk = p.cardIssuingActive !== false;
+
   const showWalletButton =
     Platform.OS === "ios" &&
     p.hasVirtualCard &&
@@ -282,11 +286,33 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
         </Text>
       </View>
 
+      {!p.accountDetails?.virtualCardId && !cardIssuingOk && (
+        <View
+          style={{
+            backgroundColor: "rgba(251, 191, 36, 0.2)",
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: "rgba(251, 191, 36, 0.5)",
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "700", color: "#FEF3C7", marginBottom: 6 }}>
+            Card issuing not active yet
+          </Text>
+          <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", lineHeight: 18 }}>
+            Stripe must activate the card_issuing capability on your account (and the platform must complete Issuing
+            onboarding). Pull to refresh after verification completes.
+          </Text>
+        </View>
+      )}
+
       {!p.accountDetails?.virtualCardId && (
         <TouchableOpacity
-          onPress={() => p.router.push(routes.banking.setup.issuingCard)}
+          onPress={() => cardIssuingOk && p.router.push(routes.banking.setup.issuingCard)}
+          disabled={!cardIssuingOk}
           style={{
-            backgroundColor: "#8B5CF6",
+            backgroundColor: cardIssuingOk ? "#8B5CF6" : "#6B7280",
             borderRadius: 16,
             padding: 20,
             marginBottom: 20,
@@ -295,9 +321,10 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
             justifyContent: "space-between",
             shadowColor: "#8B5CF6",
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
+            shadowOpacity: cardIssuingOk ? 0.25 : 0,
             shadowRadius: 12,
-            elevation: 6,
+            elevation: cardIssuingOk ? 6 : 0,
+            opacity: cardIssuingOk ? 1 : 0.75,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>

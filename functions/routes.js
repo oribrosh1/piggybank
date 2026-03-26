@@ -2,14 +2,32 @@
  * Register all API routes. Called from index.js with app and dependencies.
  */
 const childInviteController = require("./controllers/childInviteController");
-const { sensitiveEndpointLimiter, generalLimiter } = require("./middleware/rateLimit");
+const childCardController = require("./controllers/childCardController");
+const { sensitiveEndpointLimiter, generalLimiter, inviteLimiter } = require("./middleware/rateLimit");
+const { verifyAppCheck, warnAppCheck } = require("./middleware/appCheck");
 
 const isTestMode = () => (process.env.STRIPE_SECRET_KEY || "").startsWith("sk_test_");
+
+/**
+ * App Check: skipped entirely when STRIPE_SECRET_KEY is sk_test_ (Stripe test mode on Functions).
+ * With sk_live_: strict verifyAppCheck, unless APPCHECK_RELAXED=1 (warn-only for staging).
+ */
+function applyAppCheckMiddleware(app) {
+    if (isTestMode()) {
+        return;
+    }
+    if (process.env.APPCHECK_RELAXED === "1") {
+        app.use(warnAppCheck);
+    } else {
+        app.use(verifyAppCheck);
+    }
+}
 
 function registerRoutes(app, opts) {
     const { verifyFirebaseToken, stripeController, posterController, PUBLIC_BASE_URL } = opts;
 
     app.use(generalLimiter);
+    applyAppCheckMiddleware(app);
 
     // ----- Stripe Connect (protected) -----
     // createCustomConnectAccount is registered in index.js with a larger body limit
@@ -40,17 +58,27 @@ function registerRoutes(app, opts) {
         app.post("/testVerifyAccount", verifyFirebaseToken, stripeController.testVerifyAccount);
         app.post("/testCreateTransaction", verifyFirebaseToken, stripeController.testCreateTransaction);
         app.post("/testAddBalance", verifyFirebaseToken, stripeController.testAddBalance);
+        app.post("/testLinkChildAccount", verifyFirebaseToken, childCardController.testLinkChildAccount);
     }
 
     // ----- Poster (protected) -----
     app.post("/generatePoster", verifyFirebaseToken, posterController.generatePoster);
 
     // ----- Child invite -----
-    app.post("/getChildInviteLink", verifyFirebaseToken, (req, res) => {
-        req.PUBLIC_BASE_URL = PUBLIC_BASE_URL;
-        return childInviteController.getChildInviteLink(req, res);
-    });
-    app.post("/claimChildInvite", verifyFirebaseToken, (req, res) => childInviteController.claimChildInvite(req, res));
+    app.post("/sendChildInvite", verifyFirebaseToken, inviteLimiter, childInviteController.sendChildInvite);
+    app.post("/claimChildInvite", sensitiveEndpointLimiter, verifyFirebaseToken, childInviteController.claimChildInvite);
+    app.post("/revokeChildInvite", verifyFirebaseToken, childInviteController.revokeChildInvite);
+    app.get("/getPendingInvite", verifyFirebaseToken, childInviteController.getPendingInvite);
+
+    // ----- Child card management (parent controls child's Issuing card) -----
+    app.get("/getChildCard", verifyFirebaseToken, childCardController.getChildCard);
+    app.post("/freezeChildCard", verifyFirebaseToken, childCardController.freezeChildCard);
+    app.post("/unfreezeChildCard", verifyFirebaseToken, childCardController.unfreezeChildCard);
+    app.post("/updateChildSpendingLimits", verifyFirebaseToken, childCardController.updateChildSpendingLimits);
+    app.post("/updateChildBlockedCategories", verifyFirebaseToken, childCardController.updateChildBlockedCategories);
+    app.get("/getChildTransactions", verifyFirebaseToken, childCardController.getChildTransactions);
+    app.get("/getChildSpendingSummary", verifyFirebaseToken, childCardController.getChildSpendingSummary);
+
 }
 
 module.exports = { registerRoutes };

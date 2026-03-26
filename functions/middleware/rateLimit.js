@@ -23,4 +23,13 @@ const generalLimiter = rateLimit({
     message: { error: "Too many requests, please try again later.", code: "rate_limit_exceeded" },
 });
 
-module.exports = { sensitiveEndpointLimiter, generalLimiter };
+const inviteLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 3,
+    keyGenerator,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many invite requests. Try again in a minute.", code: "rate_limit_exceeded" },
+});
+
+module.exports = { sensitiveEndpointLimiter, generalLimiter, inviteLimiter };

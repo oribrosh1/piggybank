@@ -15,4 +15,5 @@ export type { AIPosterGeneratorRef } from "./AIPosterGenerator";
 export { default as GuestManagementModal } from "./GuestManagementModal";
 export { default as GuestStatsCard } from "./GuestStatsCard";
 export { default as ChildLinkCard } from "./ChildLinkCard";
+export { default as PayoutSetupBanner } from "./PayoutSetupBanner";
 export * from "./utils";

@@ -1,11 +1,17 @@
+import "@/src/firebase/appCheck";
 import { useAuth } from "@/src/utils/auth/useAuth";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Linking } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "@/src/utils/auth/store";
+import { FirstLaunchLottieOverlay } from "@/src/components/FirstLaunchLottieOverlay";
+import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
+import { BRANDED_LOTTIE_DISPLAY_MS } from "@/src/constants/loading";
+import { View, StyleSheet } from "react-native";
+
 SplashScreen.preventAutoHideAsync();
 
 function parseChildDeepLink(url: string | null): string | null {
@@ -33,6 +39,12 @@ export default function RootLayout() {
   const { initiate, isReady } = useAuth();
   const router = useRouter();
   const prevAuth = useRef<any>(null);
+  const [minBootstrapLottieDone, setMinBootstrapLottieDone] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMinBootstrapLottieDone(true), BRANDED_LOTTIE_DISPLAY_MS);
+    return () => clearTimeout(t);
+  }, []);
 
   console.log('🎨 RootLayout: isReady =', isReady);
 
@@ -106,7 +118,24 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           {/* Expo Router auto-discovers routes from file system */}
         </Stack>
+        {(!isReady || !minBootstrapLottieDone) && (
+          <View style={styles.authLoadingOverlay} pointerEvents="auto">
+            <LoadingLogoLottie />
+          </View>
+        )}
+        <FirstLaunchLottieOverlay />
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  authLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 99998,
+    elevation: 99998,
+  },
+});

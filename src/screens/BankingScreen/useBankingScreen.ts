@@ -193,6 +193,13 @@ export function useBankingScreen() {
   };
 
   const handleCreateCard = async () => {
+    const issuingCap = accountData?.capabilities?.card_issuing;
+    if (issuingCap && issuingCap !== "active") {
+      alert(
+        "Card issuing is not active on your Stripe account yet. Complete verification or wait for the platform Issuing program to be approved, then try again."
+      );
+      return;
+    }
     const ind = accountDetails?.individual;
     if (
       !ind?.first_name ||

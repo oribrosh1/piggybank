@@ -3,16 +3,13 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Animated,
   Platform,
-  Modal,
   Linking,
 } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as LocalAuthentication from "expo-local-authentication";
-import * as AppleAuthentication from "expo-apple-authentication";
 import { LinearGradient } from "expo-linear-gradient";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLoginScreen } from "./useLoginScreen";
 
 const TERMS_URL = "https://creditkid.vercel.app/terms";
@@ -22,14 +19,6 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const {
     isAuthenticating,
-    hasBiometrics,
-    biometricType,
-    showAuthModal,
-    setShowAuthModal,
-    bounceTranslate,
-    floatTranslate1,
-    floatTranslate2,
-    handleSignIn,
     handleAppleSignIn,
     handleEmailSignIn,
     handleSignUp,
@@ -37,633 +26,430 @@ export default function LoginScreen() {
   } = useLoginScreen();
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFF" }}>
-      <LinearGradient
-        colors={["#FBBF24", "#F59E0B"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-        }}
-      />
-
-      {/* Floating decorative elements */}
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 60,
-          left: 30,
-          width: 50,
-          height: 50,
-          borderRadius: 25,
-          backgroundColor: "#FCD34D",
-          opacity: 0.9,
-          shadowColor: "#000",
-          shadowOpacity: 0.2,
-          shadowRadius: 8,
-        }}
-      >
-        <View
-          style={{
-            position: "absolute",
-            top: 5,
-            left: 8,
-            width: 15,
-            height: 15,
-            borderRadius: 7.5,
-            backgroundColor: "rgba(255,255,255,0.4)",
-          }}
-        />
-      </Animated.View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 80,
-          right: 80,
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          backgroundColor: "#60A5FA",
-          opacity: 0.95,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 6,
-        }}
-      >
-        <View
-          style={{
-            position: "absolute",
-            top: 3,
-            left: 5,
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: "rgba(255,255,255,0.35)",
-          }}
-        />
-      </Animated.View>
-
-      <View style={{ position: "absolute", top: 120, right: 40 }}>
-        <Text style={{ fontSize: 40 }}>⭐</Text>
-      </View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 200,
-          left: 20,
-          width: 28,
-          height: 28,
-          borderRadius: 14,
-          backgroundColor: "#FCD34D",
-          opacity: 0.85,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 5,
-        }}
-      >
-        <View
-          style={{
-            position: "absolute",
-            top: 2,
-            left: 4,
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: "rgba(255,255,255,0.3)",
-          }}
-        />
-      </Animated.View>
-
-      <View style={{ position: "absolute", top: 240, right: 50 }}>
-        <Text style={{ fontSize: 32 }}>⭐</Text>
-      </View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          bottom: 220,
-          left: 40,
-          width: 38,
-          height: 38,
-          borderRadius: 19,
-          backgroundColor: "#FCD34D",
-          opacity: 0.8,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 6,
-        }}
-      >
-        <View
-          style={{
-            position: "absolute",
-            top: 3,
-            left: 6,
-            width: 11,
-            height: 11,
-            borderRadius: 5.5,
-            backgroundColor: "rgba(255,255,255,0.35)",
-          }}
-        />
-      </Animated.View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          bottom: 140,
-          right: 20,
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          backgroundColor: "#FCD34D",
-          opacity: 0.9,
-          shadowColor: "#000",
-          shadowOpacity: 0.2,
-          shadowRadius: 8,
-        }}
-      >
-        <View
-          style={{
-            position: "absolute",
-            top: 4,
-            left: 7,
-            width: 13,
-            height: 13,
-            borderRadius: 6.5,
-            backgroundColor: "rgba(255,255,255,0.4)",
-          }}
-        />
-      </Animated.View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 160,
-          right: 20,
-          transform: [{ translateY: floatTranslate1 }],
-        }}
-      >
-        <Text style={{ fontSize: 60 }}>🎈</Text>
-      </Animated.View>
-
-      <Animated.View
-        style={{
-          position: "absolute",
-          top: 250,
-          left: 30,
-          transform: [{ translateY: floatTranslate2 }],
-        }}
-      >
-        <Text style={{ fontSize: 50 }}>✨</Text>
-      </Animated.View>
-
-      <Animated.View style={{ position: "absolute", top: 150, left: 40, opacity: 0.6 }}>
-        <Text style={{ fontSize: 40 }}>🎊</Text>
-      </Animated.View>
-
-      <Animated.View style={{ position: "absolute", bottom: 200, right: 30, opacity: 0.5 }}>
-        <Text style={{ fontSize: 45 }}>🎉</Text>
-      </Animated.View>
-
+    <View style={{ flex: 1, backgroundColor: "#F5F0FF" }}>
       <ScrollView
-        style={{ flex: 1, zIndex: 10 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          paddingHorizontal: 20,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ alignItems: "center", marginBottom: 20, marginTop: 40 }}>
-          <Animated.View style={{ transform: [{ translateY: bounceTranslate }] }}>
-            <Text style={{ fontSize: 80, marginBottom: 20, marginTop: 40, textAlign: "center" }}>
-              🎉
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 12,
+            paddingBottom: 8,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "#7C3AED",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="wallet" size={16} color="#FFF" />
+            </View>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: "#7C3AED",
+                fontStyle: "italic",
+              }}
+            >
+              CreditKid
             </Text>
-          </Animated.View>
+          </View>
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+          >
+            <Text style={{ fontSize: 14, color: "#7C3AED", fontWeight: "500" }}>
+              notifications
+            </Text>
+          </TouchableOpacity>
+        </View>
 
+        {/* Hero Section */}
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 }}>
           <Text
             style={{
-              fontSize: 48,
-              fontWeight: "900",
-              color: "#FFFFFF",
-              marginBottom: 8,
-              textAlign: "center",
-              letterSpacing: -1,
+              fontSize: 28,
+              fontWeight: "800",
+              color: "#1F2937",
+              lineHeight: 36,
             }}
           >
-            EVENT
+            Give Your Child the{"\n"}
+            <Text
+              style={{
+                fontStyle: "italic",
+                color: "#7C3AED",
+                fontWeight: "800",
+              }}
+            >
+              Gift of Choice.
+            </Text>
           </Text>
           <Text
             style={{
-              fontSize: 48,
-              fontWeight: "900",
-              color: "#FFFFFF",
-              marginBottom: 20,
-              textAlign: "center",
-              letterSpacing: -1,
+              fontSize: 15,
+              color: "#6B7280",
+              lineHeight: 22,
+              marginTop: 12,
             }}
           >
-            CREATOR
+            Birthday money they can spend anywhere, blessing cards they'll
+            remember forever — all in one app.
           </Text>
+        </View>
 
+        {/* Get Started Button */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 20 }}>
+          <TouchableOpacity
+            onPress={handleSignUp}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: "#F59E0B",
+              borderRadius: 14,
+              paddingVertical: 16,
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#F59E0B",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFF" }}>
+              Get Started
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Video Section */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
           <View
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.25)",
-              paddingHorizontal: 20,
-              paddingVertical: 12,
-              borderRadius: 20,
-              marginBottom: 24,
-              borderWidth: 2,
-              borderColor: "rgba(255, 255, 255, 0.4)",
+              backgroundColor: "#E5E7EB",
+              borderRadius: 16,
+              height: 200,
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
             }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: "rgba(255,255,255,0.9)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MaterialIcons name="play-arrow" size={32} color="#374151" />
+            </View>
+          </View>
+          <TouchableOpacity style={{ alignItems: "center", marginTop: 8 }}>
+            <Text style={{ fontSize: 13, color: "#7C3AED", fontWeight: "600" }}>
+              See How It Works
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Safety First - Parental Controls */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              color: "#7C3AED",
+              letterSpacing: 1.5,
+              marginBottom: 4,
+            }}
+          >
+            SAFETY FIRST
+          </Text>
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: "800",
+              color: "#1F2937",
+              marginBottom: 16,
+            }}
+          >
+            You're Always in Control
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+            <ControlCard
+              icon="account-balance-wallet"
+              label="Freeze Card"
+              description="Instantly lock any card from your phone."
+              color="#7C3AED"
+            />
+            <ControlCard
+              icon="payments"
+              label="Spending Limits"
+              description="Daily or weekly caps that you manage."
+              color="#7C3AED"
+            />
+          </View>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <ControlCard
+              icon="block"
+              label="Block Types"
+              description="Restrict specific merchant categories."
+              color="#7C3AED"
+            />
+            <ControlCard
+              icon="bolt"
+              label="Live Activity"
+              description="Real-time alerts for every transaction."
+              color="#7C3AED"
+            />
+          </View>
+        </View>
+
+        {/* Gift Card Stats */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 28 }}>
+          <LinearGradient
+            colors={["#7C3AED", "#5B21B6"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 20, padding: 24 }}
           >
             <Text
               style={{
-                fontSize: 14,
-                color: "#FFFFFF",
-                fontWeight: "700",
-                textAlign: "center",
-                letterSpacing: 0.5,
+                fontSize: 36,
+                fontWeight: "900",
+                color: "#FFF",
+                marginBottom: 4,
               }}
             >
-              ✨ MAKE MAGIC HAPPEN ✨
+              $27B
             </Text>
-          </View>
-
-          <Text
-            style={{
-              fontSize: 18,
-              color: "rgba(255,255,255,0.95)",
-              fontWeight: "600",
-              textAlign: "center",
-              lineHeight: 26,
-            }}
-          >
-            Create unforgettable events and invite your closest friends
-          </Text>
-        </View>
-
-        <View style={{ marginBottom: 20, gap: 12 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: 16,
-              padding: 14,
-              gap: 12,
-              borderWidth: 1.5,
-              borderColor: "rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>🎂</Text>
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Text style={{ fontSize: 13, fontWeight: "800", color: "#FFFFFF", marginBottom: 2 }}>
-                Birthdays & Bar Mitzvahs
-              </Text>
-              <Text style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.8)", fontWeight: "500" }}>
-                Pick your vibe
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: 16,
-              padding: 14,
-              gap: 12,
-              borderWidth: 1.5,
-              borderColor: "rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>👥</Text>
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Text style={{ fontSize: 13, fontWeight: "800", color: "#FFFFFF", marginBottom: 2 }}>
-                Invite Everyone
-              </Text>
-              <Text style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.8)", fontWeight: "500" }}>
-                All your contacts at once
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: 16,
-              padding: 14,
-              gap: 12,
-              borderWidth: 1.5,
-              borderColor: "rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>📍</Text>
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Text style={{ fontSize: 13, fontWeight: "800", color: "#FFFFFF", marginBottom: 2 }}>
-                Share Your Location
-              </Text>
-              <Text style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.8)", fontWeight: "500" }}>
-                Everyone knows where to go
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: 16,
-              padding: 14,
-              gap: 12,
-              borderWidth: 1.5,
-              borderColor: "rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>✅</Text>
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Text style={{ fontSize: 13, fontWeight: "800", color: "#FFFFFF", marginBottom: 2 }}>
-                Track Who&apos;s Coming
-              </Text>
-              <Text style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.8)", fontWeight: "500" }}>
-                See yes or no instantly
-              </Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: insets.bottom + 12,
-          backgroundColor: "transparent",
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => setShowAuthModal(true)}
-          activeOpacity={0.85}
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: 20,
-            paddingVertical: 18,
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.2,
-            shadowRadius: 8,
-            elevation: 6,
-            marginBottom: 10,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "800",
-              color: "#F59E0B",
-              letterSpacing: 0.5,
-            }}
-          >
-            Get Started ✨
-          </Text>
-        </TouchableOpacity>
-
-        <Text
-          style={{
-            fontSize: 10,
-            color: "rgba(0, 0, 0, 0.5)",
-            textAlign: "center",
-            fontWeight: "500",
-            lineHeight: 14,
-          }}
-        >
-          By continuing, you agree to our{" "}
-          <Text style={{ fontWeight: "700", textDecorationLine: "underline" }} onPress={() => Linking.openURL(TERMS_URL)}>Terms of Service</Text>
-          {" & "}
-          <Text style={{ fontWeight: "700", textDecorationLine: "underline" }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>
-        </Text>
-      </View>
-
-      <Modal
-        visible={showAuthModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowAuthModal(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "flex-end",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setShowAuthModal(false)}
-          />
-
-          <View
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              paddingTop: 20,
-              paddingBottom: insets.bottom + 20,
-              paddingHorizontal: 20,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: -4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 20,
-            }}
-          >
-            <View style={{ alignItems: "center", marginBottom: 24 }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 4,
-                  backgroundColor: "#E5E7EB",
-                  borderRadius: 2,
-                  marginBottom: 16,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "800",
-                  color: "#1F2937",
-                  marginBottom: 4,
-                }}
-              >
-                Choose Sign In Method
-              </Text>
-              <Text style={{ fontSize: 14, color: "#6B7280", fontWeight: "500" }}>
-                Select how you&apos;d like to continue
-              </Text>
-            </View>
-
-            {Platform.OS === "ios" && (
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={16}
-                style={{ height: 54, marginBottom: 12 }}
-                onPress={() => {
-                  setShowAuthModal(false);
-                  handleAppleSignIn();
-                }}
-              />
-            )}
-
-            <TouchableOpacity
-              onPress={() => {
-                setShowAuthModal(false);
-                handleGoogleSignIn();
+            <Text
+              style={{
+                fontSize: 14,
+                color: "rgba(255,255,255,0.8)",
+                marginBottom: 20,
               }}
+            >
+              unused in drawers across the country
+            </Text>
+            <Text
+              style={{
+                fontSize: 36,
+                fontWeight: "900",
+                color: "#FFF",
+                marginBottom: 4,
+              }}
+            >
+              $44
+            </Text>
+            <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }}>
+              average wasted balance per household
+            </Text>
+          </LinearGradient>
+        </View>
+
+        {/* Auth Buttons */}
+        <View style={{ paddingHorizontal: 24, gap: 12 }}>
+          {Platform.OS === "ios" && (
+            <TouchableOpacity
+              onPress={handleAppleSignIn}
               activeOpacity={0.85}
               disabled={isAuthenticating}
               style={{
-                backgroundColor: isAuthenticating ? "#CCCCCC" : "#4285F4",
-                borderRadius: 16,
-                height: 54,
+                backgroundColor: "#FFF",
+                borderRadius: 14,
+                height: 52,
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 10,
-                marginBottom: 12,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
+                borderWidth: 1,
+                borderColor: "#E5E7EB",
               }}
             >
-              <Ionicons name="logo-google" size={22} color="white" />
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>
-                Continue with Google
+              <Ionicons name="logo-apple" size={20} color="#000" />
+              <Text style={{ fontSize: 15, fontWeight: "600", color: "#1F2937" }}>
+                Continue with Apple
               </Text>
             </TouchableOpacity>
+          )}
 
-            <TouchableOpacity
-              onPress={() => {
-                setShowAuthModal(false);
-                handleEmailSignIn();
-              }}
-              activeOpacity={0.85}
-              style={{
-                backgroundColor: "#F59E0B",
-                borderRadius: 16,
-                height: 54,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                marginBottom: 12,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <Ionicons name="mail-outline" size={22} color="white" />
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>
-                Continue with Email
-              </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleGoogleSignIn}
+            activeOpacity={0.85}
+            disabled={isAuthenticating}
+            style={{
+              backgroundColor: "#FFF",
+              borderRadius: 14,
+              height: 52,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+            }}
+          >
+            <Ionicons name="logo-google" size={18} color="#4285F4" />
+            <Text style={{ fontSize: 15, fontWeight: "600", color: "#1F2937" }}>
+              Continue with Google
+            </Text>
+          </TouchableOpacity>
 
-            {hasBiometrics && (
-              <TouchableOpacity
-                onPress={() => {
-                  setShowAuthModal(false);
-                  handleSignIn();
-                }}
-                activeOpacity={0.85}
-                disabled={isAuthenticating}
-                style={{
-                  backgroundColor: "#1F2937",
-                  borderRadius: 16,
-                  height: 54,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 10,
-                  marginBottom: 12,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  elevation: 3,
-                }}
-              >
-                <Ionicons
-                  name={
-                    biometricType === LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
-                      ? "scan"
-                      : "finger-print"
-                  }
-                  size={22}
-                  color="white"
-                />
-                <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>
-                  {biometricType === LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION
-                    ? "Use Face ID"
-                    : "Use Touch ID"}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginVertical: 16,
-              }}
-            >
-              <View style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
-              <Text style={{ marginHorizontal: 12, fontSize: 12, color: "#9CA3AF", fontWeight: "600" }}>
-                OR
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                setShowAuthModal(false);
-                handleSignUp();
-              }}
-              activeOpacity={0.85}
-              style={{
-                backgroundColor: "#F3F4F6",
-                borderRadius: 16,
-                height: 54,
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 16,
-              }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#F59E0B" }}>
-                Create New Account
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setShowAuthModal(false)}
-              activeOpacity={0.7}
-              style={{ alignItems: "center", paddingVertical: 8 }}
-            >
-              <Text style={{ fontSize: 14, color: "#6B7280", fontWeight: "600" }}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleSignUp}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: "#F59E0B",
+              borderRadius: 14,
+              height: 52,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Ionicons name="mail-outline" size={18} color="#FFF" />
+            <Text style={{ fontSize: 15, fontWeight: "600", color: "#FFF" }}>
+              Sign up with Email
+            </Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+        {/* Login Link */}
+        <View style={{ alignItems: "center", marginTop: 16, marginBottom: 24 }}>
+          <Text style={{ fontSize: 14, color: "#6B7280" }}>
+            Already have an account?{" "}
+            <Text
+              onPress={handleEmailSignIn}
+              style={{ fontWeight: "700", color: "#7C3AED" }}
+            >
+              Log in
+            </Text>
+          </Text>
+        </View>
+
+        {/* Footer Links */}
+        <View style={{ paddingHorizontal: 24, marginTop: 8 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 20,
+              marginBottom: 8,
+            }}
+          >
+            <Text
+              onPress={() => Linking.openURL(PRIVACY_URL)}
+              style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "500" }}
+            >
+              Privacy Policy
+            </Text>
+            <Text
+              onPress={() => Linking.openURL(TERMS_URL)}
+              style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "500" }}
+            >
+              Terms of Service
+            </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 20,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "500" }}>
+              Contact Us
+            </Text>
+            <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "500" }}>
+              Cookie Policy
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 11,
+              color: "#D1D5DB",
+              textAlign: "center",
+              lineHeight: 16,
+            }}
+          >
+            © 2024 CreditKid, Inc. All rights reserved. Banking services provided
+            by our partner banks. Member FDIC.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function ControlCard({
+  icon,
+  label,
+  description,
+  color,
+}: {
+  icon: React.ComponentProps<typeof MaterialIcons>["name"];
+  label: string;
+  description: string;
+  color: string;
+}) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#FFF",
+        borderRadius: 14,
+        padding: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          backgroundColor: "#F3EAFF",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 10,
+        }}
+      >
+        <MaterialIcons name={icon} size={20} color={color} />
+      </View>
+      <Text
+        style={{
+          fontSize: 14,
+          fontWeight: "700",
+          color: "#1F2937",
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </Text>
+      <Text style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 16 }}>
+        {description}
+      </Text>
     </View>
   );
 }

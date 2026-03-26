@@ -12,7 +12,7 @@
  *   C. Rate-limit exhaustion   (burst spam, per-user isolation)
  *   D. Card data exposure      (default vs full, fresh-auth gate, query param tricks)
  *   E. Cross-user isolation    (user A vs B — cards, balances, txns, payouts, account details)
- *   F. Input validation        (XSS, oversized payloads, missing fields)
+ *   F. Input validation        (XSS, oversized payloads, missing fields; Connect without bank)
  *   G. Test endpoints in prod  (live key blocks debug routes)
  *   H. PII log safety          (console output never leaks PII)
  *   I. Webhook forgery         (invalid signatures rejected)
@@ -684,6 +684,27 @@ async function testInputValidation() {
     });
     assert("Server handles non-JSON gracefully (not 500)", r9.status !== 500 || r9.status === 200);
 
+    section("F10 — createCustomConnectAccount without bank fields (routing/account optional)");
+    const r10 = await req(server, "POST", "/createCustomConnectAccount", {
+        headers: { Authorization: AUTH_A },
+        body: {
+            country: "US",
+            firstName: "Jane",
+            lastName: "Parent",
+            email: "jane.parent@example.com",
+            phone: "(555) 123-4567",
+            dob: "01/15/1990",
+            address: "100 Main St",
+            city: "Austin",
+            state: "TX",
+            zipCode: "78701",
+            ssnLast4: "1234",
+            useTestDocument: true,
+        },
+    });
+    assert("Returns 200 (onboarding without routingNumber/accountNumber)", r10.status === 200);
+    assert("success flag", r10.json?.success === true);
+
     server.close();
 }
 
@@ -921,9 +942,9 @@ function testFirestoreRules() {
     assert("Read restricted to userId or createdBy",
         /transactions\/\{transactionId\}[\s\S]*?allow read:[\s\S]*?userId == request\.auth\.uid/.test(rules));
 
-    section("K6 — users: owner-only write");
-    assert("Write restricted to uid == userId",
-        /users\/\{userId\}[\s\S]*?allow read, write:[\s\S]*?auth\.uid == userId/.test(rules));
+    section("K6 — users: owner-only write (child role blocked)");
+    assert("Write restricted to uid == userId and !isChild()",
+        /users\/\{userId\}[\s\S]*?allow write:[\s\S]*?auth\.uid == userId[\s\S]*?!isChild\(\)/.test(rules));
 
     section("K7 — events: only creator/host can update/delete");
     assert("update/delete restricted",
@@ -1100,9 +1121,6 @@ async function testBodySizeLimits() {
             ssnLast4: "1234",
             idDocumentType: "resident_permit",
             useTestDocument: true,
-            routingNumber: "110000000",
-            accountNumber: "000123456789012345678",
-            accountHolderName: "Bartholomew Wolfeschlegelsteinhausenbergerdorff Jr.",
         },
         createIssuingCardholder: {
             name: "Bartholomew Wolfeschlegelsteinhausenbergerdorff",

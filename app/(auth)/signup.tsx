@@ -1,414 +1,509 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform,
-    Alert,
-    ActivityIndicator,
-    ScrollView,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  Linking,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as SecureStore from "expo-secure-store";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import firebase from "@/src/firebase";
 import { routes } from "@/types/routes";
 import { getPostLoginRoute } from "@/src/utils/auth/store";
 import { initializeUserProfile } from "@/src/lib/userService";
+import {
+  configureGoogleSignIn,
+  handleAppleSignIn as appleSignIn,
+  handleGoogleSignIn as googleSignIn,
+} from "@/src/utils/auth/socialAuth";
+
+const TERMS_URL = "https://creditkid.vercel.app/terms";
+const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
 
 export default function SignUpScreen() {
-    const router = useRouter();
-    const insets = useSafeAreaInsets();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [legalFirstName, setLegalFirstName] = useState('');
-    const [legalLastName, setLegalLastName] = useState('');
-    const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    async function handleSignUp() {
-        // Validation (Legal First/Last for SSN match – Step 0)
-        if (!legalFirstName.trim()) {
-            Alert.alert('Error', 'Please enter your legal first name');
-            return;
-        }
-        if (!legalLastName.trim()) {
-            Alert.alert('Error', 'Please enter your legal last name');
-            return;
-        }
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
 
-        if (!email || !password) {
-            Alert.alert('Error', 'Please enter email and password');
-            return;
-        }
-
-        if (password.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            // Create user account
-            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-
-            // Save credentials for biometric auth
-            await SecureStore.setItemAsync('userEmail', email);
-            await SecureStore.setItemAsync('userPassword', password);
-
-            // Initialize user profile (Step 0 – Legal First/Last for SSN match)
-            console.log('🚀 Initializing user profile...');
-            const initResult = await initializeUserProfile(userCredential, {
-                legalFirstName: legalFirstName.trim(),
-                legalLastName: legalLastName.trim(),
-            });
-
-            console.log('✅ User initialization result:', initResult);
-
-            // Show success message
-            let successMessage = initResult.message || 'Your account has been created successfully!';
-            if (initResult.stripeAccount) {
-                successMessage += '\n\n🏦 Your payment account is ready! Complete the setup in the Credit tab to start receiving payments.';
-            }
-
-            Alert.alert(
-                'Success! 🎉',
-                successMessage,
-                [
-                    {
-                        text: 'Get Started',
-                        onPress: () => router.replace(getPostLoginRoute())
-                    }
-                ]
-            );
-        } catch (error: any) {
-            console.error('Sign up error:', error);
-
-            let errorMessage = 'Failed to create account';
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'This email is already registered. Please sign in instead.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address';
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Use at least 6 characters.';
-            } else if (error.code === 'auth/operation-not-allowed') {
-                errorMessage = 'Email/Password sign-up is not enabled. Please contact support.';
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-
-            Alert.alert('Sign Up Failed', errorMessage);
-        } finally {
-            setLoading(false);
-        }
+  async function handleSignUp() {
+    const trimmed = fullName.trim();
+    if (!trimmed) {
+      Alert.alert("Error", "Please enter your full name");
+      return;
+    }
+    if (!email) {
+      Alert.alert("Error", "Please enter your email address");
+      return;
+    }
+    if (!password || password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
     }
 
-    return (
-        <View style={{ flex: 1, backgroundColor: '#FBBF24' }}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
-            >
-                {/* Header */}
-                <View
-                    style={{
-                        paddingTop: insets.top + 20,
-                        paddingHorizontal: 20,
-                        paddingBottom: 20,
-                    }}
-                >
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{
-                            alignSelf: 'flex-start',
-                            padding: 8,
-                        }}
-                    >
-                        <Text style={{ fontSize: 24, color: '#FFFFFF' }}>←</Text>
-                    </TouchableOpacity>
-                </View>
+    const parts = trimmed.split(" ");
+    const legalFirstName = parts[0];
+    const legalLastName = parts.slice(1).join(" ") || parts[0];
 
-                <ScrollView
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        paddingHorizontal: 20,
-                        justifyContent: 'center',
-                        paddingBottom: 40,
-                    }}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {/* Welcome Section */}
-                    <View style={{ alignItems: 'center', marginBottom: 30 }}>
-                        <Text style={{ fontSize: 60, marginBottom: 20 }}>🎉</Text>
-                        <Text
-                            style={{
-                                fontSize: 32,
-                                fontWeight: '900',
-                                color: '#FFFFFF',
-                                textAlign: 'center',
-                                marginBottom: 8,
-                            }}
-                        >
-                            Create Account
-                        </Text>
-                        <Text
-                            style={{
-                                fontSize: 16,
-                                color: 'rgba(255, 255, 255, 0.9)',
-                                textAlign: 'center',
-                                fontWeight: '600',
-                            }}
-                        >
-                            Join CreditKid and start managing your events
-                        </Text>
-                    </View>
+    setLoading(true);
+    try {
+      const userCredential = await firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, password);
 
-                    {/* Form Card */}
-                    <View
-                        style={{
-                            backgroundColor: '#FFFFFF',
-                            borderRadius: 24,
-                            padding: 24,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 8 },
-                            shadowOpacity: 0.15,
-                            shadowRadius: 16,
-                            elevation: 12,
-                        }}
-                    >
-                        {/* Legal First Name (Step 0 – SSN match) */}
-                        <View style={{ marginBottom: 16 }}>
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '600',
-                                    color: '#333333',
-                                    marginBottom: 8,
-                                }}
-                            >
-                                Legal First Name
-                            </Text>
-                            <TextInput
-                                style={{
-                                    backgroundColor: '#F5F5F5',
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    fontSize: 16,
-                                    borderWidth: 1,
-                                    borderColor: '#E0E0E0',
-                                }}
-                                placeholder="John"
-                                value={legalFirstName}
-                                onChangeText={setLegalFirstName}
-                                autoCapitalize="words"
-                                autoComplete="given-name"
-                                editable={!loading}
-                            />
-                        </View>
-                        {/* Legal Last Name */}
-                        <View style={{ marginBottom: 16 }}>
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '600',
-                                    color: '#333333',
-                                    marginBottom: 8,
-                                }}
-                            >
-                                Legal Last Name
-                            </Text>
-                            <TextInput
-                                style={{
-                                    backgroundColor: '#F5F5F5',
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    fontSize: 16,
-                                    borderWidth: 1,
-                                    borderColor: '#E0E0E0',
-                                }}
-                                placeholder="Doe"
-                                value={legalLastName}
-                                onChangeText={setLegalLastName}
-                                autoCapitalize="words"
-                                autoComplete="family-name"
-                                editable={!loading}
-                            />
-                        </View>
+      await SecureStore.setItemAsync("userEmail", email);
+      await SecureStore.setItemAsync("userPassword", password);
 
-                        {/* Email Input */}
-                        <View style={{ marginBottom: 16 }}>
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '600',
-                                    color: '#333333',
-                                    marginBottom: 8,
-                                }}
-                            >
-                                Email Address
-                            </Text>
-                            <TextInput
-                                style={{
-                                    backgroundColor: '#F5F5F5',
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    fontSize: 16,
-                                    borderWidth: 1,
-                                    borderColor: '#E0E0E0',
-                                }}
-                                placeholder="your@email.com"
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                                autoComplete="email"
-                                editable={!loading}
-                            />
-                        </View>
+      await initializeUserProfile(userCredential, {
+        legalFirstName: legalFirstName.trim(),
+        legalLastName: legalLastName.trim(),
+      });
 
-                        {/* Password Input */}
-                        <View style={{ marginBottom: 16 }}>
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '600',
-                                    color: '#333333',
-                                    marginBottom: 8,
-                                }}
-                            >
-                                Password
-                            </Text>
-                            <TextInput
-                                style={{
-                                    backgroundColor: '#F5F5F5',
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    fontSize: 16,
-                                    borderWidth: 1,
-                                    borderColor: '#E0E0E0',
-                                }}
-                                placeholder="At least 6 characters"
-                                secureTextEntry
-                                value={password}
-                                onChangeText={setPassword}
-                                autoCapitalize="none"
-                                autoComplete="password-new"
-                                editable={!loading}
-                            />
-                        </View>
+      router.replace(getPostLoginRoute());
+    } catch (error: any) {
+      let errorMessage = "Failed to create account";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage =
+          "This email is already registered. Please sign in instead.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password is too weak. Use at least 6 characters.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      Alert.alert("Sign Up Failed", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-                        {/* Confirm Password Input */}
-                        <View style={{ marginBottom: 24 }}>
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: '600',
-                                    color: '#333333',
-                                    marginBottom: 8,
-                                }}
-                            >
-                                Confirm Password
-                            </Text>
-                            <TextInput
-                                style={{
-                                    backgroundColor: '#F5F5F5',
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    fontSize: 16,
-                                    borderWidth: 1,
-                                    borderColor: '#E0E0E0',
-                                }}
-                                placeholder="Re-enter your password"
-                                secureTextEntry
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                                autoCapitalize="none"
-                                autoComplete="password-new"
-                                editable={!loading}
-                            />
-                        </View>
+  async function handleApple() {
+    setLoading(true);
+    try {
+      const success = await appleSignIn();
+      if (success) router.replace(getPostLoginRoute());
+    } finally {
+      setLoading(false);
+    }
+  }
 
-                        {/* Sign Up Button */}
-                        <TouchableOpacity
-                            onPress={handleSignUp}
-                            disabled={loading}
-                            style={{
-                                backgroundColor: loading ? '#CCCCCC' : '#FBBF24',
-                                borderRadius: 12,
-                                padding: 18,
-                                marginBottom: 16,
-                            }}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#FFFFFF" />
-                            ) : (
-                                <Text
-                                    style={{
-                                        fontSize: 16,
-                                        fontWeight: '900',
-                                        color: '#FFFFFF',
-                                        textAlign: 'center',
-                                    }}
-                                >
-                                    CREATE ACCOUNT
-                                </Text>
-                            )}
-                        </TouchableOpacity>
+  async function handleGoogle() {
+    setLoading(true);
+    try {
+      const success = await googleSignIn();
+      if (success) router.replace(getPostLoginRoute());
+    } finally {
+      setLoading(false);
+    }
+  }
 
-                        {/* Sign In Link */}
-                        <TouchableOpacity
-                            onPress={() => router.push(routes.auth.emailSignin)}
-                            disabled={loading}
-                            style={{ padding: 8 }}
-                        >
-                            <Text
-                                style={{
-                                    fontSize: 14,
-                                    color: '#FBBF24',
-                                    textAlign: 'center',
-                                    fontWeight: '600',
-                                }}
-                            >
-                                Already have an account? Sign In
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Benefits Section */}
-                    <View
-                        style={{
-                            marginTop: 24,
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: 16,
-                            padding: 16,
-                            borderWidth: 1,
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                        }}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 14,
-                                color: '#FFFFFF',
-                                textAlign: 'center',
-                                fontWeight: '600',
-                                lineHeight: 22,
-                            }}
-                        >
-                            🔒 Secure account with Face ID{'\n'}
-                            🎉 Create and manage events{'\n'}
-                            💳 Accept payments easily
-                        </Text>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+  return (
+    <View style={{ flex: 1, backgroundColor: "#FAFAFA" }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingTop: insets.top + 12,
+            paddingBottom: 8,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ padding: 4 }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          </TouchableOpacity>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "700",
+              color: "#7C3AED",
+              fontStyle: "italic",
+            }}
+          >
+            CreditKid
+          </Text>
+          <View style={{ width: 32 }} />
         </View>
-    );
-}
 
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingTop: 24,
+            paddingBottom: insets.bottom + 40,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Title */}
+          <Text
+            style={{
+              fontSize: 30,
+              fontWeight: "900",
+              color: "#1F2937",
+              lineHeight: 38,
+              marginBottom: 8,
+            }}
+          >
+            Welcome to{"\n"}
+            <Text style={{ color: "#7C3AED" }}>CreditKid</Text>.
+          </Text>
+          <Text
+            style={{
+              fontSize: 15,
+              color: "#6B7280",
+              lineHeight: 22,
+              marginBottom: 32,
+            }}
+          >
+            The smartest way to manage your child's celebration gifts.
+          </Text>
+
+          {/* Full Name */}
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              color: "#374151",
+              letterSpacing: 1,
+              marginBottom: 8,
+            }}
+          >
+            FULL NAME
+          </Text>
+          <TextInput
+            style={{
+              backgroundColor: "#FFF",
+              borderRadius: 14,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 16,
+              color: "#1F2937",
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+              marginBottom: 20,
+            }}
+            placeholder="Alex Johnson"
+            placeholderTextColor="#D1D5DB"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+            autoComplete="name"
+            editable={!loading}
+          />
+
+          {/* Email */}
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              color: "#374151",
+              letterSpacing: 1,
+              marginBottom: 8,
+            }}
+          >
+            EMAIL ADDRESS
+          </Text>
+          <TextInput
+            style={{
+              backgroundColor: "#FFF",
+              borderRadius: 14,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 16,
+              color: "#1F2937",
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+              marginBottom: 20,
+            }}
+            placeholder="alex@example.com"
+            placeholderTextColor="#D1D5DB"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            editable={!loading}
+          />
+
+          {/* Password */}
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: "700",
+              color: "#374151",
+              letterSpacing: 1,
+              marginBottom: 8,
+            }}
+          >
+            PASSWORD
+          </Text>
+          <View style={{ position: "relative", marginBottom: 28 }}>
+            <TextInput
+              style={{
+                backgroundColor: "#FFF",
+                borderRadius: 14,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                paddingRight: 48,
+                fontSize: 16,
+                color: "#1F2937",
+                borderWidth: 1,
+                borderColor: "#E5E7EB",
+              }}
+              placeholder="At least 6 characters"
+              placeholderTextColor="#D1D5DB"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              autoComplete="password-new"
+              editable={!loading}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 14,
+                top: 0,
+                bottom: 0,
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off" : "eye"}
+                size={20}
+                color="#9CA3AF"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Create Account Button */}
+          <TouchableOpacity
+            onPress={handleSignUp}
+            disabled={loading}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: loading ? "#C4B5FD" : "#7C3AED",
+              borderRadius: 16,
+              paddingVertical: 16,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 24,
+              shadowColor: "#7C3AED",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text
+                style={{ fontSize: 17, fontWeight: "700", color: "#FFF" }}
+              >
+                Create Your Account
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* OR Divider */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <View
+              style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }}
+            />
+            <Text
+              style={{
+                marginHorizontal: 16,
+                fontSize: 12,
+                color: "#9CA3AF",
+                fontWeight: "600",
+              }}
+            >
+              OR
+            </Text>
+            <View
+              style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }}
+            />
+          </View>
+
+          {/* Apple Sign In */}
+          {Platform.OS === "ios" && (
+            <TouchableOpacity
+              onPress={handleApple}
+              disabled={loading}
+              activeOpacity={0.85}
+              style={{
+                backgroundColor: "#1F2937",
+                borderRadius: 14,
+                height: 52,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                marginBottom: 12,
+              }}
+            >
+              <Ionicons name="logo-apple" size={20} color="#FFF" />
+              <Text
+                style={{ fontSize: 15, fontWeight: "600", color: "#FFF" }}
+              >
+                Continue with Apple
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Google Sign In */}
+          <TouchableOpacity
+            onPress={handleGoogle}
+            disabled={loading}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: "#FFF",
+              borderRadius: 14,
+              height: 52,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              marginBottom: 24,
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+            }}
+          >
+            <Ionicons name="logo-google" size={18} color="#4285F4" />
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: "600",
+                color: "#1F2937",
+              }}
+            >
+              Continue with Google
+            </Text>
+          </TouchableOpacity>
+
+          {/* Trust Badge */}
+          <View
+            style={{
+              backgroundColor: "#F3EAFF",
+              borderRadius: 16,
+              padding: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+              marginBottom: 28,
+            }}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "#7C3AED",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="shield-checkmark" size={20} color="#FFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "700",
+                  color: "#1F2937",
+                  marginBottom: 2,
+                }}
+              >
+                Secure & Simple
+              </Text>
+              <Text
+                style={{ fontSize: 12, color: "#6B7280", lineHeight: 16 }}
+              >
+                Military-grade encryption for your family's financial
+                security.
+              </Text>
+            </View>
+          </View>
+
+          {/* Login Link */}
+          <View style={{ alignItems: "center", marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, color: "#6B7280" }}>
+              Already have an account?{" "}
+              <Text
+                onPress={() => router.push(routes.auth.emailSignin)}
+                style={{ fontWeight: "700", color: "#7C3AED" }}
+              >
+                Log In
+              </Text>
+            </Text>
+          </View>
+
+          {/* Footer Links */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 24,
+            }}
+          >
+            <Text
+              onPress={() => Linking.openURL(PRIVACY_URL)}
+              style={{
+                fontSize: 11,
+                color: "#9CA3AF",
+                fontWeight: "600",
+                letterSpacing: 0.5,
+              }}
+            >
+              PRIVACY POLICY
+            </Text>
+            <Text
+              onPress={() => Linking.openURL(TERMS_URL)}
+              style={{
+                fontSize: 11,
+                color: "#9CA3AF",
+                fontWeight: "600",
+                letterSpacing: 0.5,
+              }}
+            >
+              TERMS OF SERVICE
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}

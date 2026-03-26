@@ -3,24 +3,32 @@ import { Alert, Animated } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Contacts from "expo-contacts";
 import { routes } from "@/types/routes";
-import type { Guest, EventType, EventCategory, CreateEventData } from "@/types/events";
-import { createEvent } from "@/src/lib/eventService";
+import type { Guest } from "@/types/events";
+import { updateEventGuests } from "@/src/lib/eventService";
+
+function paramStr(v: string | string[] | undefined): string {
+  if (v === undefined) return "";
+  return Array.isArray(v) ? v[0] ?? "" : v;
+}
 
 export function useSelectGuestsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+
+  const eventId = paramStr(params.eventId);
 
   const [guests, setGuests] = useState<Guest[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [phoneContacts, setPhoneContacts] = useState<Guest[]>([]);
   const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isSavingGuests, setIsSavingGuests] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (!eventId) return;
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -34,7 +42,7 @@ export function useSelectGuestsScreen() {
       }),
     ]).start();
     loadContacts();
-  }, [fadeAnim, progressAnim]);
+  }, [fadeAnim, progressAnim, eventId]);
 
   const loadContacts = async () => {
     setIsLoadingContacts(true);
@@ -80,7 +88,7 @@ export function useSelectGuestsScreen() {
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["40%", "80%"],
+    outputRange: ["0%", "100%"],
   });
 
   const filteredContacts = phoneContacts.filter(
@@ -98,59 +106,39 @@ export function useSelectGuestsScreen() {
   };
 
   const handleContinue = async (skipGuests = false) => {
-    setIsCreatingEvent(true);
+    if (!eventId) return;
+    setIsSavingGuests(true);
     try {
-      const eventData: CreateEventData = {
-        eventType: (params.eventType as EventType) || "birthday",
-        formData: {
-          age: params.age ?? "",
-          eventName: params.eventName ?? "",
-          eventCategory: params.eventCategory as EventCategory | undefined,
-          partyType: params.partyType,
-          otherPartyType: params.otherPartyType,
-          attireType: params.attireType,
-          footwearType: params.footwearType,
-          theme: params.theme,
-          parking: params.parking,
-          kosherType: params.kosherType,
-          mealType: params.mealType,
-          vegetarianType: params.vegetarianType,
-          date: params.date ?? "",
-          time: params.time ?? "",
-          address1: params.address1 ?? "",
-          address2: params.address2 ?? "",
-        },
-        guests: skipGuests ? [] : guests,
-      };
+      const list = skipGuests ? [] : guests;
+      const result = await updateEventGuests(eventId, list);
 
-      const result = await createEvent(eventData);
-
-      if (result.success && result.eventId) {
-        router.replace(routes.eventDashboard(result.eventId));
+      if (result.success) {
+        router.replace(routes.eventDashboard(eventId));
       } else {
-        Alert.alert("Error", result.error || "Failed to create event. Please try again.");
+        Alert.alert("Error", result.error || "Failed to save guests. Please try again.");
       }
     } catch (error: unknown) {
-      console.error("Error creating event:", error);
+      console.error("Error saving guests:", error);
       Alert.alert(
         "Error",
         (error as Error).message || "Something went wrong. Please try again."
       );
     } finally {
-      setIsCreatingEvent(false);
+      setIsSavingGuests(false);
     }
   };
 
   const goBack = () => router.back();
 
   return {
+    eventId,
     guests,
     searchQuery,
     setSearchQuery,
     phoneContacts,
     isLoadingContacts,
     hasPermission,
-    isCreatingEvent,
+    isSavingGuests,
     fadeAnim,
     progressWidth,
     filteredContacts,

@@ -1,11 +1,23 @@
-import React from "react";
-import { View, Text, TouchableOpacity, TextInput, Switch } from "react-native";
-import { Notebook } from "lucide-react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Switch,
+  Modal,
+  ScrollView,
+  Pressable,
+} from "react-native";
+import { Sparkles, ChevronUp, ChevronDown, Utensils } from "lucide-react-native";
 import type { EventFormData } from "@/types/events";
+import { FOREST, INPUT_BG, MINT_PANEL, MINT_PANEL_BORDER } from "./designInviteTheme";
 
 type EventDetailsOptionalCardProps = {
   formData: EventFormData;
   showEventDetails: boolean;
+  optionalDetailsLater: boolean;
+  onOptionalDetailsLaterChange: (value: boolean) => void;
   focusedField: string | null;
   isBarBatMitzvah: boolean;
   isPartyMode: boolean;
@@ -15,38 +27,45 @@ type EventDetailsOptionalCardProps = {
 };
 
 const partyTypeOptions = [
-  { value: "pool", label: "🏊", name: "Pool Party" },
-  { value: "beach", label: "🏖️", name: "Beach Party" },
-  { value: "garden", label: "🌳", name: "Garden Party" },
-  { value: "indoor", label: "🏠", name: "Indoor Party" },
-  { value: "restaurant", label: "🍽️", name: "Restaurant" },
-  { value: "rooftop", label: "🌆", name: "Rooftop" },
+  { value: "pool", label: "🏊", name: "POOL" },
+  { value: "beach", label: "🏖️", name: "BEACH" },
+  { value: "club", label: "🍸", name: "CLUB" },
+  { value: "garden", label: "🌳", name: "GARDEN" },
+  { value: "indoor", label: "🏠", name: "INDOOR" },
+  { value: "restaurant", label: "🍽️", name: "RESTAURANT" },
+  { value: "rooftop", label: "🌆", name: "ROOFTOP" },
+  { value: "other", label: "✏️", name: "OTHER" },
 ];
 
-const attireOptions = [
-  { value: "casual", label: "👕 Casual", desc: "Everyday wear" },
-  { value: "swimwear", label: "🩱 Swimwear", desc: "Pool/Beach" },
-  { value: "costume", label: "🎭 Costume", desc: "Themed outfit" },
+const attirePickerOptions = [
+  { value: "casual", label: "Casual" },
+  { value: "semi-formal", label: "Semi-Formal" },
+  { value: "formal", label: "Formal" },
+  { value: "swimwear", label: "Swimwear" },
+  { value: "costume", label: "Costume" },
 ];
 
-const footwearOptions = [
-  { value: "sneakers", label: "👟", name: "Sneakers" },
-  { value: "slides", label: "🩴", name: "Slides" },
-  { value: "any", label: "✨", name: "Any" },
+const footwearPickerOptions = [
+  { value: "sneakers", label: "Sneakers" },
+  { value: "slides", label: "Slides" },
+  { value: "comfortable", label: "Comfortable" },
+  { value: "any", label: "Any" },
 ];
 
 const kosherOptions = [
-  { value: "kosher-style", label: "🍴", name: "Kosher Style" },
-  { value: "kosher", label: "✡️", name: "Kosher" },
-  { value: "glatt-kosher", label: "Ⓤ", name: "Glatt Kosher" },
-  { value: "not-kosher", label: "🍽️", name: "Not Kosher" },
+  { value: "kosher-style", label: "STANDARD", sub: "Kosher style" },
+  { value: "kosher", label: "KOSHER", sub: "" },
+  { value: "glatt-kosher", label: "GLATT", sub: "" },
+  { value: "not-kosher", label: "NOT KOSHER", sub: "" },
 ];
 
 const mealOptions = [
-  { value: "dairy", label: "🧀", name: "Dairy", desc: "Dairy" },
-  { value: "meat", label: "🥩", name: "Meat", desc: "Meat" },
-  { value: "pareve", label: "🥗", name: "Pareve", desc: "Pareve" },
+  { value: "dairy", label: "DAIRY" },
+  { value: "meat", label: "MEAT" },
+  { value: "pareve", label: "PAREVE" },
 ];
+
+const themeChips = ["NEON GLOW", "VINTAGE", "MINIMALIST", "FANTASY"];
 
 const vegetarianOptions = [
   { value: "none", label: "🍴", name: "None", desc: "Regular menu" },
@@ -54,12 +73,90 @@ const vegetarianOptions = [
   { value: "vegan", label: "🌱", name: "Vegan", desc: "Plant-based" },
 ];
 
-const themeSuggestions = ["🏆 Sports", "🏰 Inflatables", "🏊 Pool", "🎭 Costumes", "🦸 Superheroes"];
+function attireDisplay(v: string | undefined) {
+  if (!v) return "Semi-Formal";
+  const o = attirePickerOptions.find((x) => x.value === v);
+  return o?.label ?? v;
+}
+
+function footwearDisplay(v: string | undefined) {
+  if (!v) return "Comfortable";
+  const o = footwearPickerOptions.find((x) => x.value === v);
+  return o?.label ?? v;
+}
+
+function PickerModal({
+  visible,
+  title,
+  options,
+  selected,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  options: { value: string; label: string }[];
+  selected: string;
+  onSelect: (v: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }} onPress={onClose}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            paddingBottom: 36,
+            maxHeight: "50%",
+          }}
+        >
+          <Text style={{ fontSize: 17, fontWeight: "800", color: FOREST, marginBottom: 16 }}>{title}</Text>
+          <ScrollView>
+            {options.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => {
+                  onSelect(opt.value);
+                  onClose();
+                }}
+                style={{
+                  paddingVertical: 14,
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#F3F4F6",
+                  backgroundColor: selected === opt.value ? "#F0FDF4" : "transparent",
+                  borderRadius: 8,
+                  paddingHorizontal: 8,
+                  marginBottom: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: selected === opt.value ? "800" : "600",
+                    color: selected === opt.value ? FOREST : "#374151",
+                  }}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
 
 export default function EventDetailsOptionalCard(props: EventDetailsOptionalCardProps) {
   const {
     formData,
     showEventDetails,
+    optionalDetailsLater,
+    onOptionalDetailsLaterChange,
     focusedField,
     isBarBatMitzvah,
     isPartyMode,
@@ -68,117 +165,133 @@ export default function EventDetailsOptionalCard(props: EventDetailsOptionalCard
     setFocusedField,
   } = props;
 
-  const showMealType =
-    formData.kosherType === "kosher" ||
-    formData.kosherType === "glatt-kosher" ||
-    formData.kosherType === "kosher-style";
+  const [attireOpen, setAttireOpen] = useState(false);
+  const [footwearOpen, setFootwearOpen] = useState(false);
+
+  const hideAttireFootwear = formData.partyType === "restaurant";
 
   return (
     <View
       style={{
         marginBottom: 24,
-        backgroundColor: "#FFFFFF",
-        borderRadius: 24,
-        padding: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 3,
-        borderWidth: 2,
-        borderColor: "#F3F4F6",
+        backgroundColor: MINT_PANEL,
+        borderRadius: 20,
+        padding: 18,
+        borderWidth: 1,
+        borderColor: MINT_PANEL_BORDER,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#E0F7F2", alignItems: "center", justifyContent: "center" }}>
-          <Notebook size={20} color="#06D6A0" strokeWidth={2.5} />
-        </View>
-        <View style={{ marginLeft: 14, flex: 1 }}>
-          <Text style={{ fontSize: 16, fontWeight: "800", color: "#111827" }}>Event Details</Text>
-          <Text style={{ fontSize: 12, fontWeight: "500", color: "#9CA3AF", marginTop: 2 }}>Optional • Will be shown on invitation</Text>
-        </View>
-      </View>
-
       <TouchableOpacity
         onPress={onToggleDetails}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          backgroundColor: showEventDetails ? "#F9FAFB" : "#FEF3C7",
-          borderRadius: 12,
-          padding: 14,
-          marginBottom: showEventDetails ? 20 : 0,
-          borderWidth: 2,
-          borderColor: showEventDetails ? "#E5E7EB" : "#F59E0B",
-        }}
+        activeOpacity={0.85}
+        style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-          <Text style={{ fontSize: 18, marginRight: 10 }}>{showEventDetails ? "📝" : "⏰"}</Text>
-          <View>
-            <Text style={{ fontSize: 14, fontWeight: "700", color: showEventDetails ? "#374151" : "#92400E" }}>
-              {showEventDetails ? "Fill in details now" : "I'll add details later"}
-            </Text>
-            <Text style={{ fontSize: 11, color: showEventDetails ? "#9CA3AF" : "#B45309", marginTop: 2 }}>
-              {showEventDetails ? "Customize your invitation" : "You can edit these anytime"}
-            </Text>
-          </View>
-        </View>
-        <View style={{ width: 50, height: 28, borderRadius: 14, backgroundColor: showEventDetails ? "#06D6A0" : "#D1D5DB", padding: 2, justifyContent: "center" }}>
-          <View
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              backgroundColor: "#FFFFFF",
-              alignSelf: showEventDetails ? "flex-end" : "flex-start",
-            }}
-          />
-        </View>
+        <Sparkles size={22} color={FOREST} strokeWidth={2.2} />
+        <Text style={{ fontSize: 17, fontWeight: "800", color: FOREST, marginLeft: 10, flex: 1 }}>More details</Text>
+        {showEventDetails ? <ChevronUp size={22} color={FOREST} /> : <ChevronDown size={22} color={FOREST} />}
       </TouchableOpacity>
 
-      {showEventDetails && (
+      <View style={{ gap: 10, marginBottom: showEventDetails ? 14 : 0 }}>
+        <TouchableOpacity
+          onPress={() => onOptionalDetailsLaterChange(false)}
+          activeOpacity={0.88}
+          style={{
+            borderRadius: 14,
+            padding: 14,
+            borderWidth: 2,
+            borderColor: !optionalDetailsLater ? FOREST : "#D1D5DB",
+            backgroundColor: INPUT_BG,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "800", color: FOREST }}>Add details now</Text>
+          <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4, lineHeight: 18 }}>
+            Theme, party mode & catering — used for an AI-generated poster.
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => onOptionalDetailsLaterChange(true)}
+          activeOpacity={0.88}
+          style={{
+            borderRadius: 14,
+            padding: 14,
+            borderWidth: 2,
+            borderColor: optionalDetailsLater ? FOREST : "#D1D5DB",
+            backgroundColor: INPUT_BG,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: "800", color: FOREST }}>I&apos;ll fill this in later</Text>
+          <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4, lineHeight: 18 }}>
+            Standard invitation look — not AI-generated. Add details anytime in Edit event.
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {showEventDetails && optionalDetailsLater && (
+        <View style={{ paddingBottom: 4 }}>
+          <Text style={{ fontSize: 13, color: "#4B5563", lineHeight: 20 }}>
+            You&apos;ll see a simple, classic invitation preview on your dashboard. Optional fields stay empty until you edit the event.
+          </Text>
+        </View>
+      )}
+
+      {showEventDetails && !optionalDetailsLater && (
         <>
           {isBarBatMitzvah && (
             <View style={{ marginBottom: 18 }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                 <Text style={{ fontSize: 16 }}>🎪</Text>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>What are you planning?</Text>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: "#4B5563", marginLeft: 8 }}>What are you planning?</Text>
               </View>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <TouchableOpacity
                   onPress={() => onInputChange("eventCategory", "formal")}
                   style={{
                     flex: 1,
-                    backgroundColor: formData.eventCategory === "formal" ? "#06D6A0" : "#F9FAFB",
+                    backgroundColor: formData.eventCategory === "formal" ? FOREST : INPUT_BG,
                     borderRadius: 14,
                     paddingVertical: 14,
-                    paddingHorizontal: 16,
+                    paddingHorizontal: 12,
                     alignItems: "center",
                     borderWidth: 2,
-                    borderColor: formData.eventCategory === "formal" ? "#06D6A0" : "#E5E7EB",
+                    borderColor: formData.eventCategory === "formal" ? FOREST : "#E5E7EB",
                   }}
                 >
-                  <Text style={{ fontSize: 24, marginBottom: 6 }}>🕎</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: formData.eventCategory === "formal" ? "#FFFFFF" : "#374151" }}>The Ceremony</Text>
-                  <Text style={{ fontSize: 11, fontWeight: "500", color: formData.eventCategory === "formal" ? "rgba(255,255,255,0.8)" : "#9CA3AF", marginTop: 2 }}>Synagogue, Formal</Text>
+                  <Text style={{ fontSize: 22, marginBottom: 4 }}>🕎</Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: formData.eventCategory === "formal" ? "#FFFFFF" : "#374151",
+                      textAlign: "center",
+                    }}
+                  >
+                    The Ceremony
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => onInputChange("eventCategory", "party")}
                   style={{
                     flex: 1,
-                    backgroundColor: formData.eventCategory === "party" ? "#06D6A0" : "#F9FAFB",
+                    backgroundColor: formData.eventCategory === "party" ? FOREST : INPUT_BG,
                     borderRadius: 14,
                     paddingVertical: 14,
-                    paddingHorizontal: 16,
+                    paddingHorizontal: 12,
                     alignItems: "center",
                     borderWidth: 2,
-                    borderColor: formData.eventCategory === "party" ? "#06D6A0" : "#E5E7EB",
+                    borderColor: formData.eventCategory === "party" ? FOREST : "#E5E7EB",
                   }}
                 >
-                  <Text style={{ fontSize: 24, marginBottom: 6 }}>🎉</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: formData.eventCategory === "party" ? "#FFFFFF" : "#374151" }}>The Party</Text>
-                  <Text style={{ fontSize: 11, fontWeight: "500", color: formData.eventCategory === "party" ? "rgba(255,255,255,0.8)" : "#9CA3AF", marginTop: 2 }}>Celebration, Fun!</Text>
+                  <Text style={{ fontSize: 22, marginBottom: 4 }}>🎉</Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "800",
+                      color: formData.eventCategory === "party" ? "#FFFFFF" : "#374151",
+                      textAlign: "center",
+                    }}
+                  >
+                    The Party
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -187,161 +300,188 @@ export default function EventDetailsOptionalCard(props: EventDetailsOptionalCard
           {isPartyMode && (
             <>
               <View style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                  <Text style={{ fontSize: 16 }}>🎊</Text>
-                  <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Party Type</Text>
-                  <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-                </View>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                  {partyTypeOptions.map((opt) => (
-                    <TouchableOpacity
-                      key={opt.value}
-                      onPress={() => onInputChange("partyType", opt.value)}
-                      style={{
-                        width: "31%",
-                        backgroundColor: formData.partyType === opt.value ? "#06D6A0" : "#F9FAFB",
-                        borderRadius: 14,
-                        paddingVertical: 12,
-                        paddingHorizontal: 8,
-                        alignItems: "center",
-                        borderWidth: 2,
-                        borderColor: formData.partyType === opt.value ? "#06D6A0" : "#E5E7EB",
-                      }}
-                    >
-                      <Text style={{ fontSize: 24, marginBottom: 4 }}>{opt.label}</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: formData.partyType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  onPress={() => onInputChange("partyType", "other")}
-                  style={{
-                    marginTop: 10,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: formData.partyType === "other" ? "#06D6A0" : "#F9FAFB",
-                    borderRadius: 12,
-                    paddingVertical: 10,
-                    paddingHorizontal: 16,
-                    width: "75%",
-                    borderWidth: 2,
-                    borderColor: formData.partyType === "other" ? "#06D6A0" : "#E5E7EB",
-                    alignSelf: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 16, marginRight: 6 }}>✏️</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: formData.partyType === "other" ? "#FFFFFF" : "#374151" }}>Other</Text>
-                </TouchableOpacity>
+                <Text style={{ fontSize: 11, fontWeight: "800", color: FOREST, letterSpacing: 1, marginBottom: 12 }}>PARTY MODE</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 8 }}>
+                  {partyTypeOptions.map((opt) => {
+                    const sel = formData.partyType === opt.value;
+                    return (
+                      <TouchableOpacity key={opt.value} onPress={() => onInputChange("partyType", opt.value)} style={{ alignItems: "center", width: 72 }}>
+                        <View
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 32,
+                            backgroundColor: sel ? FOREST : INPUT_BG,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderWidth: sel ? 0 : 1,
+                            borderColor: "#E5E7EB",
+                          }}
+                        >
+                          <Text style={{ fontSize: 28 }}>{opt.label}</Text>
+                        </View>
+                        <Text
+                          style={{
+                            marginTop: 6,
+                            fontSize: 10,
+                            fontWeight: "800",
+                            color: sel ? FOREST : "#6B7280",
+                            textAlign: "center",
+                          }}
+                        >
+                          {opt.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
                 {formData.partyType === "other" && (
-                  <View style={{ marginTop: 12 }}>
-                    <TextInput
-                      style={{
-                        backgroundColor: focusedField === "otherPartyType" ? "#F0FDFA" : "#F9FAFB",
-                        borderRadius: 12,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        fontSize: 15,
-                        fontWeight: "600",
-                        color: "#111827",
-                        borderWidth: 2,
-                        borderColor: focusedField === "otherPartyType" ? "#06D6A0" : "#E5E7EB",
-                      }}
-                      placeholder="Describe your party type..."
-                      placeholderTextColor="#D1D5DB"
-                      value={formData.otherPartyType ?? ""}
-                      onChangeText={(v) => onInputChange("otherPartyType", v)}
-                      onFocus={() => setFocusedField("otherPartyType")}
-                      onBlur={() => setFocusedField(null)}
-                    />
-                  </View>
+                  <TextInput
+                    style={{
+                      marginTop: 12,
+                      backgroundColor: INPUT_BG,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      fontSize: 15,
+                      fontWeight: "600",
+                      borderWidth: 1,
+                      borderColor: "#E5E7EB",
+                    }}
+                    placeholder="Describe your party type..."
+                    placeholderTextColor="#9CA3AF"
+                    value={formData.otherPartyType ?? ""}
+                    onChangeText={(v) => onInputChange("otherPartyType", v)}
+                  />
                 )}
               </View>
 
-              {formData.partyType !== "restaurant" && (
-                <>
-                  <View style={{ marginBottom: 16 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                      <Text style={{ fontSize: 16 }}>👕</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Attire Type</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      {attireOptions.map((opt) => (
-                        <TouchableOpacity
-                          key={opt.value}
-                          onPress={() => onInputChange("attireType", opt.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: formData.attireType === opt.value ? "#06D6A0" : "#F9FAFB",
-                            borderRadius: 14,
-                            paddingVertical: 14,
-                            paddingHorizontal: 10,
-                            alignItems: "center",
-                            borderWidth: 2,
-                            borderColor: formData.attireType === opt.value ? "#06D6A0" : "#E5E7EB",
-                          }}
-                        >
-                          <Text style={{ fontSize: 22, marginBottom: 4 }}>{opt.label.split(" ")[0]}</Text>
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: formData.attireType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.label.split(" ")[1]}</Text>
-                          <Text style={{ fontSize: 10, color: formData.attireType === opt.value ? "rgba(255,255,255,0.8)" : "#9CA3AF", marginTop: 2, textAlign: "center" }}>{opt.desc}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: "800", color: FOREST, letterSpacing: 1, marginBottom: 6 }}>THEME & VIBE</Text>
+                <Text style={{ fontSize: 12, color: "#4B5563", marginBottom: 10, lineHeight: 18 }}>
+                  Describe the look and feel you want—this helps us create your AI poster (colors, style, characters, etc.)
+                </Text>
+                <TextInput
+                  style={{
+                    backgroundColor: INPUT_BG,
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 15,
+                    fontWeight: "600",
+                    borderWidth: 1,
+                    borderColor: focusedField === "theme" ? FOREST : "#E5E7EB",
+                    minHeight: 96,
+                    textAlignVertical: "top",
+                  }}
+                  placeholder="e.g. A neon-lit futuristic disco with purple and blue accents..."
+                  placeholderTextColor="#9CA3AF"
+                  value={formData.theme}
+                  onChangeText={(v) => onInputChange("theme", v)}
+                  onFocus={() => setFocusedField("theme")}
+                  onBlur={() => setFocusedField(null)}
+                  multiline
+                />
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                  {themeChips.map((chip) => {
+                    const active = formData.theme === chip;
+                    return (
+                      <TouchableOpacity
+                        key={chip}
+                        onPress={() => onInputChange("theme", chip)}
+                        style={{
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: 20,
+                          backgroundColor: active ? FOREST : INPUT_BG,
+                          borderWidth: active ? 0 : 1,
+                          borderColor: "#E5E7EB",
+                        }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: "800", color: active ? "#FFFFFF" : "#6B7280" }}>{chip}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <TouchableOpacity
+                    onPress={() => setFocusedField("theme")}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      backgroundColor: INPUT_BG,
+                      borderWidth: 1,
+                      borderColor: FOREST,
+                    }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: "800", color: FOREST }}>+ CUSTOM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {!hideAttireFootwear && (
+                <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 10, fontWeight: "800", color: FOREST, marginBottom: 6 }}>ATTIRE</Text>
+                    <TouchableOpacity
+                      onPress={() => setAttireOpen(true)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        backgroundColor: INPUT_BG,
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 14,
+                        borderWidth: 1,
+                        borderColor: "#E5E7EB",
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>{attireDisplay(formData.attireType)}</Text>
+                      <ChevronDown size={18} color={FOREST} />
+                    </TouchableOpacity>
                   </View>
-                  <View style={{ marginBottom: 14 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                      <Text style={{ fontSize: 16 }}>👟</Text>
-                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Footwear</Text>
-                      <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-                    </View>
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      {footwearOptions.map((opt) => (
-                        <TouchableOpacity
-                          key={opt.value}
-                          onPress={() => onInputChange("footwearType", opt.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: formData.footwearType === opt.value ? "#06D6A0" : "#F9FAFB",
-                            borderRadius: 14,
-                            paddingVertical: 14,
-                            paddingHorizontal: 10,
-                            alignItems: "center",
-                            borderWidth: 2,
-                            borderColor: formData.footwearType === opt.value ? "#06D6A0" : "#E5E7EB",
-                          }}
-                        >
-                          <Text style={{ fontSize: 24, marginBottom: 4 }}>{opt.label}</Text>
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: formData.footwearType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 10, fontWeight: "800", color: FOREST, marginBottom: 6 }}>FOOTWEAR</Text>
+                    <TouchableOpacity
+                      onPress={() => setFootwearOpen(true)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        backgroundColor: INPUT_BG,
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 14,
+                        borderWidth: 1,
+                        borderColor: "#E5E7EB",
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827" }}>{footwearDisplay(formData.footwearType)}</Text>
+                      <ChevronDown size={18} color={FOREST} />
+                    </TouchableOpacity>
                   </View>
-                </>
+                </View>
               )}
             </>
           )}
 
           {isBarBatMitzvah && formData.eventCategory === "formal" && (
             <View style={{ marginBottom: 14 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                <Text style={{ fontSize: 16 }}>👗</Text>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Dress Code</Text>
-              </View>
+              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>Dress Code</Text>
               <TextInput
                 style={{
-                  backgroundColor: focusedField === "dressCode" ? "#F0FDFA" : "#F9FAFB",
+                  backgroundColor: INPUT_BG,
                   borderRadius: 12,
                   paddingHorizontal: 14,
                   paddingVertical: 12,
                   fontSize: 15,
                   fontWeight: "600",
                   color: "#111827",
-                  borderWidth: 1.5,
-                  borderColor: focusedField === "dressCode" ? "#06D6A0" : "transparent",
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
                 }}
                 placeholder="e.g. Black tie, Cocktail, Business casual..."
-                placeholderTextColor="#D1D5DB"
+                placeholderTextColor="#9CA3AF"
                 value={formData.attireType ?? ""}
                 onChangeText={(v) => onInputChange("attireType", v)}
                 onFocus={() => setFocusedField("dressCode")}
@@ -350,78 +490,35 @@ export default function EventDetailsOptionalCard(props: EventDetailsOptionalCard
             </View>
           )}
 
-          <View style={{ marginBottom: 16 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-              <Text style={{ fontSize: 16 }}>🎭</Text>
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Party Theme</Text>
-              <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(optional)</Text>
-            </View>
-            <TextInput
-              style={{
-                backgroundColor: focusedField === "theme" ? "#F0FDFA" : "#F9FAFB",
-                borderRadius: 14,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                fontSize: 16,
-                fontWeight: "600",
-                color: "#111827",
-                borderWidth: 2,
-                borderColor: focusedField === "theme" ? "#06D6A0" : "#E5E7EB",
-              }}
-              placeholder="What's the vibe?"
-              placeholderTextColor="#D1D5DB"
-              value={formData.theme ?? ""}
-              onChangeText={(v) => onInputChange("theme", v)}
-              onFocus={() => setFocusedField("theme")}
-              onBlur={() => setFocusedField(null)}
-            />
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-              {themeSuggestions.map((s) => (
-                <TouchableOpacity key={s} onPress={() => onInputChange("theme", s)} style={{ backgroundColor: "#F3F4F6", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 }}>
-                  <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "600" }}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+          <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Utensils size={18} color={FOREST} strokeWidth={2.2} />
+            <Text style={{ fontSize: 14, fontWeight: "800", color: FOREST }}>CATERING PREFERENCES</Text>
           </View>
 
           <View style={{ marginBottom: 16 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-              <Text style={{ fontSize: 16 }}>✡️</Text>
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Kosher Type</Text>
-              <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-            </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-              {kosherOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  onPress={() => onInputChange("kosherType", opt.value)}
-                  style={{
-                    width: "47%",
-                    backgroundColor: formData.kosherType === opt.value ? "#06D6A0" : "#F9FAFB",
-                    borderRadius: 14,
-                    paddingVertical: 12,
-                    paddingHorizontal: 8,
-                    alignItems: "center",
-                    borderWidth: 2,
-                    borderColor: formData.kosherType === opt.value ? "#06D6A0" : "#E5E7EB",
-                  }}
-                >
-                  <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.label}</Text>
-                  <Text style={{ fontSize: 11, fontWeight: "700", color: formData.kosherType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {showMealType && (
-            <View style={{ marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                <Text style={{ fontSize: 16 }}>🍽️</Text>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Meal Type</Text>
-                <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                {mealOptions.map((opt) => (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {kosherOptions.map((opt) => {
+                const sel = formData.kosherType === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => onInputChange("kosherType", opt.value)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: sel ? "#F0FDF4" : INPUT_BG,
+                      borderWidth: 2,
+                      borderColor: sel ? FOREST : "transparent",
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: "800", color: sel ? FOREST : "#6B7280" }}>{opt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+              {mealOptions.map((opt) => {
+                const sel = formData.mealType === opt.value;
+                return (
                   <TouchableOpacity
                     key={opt.value}
                     onPress={() => {
@@ -429,67 +526,59 @@ export default function EventDetailsOptionalCard(props: EventDetailsOptionalCard
                       onInputChange("mealType", opt.value);
                     }}
                     style={{
-                      flex: 1,
-                      backgroundColor: formData.mealType === opt.value ? "#06D6A0" : "#F9FAFB",
-                      borderRadius: 14,
-                      paddingVertical: 12,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: sel ? "#F0FDF4" : INPUT_BG,
                       borderWidth: 2,
-                      borderColor: formData.mealType === opt.value ? "#06D6A0" : "#E5E7EB",
+                      borderColor: sel ? FOREST : "transparent",
                     }}
                   >
-                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.label}</Text>
-                    <Text style={{ fontSize: 13, fontWeight: "800", color: formData.mealType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.name}</Text>
-                    <Text style={{ fontSize: 10, fontWeight: "500", color: formData.mealType === opt.value ? "rgba(255,255,255,0.8)" : "#9CA3AF", textAlign: "center" }}>{opt.desc}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: "800", color: sel ? FOREST : "#6B7280" }}>{opt.label}</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
+                );
+              })}
             </View>
-          )}
+          </View>
 
           {formData.mealType === "meat" ? (
-            <View style={{ marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16 }}>🌱</Text>
-                  <Text style={{ fontSize: 14, fontWeight: "700", color: "#374151", marginTop: 4 }}>Offer vegetarian meals (guests can request)</Text>
-                  <Text style={{ fontSize: 12, fontWeight: "500", color: "#9CA3AF", marginTop: 4 }}>Guests can choose if they want a vegetarian option; you'll know to prepare it.</Text>
-                </View>
-                <Switch
-                  value={formData.vegetarianType === "by_request"}
-                  onValueChange={(v) => onInputChange("vegetarianType", v ? "by_request" : "")}
-                  trackColor={{ false: "#E5E7EB", true: "#A7F3D0" }}
-                  thumbColor={formData.vegetarianType === "by_request" ? "#06D6A0" : "#9CA3AF"}
-                />
+            <View style={{ marginBottom: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: "700", color: "#374151" }}>Vegetarian options</Text>
+                <Text style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>Guests can request a vegetarian meal in advance.</Text>
               </View>
+              <Switch
+                value={formData.vegetarianType === "by_request"}
+                onValueChange={(v) => onInputChange("vegetarianType", v ? "by_request" : "")}
+                trackColor={{ false: "#E5E7EB", true: "#BBF7D0" }}
+                thumbColor={formData.vegetarianType === "by_request" ? FOREST : "#9CA3AF"}
+              />
             </View>
           ) : (
-            <View>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                <Text style={{ fontSize: 16 }}>🌱</Text>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280", marginLeft: 8 }}>Vegetarian Options</Text>
-                <Text style={{ fontSize: 11, fontWeight: "500", color: "#9CA3AF", marginLeft: 6 }}>(select one)</Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 10 }}>
+            <View style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", marginBottom: 8 }}>Vegetarian options</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 {vegetarianOptions.map((opt) => (
                   <TouchableOpacity
                     key={opt.value}
                     onPress={() => onInputChange("vegetarianType", opt.value)}
                     style={{
                       flex: 1,
-                      backgroundColor: formData.vegetarianType === opt.value ? "#06D6A0" : "#F9FAFB",
-                      borderRadius: 14,
-                      paddingVertical: 12,
-                      paddingHorizontal: 8,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: formData.vegetarianType === opt.value ? FOREST : INPUT_BG,
                       alignItems: "center",
-                      borderWidth: 2,
-                      borderColor: formData.vegetarianType === opt.value ? "#06D6A0" : "#E5E7EB",
                     }}
                   >
-                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.label}</Text>
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: formData.vegetarianType === opt.value ? "#FFFFFF" : "#374151", textAlign: "center" }}>{opt.name}</Text>
-                    <Text style={{ fontSize: 10, fontWeight: "500", color: formData.vegetarianType === opt.value ? "rgba(255,255,255,0.8)" : "#9CA3AF", textAlign: "center" }}>{opt.desc}</Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "800",
+                        color: formData.vegetarianType === opt.value ? "#FFFFFF" : "#374151",
+                      }}
+                    >
+                      {opt.name}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -497,6 +586,23 @@ export default function EventDetailsOptionalCard(props: EventDetailsOptionalCard
           )}
         </>
       )}
+
+      <PickerModal
+        visible={attireOpen}
+        title="Attire"
+        options={attirePickerOptions}
+        selected={formData.attireType ?? ""}
+        onSelect={(v) => onInputChange("attireType", v)}
+        onClose={() => setAttireOpen(false)}
+      />
+      <PickerModal
+        visible={footwearOpen}
+        title="Footwear"
+        options={footwearPickerOptions}
+        selected={formData.footwearType ?? ""}
+        onSelect={(v) => onInputChange("footwearType", v)}
+        onClose={() => setFootwearOpen(false)}
+      />
     </View>
   );
 }

@@ -47,9 +47,22 @@ app.use(cors({
 app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhookHandler);
 
 const { generalLimiter } = require("./middleware/rateLimit");
-app.post("/createCustomConnectAccount",
+const { verifyAppCheck, warnAppCheck } = require("./middleware/appCheck");
+
+const isStripeTestMode = () => (process.env.STRIPE_SECRET_KEY || "").startsWith("sk_test_");
+
+/** App Check for this route only; omitted in Stripe test mode (sk_test_). */
+function appCheckMiddlewareForKyc() {
+    if (isStripeTestMode()) return [];
+    if (process.env.APPCHECK_RELAXED === "1") return [warnAppCheck];
+    return [verifyAppCheck];
+}
+
+app.post(
+    "/createCustomConnectAccount",
     express.json({ limit: "8mb" }),
     generalLimiter,
+    ...appCheckMiddlewareForKyc(),
     verifyFirebaseToken,
     stripeController.createCustomConnectAccount
 );

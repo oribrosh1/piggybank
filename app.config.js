@@ -90,6 +90,7 @@ module.exports = {
             ],
             "@react-native-firebase/app",
             "@react-native-firebase/auth",
+            "@react-native-firebase/app-check",
             "@react-native-google-signin/google-signin",
             [
                 "expo-secure-store",

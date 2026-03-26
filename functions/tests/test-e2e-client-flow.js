@@ -18,11 +18,12 @@
  * Usage:
  *   node functions/tests/test-e2e-client-flow.js [--cleanup]
  */
-require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const PROJECT_ID = "piggybank-a0011";
 process.env.GCLOUD_PROJECT = PROJECT_ID;
-process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/piggybank-adc.json";
+process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, "..", "..", "firebaseserviceAccountKey.json");
 
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
@@ -63,8 +64,8 @@ const PARENT = {
     state: "CA",
     zipCode: "94111",
     ssnLast4: "0000",
-    routingNumber: "110000000",
-    accountNumber: "000123456789",
+    // routingNumber: "110000000",
+    // accountNumber: "000123456789",
 };
 
 let uid = null;
@@ -188,8 +189,8 @@ async function step3_parentSubmitsBanking() {
         state: PARENT.state,
         zipCode: PARENT.zipCode,
         ssnLast4: PARENT.ssnLast4,
-        routingNumber: PARENT.routingNumber,
-        accountNumber: PARENT.accountNumber,
+        // routingNumber: PARENT.routingNumber,
+        // accountNumber: PARENT.accountNumber,
         accountHolderName: `${parentFirst} ${parentLast}`,
         useTestDocument: true,
     });

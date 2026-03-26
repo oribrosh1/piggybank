@@ -1,33 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Users — own document only
+
+    function isChild() {
+      return request.auth.token.get('role', '') == 'child';
+    }
+
+    // Users — own document only; child role cannot write
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId && !isChild();
     }
     
     // Events — authenticated users can create, owners can edit
     // Child users (role=='child') can only read their linked event
     match /events/{eventId} {
       allow read: if request.auth != null &&
-        (request.auth.token.get('role', '') != 'child' || resource.id == request.auth.token.eventId);
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && 
+        (!isChild() || resource.id == request.auth.token.eventId);
+      allow create: if request.auth != null && !isChild();
+      allow update, delete: if request.auth != null && !isChild() &&
         (resource.data.creatorId == request.auth.uid || resource.data.hostId == request.auth.uid);
     }
 
-    // Child accounts — child can read their own doc only; writes are server-only
+    // Child accounts — child can read own doc; parent (creatorId) can also read
     match /childAccounts/{childAccountId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || resource.data.creatorId == request.auth.uid);
       allow create, update, delete: if false;
     }
     
-    // Families — members can read, parents can modify
+    // Families — members can read, parents can modify; child role blocked from writes
     match /families/{familyId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.parentIds;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && 
+      allow create: if request.auth != null && !isChild();
+      allow update, delete: if request.auth != null && !isChild() &&
         request.auth.uid in resource.data.parentIds;
     }
     
@@ -44,21 +50,21 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
     
-    // Gifts subcollection — scoped to event owner
+    // Gifts subcollection — scoped to event owner; child role blocked from writes
     match /events/{eventId}/gifts/{giftId} {
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/events/$(eventId)).data.creatorId == request.auth.uid;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null &&
+      allow create: if request.auth != null && !isChild();
+      allow update, delete: if request.auth != null && !isChild() &&
         get(/databases/$(database)/documents/events/$(eventId)).data.creatorId == request.auth.uid;
     }
     
-    // Invitations — recipient or sender can read; sender can modify
+    // Invitations — recipient or sender can read; child role blocked from writes
     match /invitations/{inviteId} {
       allow read: if request.auth != null &&
         (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null &&
+      allow create: if request.auth != null && !isChild();
+      allow update, delete: if request.auth != null && !isChild() &&
         resource.data.senderId == request.auth.uid;
     }
 
@@ -76,6 +82,32 @@ service cloud.firestore {
 
     // Child invite tokens — server-managed only
     match /childInviteTokens/{tokenId} {
+      allow read, write: if false;
+
+      match /claimAttempts/{attemptId} {
+        allow read, write: if false;
+      }
+    }
+
+    // AI poster version counter — event owner read; server writes only
+    match /posterVersionCounters/{eventId} {
+      allow read: if request.auth != null && !isChild() &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.creatorId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // AI poster versions — read if user owns the linked event (query must filter by eventId).
+    // Note: accountId-only rules reject list queries; linking via events/{eventId}.creatorId fixes permission-denied on onSnapshot.
+    match /eventPosterVersions/{versionId} {
+      allow read: if request.auth != null && !isChild() &&
+        resource.data.eventId is string &&
+        exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+        get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.creatorId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Default deny: any collection not explicitly listed above is locked
+    match /{document=**} {
       allow read, write: if false;
     }
   }

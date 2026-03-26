@@ -4,6 +4,37 @@ const userRepository = require("../repositories/userRepository");
 
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://creditkid.vercel.app";
 
+/**
+ * Copy Connect account id onto all events created by this user so guest gift PaymentIntents
+ * resolve destination (see piggybank-website create-payment-intent).
+ */
+async function syncStripeAccountToCreatorEvents(uid, accountId) {
+    const db = admin.firestore();
+    const snap = await db.collection("events").where("creatorId", "==", uid).get();
+    if (snap.empty) return;
+    const updates = [];
+    for (const doc of snap.docs) {
+        const d = doc.data();
+        if (d.stripeAccountId === accountId && d.needsBankingSetup !== true) continue;
+        updates.push(doc.ref);
+    }
+    if (updates.length === 0) return;
+    const chunkSize = 400;
+    for (let i = 0; i < updates.length; i += chunkSize) {
+        const batch = db.batch();
+        const slice = updates.slice(i, i + chunkSize);
+        slice.forEach((ref) => {
+            batch.update(ref, {
+                stripeAccountId: accountId,
+                needsBankingSetup: admin.firestore.FieldValue.delete(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        });
+        await batch.commit();
+    }
+    console.log(`[syncStripeAccountToCreatorEvents] uid=${uid} updated ${updates.length} event(s)`);
+}
+
 function parseDobString(dob) {
     if (!dob || typeof dob !== "string") return null;
     const match = dob.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -40,9 +71,78 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
         return profileSlug;
     }
 
+    /**
+     * Creates a Stripe Custom Connect account using Firebase Auth email and profile name only.
+     * KYC is completed in Stripe-hosted onboarding (Account Link), not in the app.
+     */
+    async function createMinimalStripeConnectAccountFromAuth(uid) {
+        const existing = await stripeAccountRepository.getByUid(uid);
+        if (existing && existing.accountId) {
+            await syncStripeAccountToCreatorEvents(uid, existing.accountId).catch(() => {});
+            return { accountId: existing.accountId, success: true, existing: true };
+        }
+
+        const profileSlug = await getOrCreateProfileSlug(uid);
+        const profileUrl = `${PUBLIC_BASE_URL}/users/${profileSlug}`;
+
+        let authUser;
+        try {
+            authUser = await admin.auth().getUser(uid);
+        } catch (e) {
+            const err = new Error("Could not load your account. Try signing out and back in.");
+            err.statusCode = 400;
+            throw err;
+        }
+        if (!authUser.email) {
+            const err = new Error("Add an email to your account before continuing with Stripe verification.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        let firstName = "Account";
+        let lastName = "Holder";
+        const profile = await userRepository.getById(uid);
+        if (profile?.fullName && String(profile.fullName).trim()) {
+            const parts = String(profile.fullName).trim().split(/\s+/);
+            firstName = parts[0] || firstName;
+            lastName = parts.slice(1).join(" ") || lastName;
+        } else if (authUser.displayName && authUser.displayName.trim()) {
+            const parts = authUser.displayName.trim().split(/\s+/);
+            firstName = parts[0] || firstName;
+            lastName = parts.slice(1).join(" ") || lastName;
+        }
+
+        const account = await stripeService.createMinimalCustomConnectAccount(stripe, {
+            country: "US",
+            profileUrl,
+            email: authUser.email,
+            firstName,
+            lastName,
+            firebaseUserId: uid,
+        });
+
+        await stripeAccountRepository.set(uid, {
+            accountId: account.id,
+            country: "US",
+            business_type: "individual",
+            type: "custom",
+            status: "pending",
+            cardIssuingActive: false,
+        });
+        await userRepository.setStripeAccount(uid, account.id, "pending").catch(() => {});
+        await syncStripeAccountToCreatorEvents(uid, account.id).catch((e) => {
+            console.warn("[StripeConnectService] syncStripeAccountToCreatorEvents (minimal) failed", e.message);
+        });
+
+        return { accountId: account.id, success: true, existing: false };
+    }
+
     async function createCustomConnectAccount(uid, body) {
         const existing = await stripeAccountRepository.getByUid(uid);
         if (existing && existing.accountId) {
+            await syncStripeAccountToCreatorEvents(uid, existing.accountId).catch((e) => {
+                console.warn("[StripeConnectService] sync (existing account) failed", e.message);
+            });
             return { accountId: existing.accountId, success: true, existing: true };
         }
 
@@ -154,6 +254,9 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
             cardIssuingActive: false,
         });
         await userRepository.setStripeAccount(uid, account.id, "pending").catch(() => {});
+        await syncStripeAccountToCreatorEvents(uid, account.id).catch((e) => {
+            console.warn("[StripeConnectService] syncStripeAccountToCreatorEvents failed", e.message);
+        });
 
         if (isTestMode) {
             try {
@@ -201,18 +304,35 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
         return { accountId: account.id, status: "provisioning", success: true, existing: false };
     }
 
-    async function createOnboardingLink(uid) {
-        const doc = await stripeAccountRepository.getByUid(uid);
+    async function createOnboardingLink(uid, body = {}) {
+        let doc = await stripeAccountRepository.getByUid(uid);
         if (!doc || !doc.accountId) {
-            const err = new Error("No Connect account. Call createCustomConnectAccount first.");
+            await createMinimalStripeConnectAccountFromAuth(uid);
+            doc = await stripeAccountRepository.getByUid(uid);
+        }
+        if (!doc || !doc.accountId) {
+            const err = new Error("Could not create a Connect account. Try again.");
             err.statusCode = 400;
             throw err;
         }
         const returnPath = (process.env.STRIPE_RETURN_PATH || "banking/setup/success").replace(/^\//, "");
         const refreshPath = (process.env.STRIPE_REFRESH_PATH || "banking/setup/stripe-connection?refresh=true").replace(/^\//, "");
-        const baseUrl = (PUBLIC_BASE_URL || "https://creditkid.vercel.app").replace(/\/+$/, "");
-        const returnUrl = `${baseUrl}/${returnPath}`.replace(/([^:]\/)\/+/g, "$1");
-        const refreshUrl = `${baseUrl}/${refreshPath}`.replace(/([^:]\/)\/+/g, "$1");
+        let returnUrl;
+        let refreshUrl;
+        const clientReturn = body && body.returnUrl != null ? String(body.returnUrl).trim() : "";
+        const clientRefresh = body && body.refreshUrl != null ? String(body.refreshUrl).trim() : "";
+        /** Stripe Account Links require HTTPS return/refresh URLs. Reject exp:// / custom schemes from mobile clients. */
+        const clientHttpsOk =
+            clientReturn.startsWith("https://") &&
+            clientRefresh.startsWith("https://");
+        if (clientHttpsOk) {
+            returnUrl = clientReturn;
+            refreshUrl = clientRefresh;
+        } else {
+            const baseUrl = (PUBLIC_BASE_URL || "https://creditkid.vercel.app").replace(/\/+$/, "");
+            returnUrl = `${baseUrl}/${returnPath}`.replace(/([^:]\/)\/+/g, "$1");
+            refreshUrl = `${baseUrl}/${refreshPath}`.replace(/([^:]\/)\/+/g, "$1");
+        }
         const accountLink = await stripeService.createAccountLink(stripe, {
             accountId: doc.accountId,
             returnUrl,
@@ -430,6 +550,9 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
         if (cardIssuingActive) {
             await userRepository.update(row.uid, { stripeAccountStatus: "approved" }).catch(() => {});
         }
+        await syncStripeAccountToCreatorEvents(row.uid, account.id).catch((e) => {
+            console.warn("[StripeConnectService] webhook syncStripeAccountToCreatorEvents failed", e.message);
+        });
     }
 
     async function getBalance(uid) {
@@ -752,6 +875,74 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
         return { ...details, cardId: doc.virtualCardId, success: true };
     }
 
+    /**
+     * Create a PaymentIntent on the platform for a **destination charge**: net amount goes to the
+     * caller's connected account, platform keeps an application fee (same 3% model as the website gift API).
+     * Used for in-app top-up; client confirms with Stripe.js / React Native.
+     *
+     * @param {string} uid Firebase user id (must match a stripeAccounts doc with accountId)
+     * @param {{ amount: number, currency?: string, description?: string, metadata?: Record<string, string> }} body
+     *        `amount` = gift / recipient amount in **integer cents** (before platform fee).
+     */
+    async function createPaymentIntent(uid, body) {
+        const doc = await stripeAccountRepository.getByUid(uid);
+        if (!doc?.accountId) {
+            const err = new Error("No Stripe Connect account. Complete banking setup first.");
+            err.statusCode = 404;
+            err.code = "no_connect_account";
+            throw err;
+        }
+
+        const raw = body?.amount;
+        const giftAmountCents = typeof raw === "number" ? Math.floor(raw) : parseInt(String(raw), 10);
+        if (!Number.isFinite(giftAmountCents) || giftAmountCents < 50) {
+            const err = new Error("Invalid amount. Minimum is 50 cents ($0.50).");
+            err.statusCode = 400;
+            err.code = "invalid_amount";
+            throw err;
+        }
+        if (giftAmountCents > 999_999_99) {
+            const err = new Error("Amount too large.");
+            err.statusCode = 400;
+            err.code = "invalid_amount";
+            throw err;
+        }
+
+        const feeRate = Number(process.env.PLATFORM_FEE_RATE || 0.03);
+        const platformFeeCents = Math.round(giftAmountCents * feeRate);
+        const totalCents = giftAmountCents + platformFeeCents;
+        const currency = (body.currency || "usd").toLowerCase();
+
+        const metadata = {
+            userId: uid,
+            giftAmountCents: String(giftAmountCents),
+            platformFeeCents: String(platformFeeCents),
+            type: "creditkid_topup",
+            ...(body.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+        };
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: totalCents,
+            currency,
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination: doc.accountId },
+            description: body.description || "CreditKid wallet top-up",
+            metadata,
+            automatic_payment_methods: { enabled: true },
+        });
+
+        return {
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+            amount: giftAmountCents,
+            platformFeeCents,
+            totalChargedCents: totalCents,
+            currency,
+            connectedAccountId: doc.accountId,
+        };
+    }
+
     return {
         createCustomConnectAccount,
         createOnboardingLink,
@@ -779,6 +970,7 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
         testVerifyAccount,
         testCreateTransaction,
         testAddBalance,
+        createPaymentIntent,
     };
 }
 

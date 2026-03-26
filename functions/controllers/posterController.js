@@ -3,9 +3,9 @@ const aiService = require("../services/aiService");
 const { AppError, handleError } = require("../utils/errors");
 
 async function generatePoster(req, res) {
-    const { eventId } = req.body;
+    const { eventId, posterThemeId } = req.body;
     const uid = req.user?.uid;
-    console.log(`[generatePoster] uid=${uid} eventId=${eventId}`);
+    console.log(`[generatePoster] uid=${uid} eventId=${eventId} posterThemeId=${posterThemeId || ""}`);
 
     if (!eventId) {
         return res.status(400).json({ error: "Missing eventId" });
@@ -20,7 +20,7 @@ async function generatePoster(req, res) {
             throw new AppError("Not authorized to modify this event", { statusCode: 403 });
         }
 
-        const { posterPrompt, posterUrl } = await aiService.generatePoster(eventId, event);
+        const { posterPrompt, posterUrl } = await aiService.generatePoster(eventId, event, posterThemeId);
         console.log(`[generatePoster] success uid=${uid} eventId=${eventId} hasUrl=${!!posterUrl}`);
 
         res.json({

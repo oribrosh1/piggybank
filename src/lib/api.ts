@@ -1,6 +1,7 @@
 // API wrapper for calling Firebase Cloud Functions
 import axios from 'axios';
 import firebase from "@/src/firebase";
+import { appCheckReady, isAppCheckEnabled } from "@/src/firebase/appCheck";
 
 // API base URL from environment variables
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || "https://us-central1-piggybank-a0011.cloudfunctions.net/api";
@@ -386,24 +387,89 @@ export interface TestTransactionResponse {
 // Helper Functions
 // ============================================
 
-async function authHeaders(): Promise<{ Authorization: string }> {
+/**
+ * Resolves an App Check token when App Check is enabled (production or
+ * EXPO_PUBLIC_APP_CHECK_IN_DEV). The API middleware may require
+ * X-Firebase-AppCheck; without it the server can return 401 before Firebase auth runs.
+ * Retries with force-refresh and a short delay to handle cold start after login.
+ */
+async function getAppCheckTokenForRequest(): Promise<string | undefined> {
+    if (!isAppCheckEnabled) {
+        return undefined;
+    }
+    const { getToken } =
+        require("@react-native-firebase/app-check") as typeof import("@react-native-firebase/app-check");
+    const tryOnce = async (forceRefresh: boolean) => {
+        const appCheck = await appCheckReady;
+        if (!appCheck) return undefined;
+        const result = await getToken(appCheck, forceRefresh);
+        return result.token ?? undefined;
+    };
+    try {
+        let t = await tryOnce(false);
+        if (!t) t = await tryOnce(true);
+        if (t) return t;
+    } catch (e) {
+        console.warn("[api] App Check getToken failed:", e);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+    try {
+        return await tryOnce(true);
+    } catch (e) {
+        console.warn("[api] App Check retry failed:", e);
+        return undefined;
+    }
+}
+
+/** Auth + optional App Check headers for Cloud Function HTTP calls (including `fetch` from eventService). */
+export async function getCloudFunctionAuthHeaders(): Promise<Record<string, string>> {
     const token = await firebase.auth().currentUser?.getIdToken(true);
     if (!token) {
         throw new Error('No authentication token found');
     }
-    return { Authorization: `Bearer ${token}` };
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    const appCheckToken = await getAppCheckTokenForRequest();
+    if (appCheckToken) {
+        headers["X-Firebase-AppCheck"] = appCheckToken;
+    } else if (process.env.NODE_ENV === "development" && isAppCheckEnabled) {
+        console.warn(
+            "[api] No App Check token — Cloud Functions will return 401. For Expo dev, register a debug token in Firebase Console and set EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN."
+        );
+    }
+    return headers;
+}
+
+/**
+ * Logs Axios error status + JSON body from Cloud Functions (e.g. "Missing App Check token" vs "Invalid token").
+ * Use when debugging 401s from `getChildCard` and other API calls.
+ */
+export function logApiErrorDetail(prefix: string, err: unknown): void {
+    if (!axios.isAxiosError(err)) {
+        console.warn(prefix, err);
+        return;
+    }
+    const status = err.response?.status;
+    const raw = err.response?.data;
+    const serverError =
+        raw && typeof raw === "object" && "error" in raw
+            ? (raw as { error: string }).error
+            : raw;
+    const path = err.config?.url?.replace(/^.*\/api/, "") ?? err.config?.url;
+    console.warn(`${prefix}`, { status, serverError, path });
+    if (status === 401) {
+        const hint =
+            String(serverError).includes("App Check") || serverError === undefined
+                ? "App Check: add EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN (Firebase Console → App Check → Apps → Debug token), or set Cloud Functions env APPCHECK_RELAXED=1 on dev only."
+                : String(serverError).includes("Invalid token") || String(serverError).includes("authorization")
+                  ? "Auth: sign out and back in, or confirm Firebase project matches the app."
+                  : "See serverError above.";
+        console.warn("[api] 401 hint:", hint);
+    }
 }
 
 // ============================================
 // Child invite (parent link → child claims account)
 // ============================================
-
-export interface GetChildInviteLinkResponse {
-    link: string;
-    pin: string;
-    expiresAt: string;
-    token: string;
-}
 
 export interface ClaimChildInviteResponse {
     childAccountId: string;
@@ -413,23 +479,40 @@ export interface ClaimChildInviteResponse {
     cardLast4?: string | null;
 }
 
-/** Parent: get SMS link for child to open (requires auth). Also accepts child's phone. */
-export async function getChildInviteLink(eventId: string, childPhone: string): Promise<GetChildInviteLinkResponse> {
-    const headers = await authHeaders();
-    const res = await axios.post<GetChildInviteLinkResponse>(
-        `${BASE}/getChildInviteLink`,
-        { eventId, childPhone },
+/** Child: claim invite with token + PIN (requires Firebase Phone Auth). */
+export async function claimChildInvite(token: string, pin: string): Promise<ClaimChildInviteResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<ClaimChildInviteResponse>(
+        `${BASE}/claimChildInvite`,
+        { token, pin },
         { headers }
     );
     return res.data;
 }
 
-/** Child: claim invite with token + PIN (requires Firebase Phone Auth). */
-export async function claimChildInvite(token: string, pin: string): Promise<ClaimChildInviteResponse> {
-    const headers = await authHeaders();
-    const res = await axios.post<ClaimChildInviteResponse>(
-        `${BASE}/claimChildInvite`,
-        { token, pin },
+export interface PendingInviteResponse {
+    hasPending: boolean;
+    childName?: string | null;
+    childPhone?: string | null;
+    expiresAt?: string | null;
+}
+
+/** Parent: check if a pending invite exists for the given event. */
+export async function getPendingInvite(eventId: string): Promise<PendingInviteResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.get<PendingInviteResponse>(
+        `${BASE}/getPendingInvite`,
+        { headers, params: { eventId } }
+    );
+    return res.data;
+}
+
+/** Parent: revoke all pending invites for the given event. */
+export async function revokeChildInvite(eventId: string): Promise<{ success: boolean; revokedCount: number }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean; revokedCount: number }>(
+        `${BASE}/revokeChildInvite`,
+        { eventId },
         { headers }
     );
     return res.data;
@@ -445,7 +528,7 @@ export async function claimChildInvite(token: string, pin: string): Promise<Clai
 export async function createExpressAccount(
     payload: CreateExpressAccountPayload
 ): Promise<CreateExpressAccountResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateExpressAccountResponse>(
         `${BASE}/createExpressAccount`,
         payload,
@@ -461,7 +544,7 @@ export async function createExpressAccount(
 export async function createCustomConnectAccount(
     payload: CreateCustomConnectAccountPayload
 ): Promise<CreateCustomConnectAccountResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateCustomConnectAccountResponse>(
         `${BASE}/createCustomConnectAccount`,
         payload,
@@ -474,7 +557,7 @@ export async function createCustomConnectAccount(
  * Get Stripe account status and verification details
  */
 export async function getAccountStatus(): Promise<AccountStatusResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<AccountStatusResponse>(
         `${BASE}/getAccountStatus`,
         { headers }
@@ -486,7 +569,7 @@ export async function getAccountStatus(): Promise<AccountStatusResponse> {
  * Request capabilities (card_issuing, transfers) on the Connect account. Use if account was created without them.
  */
 export async function updateAccountCapabilities(): Promise<UpdateAccountCapabilitiesResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UpdateAccountCapabilitiesResponse>(
         `${BASE}/updateAccountCapabilities`,
         {},
@@ -496,10 +579,12 @@ export async function updateAccountCapabilities(): Promise<UpdateAccountCapabili
 }
 
 /**
- * STAGE 2 – Create Stripe Hosted Onboarding link (SSN, DOB, Address, Bank)
+ * Stripe Connect hosted onboarding (Account Link). Collects KYC in the browser — not in-app.
+ * If the user has no Connect account yet, the backend creates one from their Firebase email/name, then returns the link.
+ * Return/refresh URLs are chosen on the server (HTTPS on PUBLIC_BASE_URL); Stripe rejects exp:// / custom-scheme URLs.
  */
 export async function createOnboardingLink(): Promise<CreateOnboardingLinkResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateOnboardingLinkResponse>(
         `${BASE}/createOnboardingLink`,
         {},
@@ -512,7 +597,7 @@ export async function createOnboardingLink(): Promise<CreateOnboardingLinkRespon
  * Get Treasury Financial Account balance
  */
 export async function getFinancialAccountBalance(): Promise<GetFinancialAccountBalanceResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetFinancialAccountBalanceResponse>(
         `${BASE}/getFinancialAccountBalance`,
         { headers }
@@ -524,7 +609,7 @@ export async function getFinancialAccountBalance(): Promise<GetFinancialAccountB
  * Retry a failed provisioning task
  */
 export async function retryProvisioning(): Promise<RetryProvisioningResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<RetryProvisioningResponse>(
         `${BASE}/retryProvisioning`,
         {},
@@ -539,7 +624,7 @@ export async function retryProvisioning(): Promise<RetryProvisioningResponse> {
 export async function createIssuingCardholder(
     payload: CreateIssuingCardholderPayload
 ): Promise<CreateIssuingCardholderResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateIssuingCardholderResponse>(
         `${BASE}/createIssuingCardholder`,
         payload,
@@ -554,7 +639,7 @@ export async function createIssuingCardholder(
 export async function createVirtualCard(
     payload: CreateVirtualCardPayload = {}
 ): Promise<CreateVirtualCardResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateVirtualCardResponse>(
         `${BASE}/createVirtualCard`,
         payload,
@@ -567,7 +652,7 @@ export async function createVirtualCard(
  * STAGE 4 – Fetch card metadata (last4, expiry, brand). Full card number never leaves Stripe.
  */
 export async function getCardDetails(): Promise<GetCardDetailsResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetCardDetailsResponse>(
         `${BASE}/getCardDetails`,
         { headers }
@@ -579,7 +664,7 @@ export async function getCardDetails(): Promise<GetCardDetailsResponse> {
  * Get card details including Apple Wallet provisioning fields (primaryAccountIdentifier).
  */
 export async function getCardDetailsWithWallet(): Promise<GetCardDetailsWithWalletResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetCardDetailsWithWalletResponse>(
         `${BASE}/getCardDetailsWithWallet`,
         { headers }
@@ -593,7 +678,7 @@ export async function getCardDetailsWithWallet(): Promise<GetCardDetailsWithWall
 export async function createPushProvisioningEphemeralKey(
     payload: CreatePushProvisioningEphemeralKeyPayload = {}
 ): Promise<CreatePushProvisioningEphemeralKeyResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePushProvisioningEphemeralKeyResponse>(
         `${BASE}/createPushProvisioningEphemeralKey`,
         payload,
@@ -608,7 +693,7 @@ export async function createPushProvisioningEphemeralKey(
 export async function createTestAuthorization(
     payload: { amount?: number } = {}
 ): Promise<CreateTestAuthorizationResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateTestAuthorizationResponse>(
         `${BASE}/createTestAuthorization`,
         payload,
@@ -623,7 +708,7 @@ export async function createTestAuthorization(
 export async function uploadVerificationFile(
     payload: UploadVerificationFilePayload
 ): Promise<UploadVerificationFileResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UploadVerificationFileResponse>(
         `${BASE}/uploadVerificationFile`,
         payload,
@@ -638,7 +723,7 @@ export async function uploadVerificationFile(
 export async function createPaymentIntent(
     payload: CreatePaymentIntentPayload
 ): Promise<CreatePaymentIntentResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePaymentIntentResponse>(
         `${BASE}/createPaymentIntent`,
         payload,
@@ -651,7 +736,7 @@ export async function createPaymentIntent(
  * Get Stripe account balance
  */
 export async function getBalance(): Promise<GetBalanceResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetBalanceResponse>(
         `${BASE}/getBalance`,
         { headers }
@@ -665,7 +750,7 @@ export async function getBalance(): Promise<GetBalanceResponse> {
 export async function createPayout(
     payload: CreatePayoutPayload
 ): Promise<CreatePayoutResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePayoutResponse>(
         `${BASE}/createPayout`,
         payload,
@@ -681,7 +766,7 @@ export async function getTransactions(
     limit: number = 10,
     starting_after?: string
 ): Promise<GetTransactionsResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const params = new URLSearchParams({ limit: limit.toString() });
     if (starting_after) {
         params.append('starting_after', starting_after);
@@ -697,7 +782,7 @@ export async function getTransactions(
  * Get full Stripe Custom account details
  */
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetAccountDetailsResponse>(
         `${BASE}/getAccountDetails`,
         { headers }
@@ -712,7 +797,7 @@ export async function getPayouts(
     limit: number = 10,
     starting_after?: string
 ): Promise<GetPayoutsResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const params = new URLSearchParams({ limit: limit.toString() });
     if (starting_after) {
         params.append('starting_after', starting_after);
@@ -730,7 +815,7 @@ export async function getPayouts(
 export async function addBankAccount(
     payload: AddBankAccountPayload
 ): Promise<AddBankAccountResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<AddBankAccountResponse>(
         `${BASE}/addBankAccount`,
         payload,
@@ -745,7 +830,7 @@ export async function addBankAccount(
 export async function updateAccountInfo(
     payload: UpdateAccountInfoPayload
 ): Promise<UpdateAccountInfoResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UpdateAccountInfoResponse>(
         `${BASE}/updateAccountInfo`,
         payload,
@@ -760,10 +845,181 @@ export async function updateAccountInfo(
 export async function acceptTermsOfService(
     ip?: string
 ): Promise<AcceptTermsOfServiceResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<AcceptTermsOfServiceResponse>(
         `${BASE}/acceptTermsOfService`,
         { ip },
+        { headers }
+    );
+    return res.data;
+}
+
+// ============================================
+// Child Card Management (parent controls child's Issuing card)
+// ============================================
+
+export interface ChildCardInfo {
+    id: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+    status: 'active' | 'inactive' | 'canceled';
+    brand: string;
+    spendingControls?: {
+        spending_limits?: Array<{ amount: number; interval: string }>;
+        blocked_categories?: string[];
+    };
+}
+
+export interface ChildCardResponse {
+    success: boolean;
+    childName: string | null;
+    card: ChildCardInfo;
+    balance: number;
+}
+
+export interface ChildIssuingTransaction {
+    id: string;
+    amount: number;
+    currency: string;
+    merchantName: string;
+    merchantCategory: string;
+    merchantCity: string | null;
+    merchantCountry: string | null;
+    type: string;
+    created: number;
+    status: string;
+}
+
+export interface ChildTransactionsResponse {
+    success: boolean;
+    transactions: ChildIssuingTransaction[];
+    hasMore: boolean;
+}
+
+export interface ChildSpendingSummaryResponse {
+    success: boolean;
+    period: string;
+    totalSpent: number;
+    transactionCount: number;
+    averageTransaction: number;
+    largestTransaction: number;
+    byCategory: Record<string, number>;
+    topMerchants: Array<{ name: string; amount: number; count: number }>;
+}
+
+export async function getChildCard(childAccountId: string): Promise<ChildCardResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.get<ChildCardResponse>(
+        `${BASE}/getChildCard`,
+        { headers, params: { childAccountId } }
+    );
+    return res.data;
+}
+
+export async function freezeChildCard(childAccountId: string): Promise<{ success: boolean }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean }>(
+        `${BASE}/freezeChildCard`,
+        { childAccountId },
+        { headers }
+    );
+    return res.data;
+}
+
+export async function unfreezeChildCard(childAccountId: string): Promise<{ success: boolean }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean }>(
+        `${BASE}/unfreezeChildCard`,
+        { childAccountId },
+        { headers }
+    );
+    return res.data;
+}
+
+export async function updateChildSpendingLimits(
+    childAccountId: string,
+    limits: { daily?: number; weekly?: number; monthly?: number; perTransaction?: number }
+): Promise<{ success: boolean }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean }>(
+        `${BASE}/updateChildSpendingLimits`,
+        { childAccountId, ...limits },
+        { headers }
+    );
+    return res.data;
+}
+
+export async function updateChildBlockedCategories(
+    childAccountId: string,
+    blockedCategories: string[]
+): Promise<{ success: boolean }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean }>(
+        `${BASE}/updateChildBlockedCategories`,
+        { childAccountId, blockedCategories },
+        { headers }
+    );
+    return res.data;
+}
+
+export async function getChildTransactions(
+    childAccountId: string,
+    limit: number = 20,
+    startingAfter?: string
+): Promise<ChildTransactionsResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const params: Record<string, string> = { childAccountId, limit: limit.toString() };
+    if (startingAfter) params.startingAfter = startingAfter;
+    const res = await axios.get<ChildTransactionsResponse>(
+        `${BASE}/getChildTransactions`,
+        { headers, params }
+    );
+    return res.data;
+}
+
+export async function getChildSpendingSummary(
+    childAccountId: string,
+    period: 'day' | 'week' | 'month' = 'month'
+): Promise<ChildSpendingSummaryResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.get<ChildSpendingSummaryResponse>(
+        `${BASE}/getChildSpendingSummary`,
+        { headers, params: { childAccountId, period } }
+    );
+    return res.data;
+}
+
+export interface SendChildInviteResponse {
+    success: boolean;
+    childName: string | null;
+    expiresAt: string;
+    /** True when Twilio was not used (Stripe test mode only). */
+    smsSkipped?: boolean;
+    /** Only when smsSkipped + test mode — use for dev without Twilio. Never shown in production SMS path. */
+    devInviteLink?: string;
+    devPin?: string;
+}
+
+export async function sendChildInvite(
+    eventId: string,
+    childPhone: string,
+    childName: string
+): Promise<SendChildInviteResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<SendChildInviteResponse>(
+        `${BASE}/sendChildInvite`,
+        { eventId, childPhone, childName },
+        { headers }
+    );
+    return res.data;
+}
+
+export async function testLinkChildAccount(): Promise<{ success: boolean; childAccountId: string }> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.post<{ success: boolean; childAccountId: string }>(
+        `${BASE}/testLinkChildAccount`,
+        {},
         { headers }
     );
     return res.data;
@@ -785,7 +1041,7 @@ interface TestVerifyResponse {
  * Only works in Stripe test mode!
  */
 export async function testVerifyAccount(): Promise<TestVerifyResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestVerifyResponse>(
         `${BASE}/testVerifyAccount`,
         {},
@@ -801,7 +1057,7 @@ export async function testVerifyAccount(): Promise<TestVerifyResponse> {
 export async function testCreateTransaction(
     amount: number = 2500 // Amount in cents, default $25
 ): Promise<TestTransactionResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestTransactionResponse>(
         `${BASE}/testCreateTransaction`,
         { amount },
@@ -817,7 +1073,7 @@ export async function testCreateTransaction(
 export async function testAddBalance(
     amount: number = 5000 // Amount in cents, default $50
 ): Promise<TestTransactionResponse> {
-    const headers = await authHeaders();
+    const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestTransactionResponse>(
         `${BASE}/testAddBalance`,
         { amount },

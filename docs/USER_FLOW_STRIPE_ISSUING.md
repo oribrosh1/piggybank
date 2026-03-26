@@ -49,7 +49,8 @@ Implement **Node.js/TypeScript** logic to create a **Stripe Custom Connected Acc
 
 - Create an **Account Link** (`account_links`) for the connected account.
 - Set **collection_options**: `{ fields: "eventually_due" }` so Stripe collects KYC (SSN, DOB, Address, Bank Account) via the hosted flow.
-- **return_url:** e.g. `creditkidapp://stripe-callback` (or `creditkidapp://banking/setup/success`) to bring the user back to the app after onboarding.
+- **return_url / refresh_url:** The mobile app sends these in the `POST /createOnboardingLink` body (`returnUrl`, `refreshUrl`) using `expo-linking` `createURL(...)` so they match `WebBrowser.openAuthSessionAsync` exactly. If omitted, Cloud Functions fall back to `APP_SCHEME` (e.g. `creditkidapp://banking/setup/success`) or `PUBLIC_BASE_URL` for HTTPS pages.
+- **return_url (legacy):** e.g. `creditkidapp://stripe-callback` (or `creditkidapp://banking/setup/success`) to bring the user back to the app after onboarding.
 - **refresh_url:** e.g. `creditkidapp://banking/setup/stripe-connection?refresh=true` for link refresh.
 
 ### Mobile (Expo)
@@ -80,26 +81,27 @@ Implement **Node.js/TypeScript** logic to create a **Stripe Custom Connected Acc
 2. **Step 1 – Personal info**  
    User fills in: First name, Last name, Email (from auth), Phone, DOB, Address (or use Google Places). Accept ToS. Tap **Next**.
 
-3. **Step 2 – Stripe Hosted Onboarding**  
-   On the next **Next**:
-   - App calls **`createCustomConnectAccount({ country: "US" })`** (creates Connect account if needed).
-   - App calls **`createOnboardingLink()`** to get a Stripe Account Link URL.
-   - App opens that URL with **`Linking.openURL(url)`** (browser or in-app browser).
-   - User completes **Stripe’s hosted form**: identity (SSN, DOB), address, **bank account** (for funding/top-up). No SSN or bank details are stored in your app.
-   - When done, Stripe redirects to **return_url** (e.g. `creditkidapp://banking/setup/success`), which deep-links the user back to the app’s success screen.
+3. **Create Connect account (personal info)**  
+   After the final **Next** on personal info:
+   - App calls **`createCustomConnectAccount({ country: "US", ... })`** (creates the Connect account and bank linkage as implemented).
+   - App navigates to **`/banking/setup/success`** (no in-app Stripe browser at this step).
 
-4. **After onboarding**  
+4. **Stripe Hosted Onboarding (browser)**  
+   From **Finish payout setup** on the event dashboard / Gifts tab, or **Set up banking** on Home / Profile when payouts aren’t ready:
+   - If the user has **no** Connect account yet → app routes to **personal info** first.
+   - If a Connect account **exists** → app calls **`createOnboardingLink()`** (with `returnUrl` / `refreshUrl` from `expo-linking`) and opens the URL with **`WebBrowser.openAuthSessionAsync`**. User completes **Stripe’s hosted** identity/bank steps.
+   - On return, app navigates to **`/banking/setup/success`**. Shared helper: `src/lib/stripeHostedOnboarding.ts` (`navigateToStripeConnectOrPersonalInfo`).
+
+5. **After onboarding**  
    Poll **`getAccountStatus`** or rely on **`account.updated`** webhook; when **`capabilities.card_issuing === 'active'`**, user can proceed to **Stage 3** (fund account) and **Stage 4** (issue card).
 
 ### Environment (backend)
 
 In **`functions/.env`**:
 
-- **`APP_SCHEME`** – Must match the app’s URL scheme (e.g. `creditkidapp` in `app.json`). Used to build return/refresh URLs.
-- **`STRIPE_RETURN_PATH`** (optional) – Path after scheme for return URL. Default: `banking/setup/success` → `creditkidapp://banking/setup/success`.
-- **`STRIPE_REFRESH_PATH`** (optional) – Path for refresh URL when the link expires. Default: `banking/setup/stripe-connection?refresh=true`.
-
-So return URL = `{APP_SCHEME}://{STRIPE_RETURN_PATH}`, refresh URL = `{APP_SCHEME}://{STRIPE_REFRESH_PATH}`.
+- **`APP_SCHEME`** (optional if the app always sends `returnUrl` / `refreshUrl` on `createOnboardingLink`) – e.g. `creditkidapp`. When set and the client does not send URLs, the API builds `creditkidapp://banking/setup/success` style links.
+- **`PUBLIC_BASE_URL`** – Used for HTTPS return URLs when neither client URLs nor `APP_SCHEME` apply (e.g. web-only flows).
+- **`STRIPE_RETURN_PATH`** / **`STRIPE_REFRESH_PATH`** (optional) – Path segments appended after the scheme or HTTPS base.
 
 ### Deep linking
 

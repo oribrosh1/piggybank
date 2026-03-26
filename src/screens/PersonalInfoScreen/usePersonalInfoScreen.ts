@@ -282,6 +282,7 @@ export function usePersonalInfoScreen() {
           accountNumber: account,
           accountHolderName,
         });
+        /** Stripe hosted KYC opens from Event / Gifts “Finish payout setup” (browser), not here. */
         router.replace("/banking/setup/success");
       } catch (err: unknown) {
         const code = err && typeof err === "object" && "response" in err

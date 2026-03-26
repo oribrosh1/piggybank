@@ -15,14 +15,15 @@ export type AppRoute =
     | "/(auth)/email-signin"
     // Tab routes
     | "/(tabs)/home"
-    | "/(tabs)/banking"
-    | "/(tabs)/create-event"
-    | "/(tabs)/my-events"
+    | "/(tabs)/gifts"
+    | "/(tabs)/kids"
+    | "/(tabs)/my-event"
     | "/(tabs)/profile"
     // Create Event flow
     | "/create-event/event-type"
     | "/create-event/event-details"
     | "/create-event/select-guests"
+    | "/create-event/event-poster"
     | "/create-event/review-invitation"
     | `/event-dashboard/${string}`
     // Banking setup flow
@@ -80,15 +81,16 @@ export const routes = {
     },
     tabs: {
         home: route("/(tabs)/home"),
-        banking: route("/(tabs)/banking"),
-        createEvent: route("/(tabs)/create-event"),
-        myEvents: route("/(tabs)/my-events"),
+        gifts: route("/(tabs)/gifts"),
+        kids: route("/(tabs)/kids"),
+        myEvent: route("/(tabs)/my-event"),
         profile: route("/(tabs)/profile"),
     },
     createEvent: {
         eventType: route("/create-event/event-type"),
         eventDetails: route("/create-event/event-details"),
         selectGuests: route("/create-event/select-guests"),
+        eventPoster: route("/create-event/event-poster"),
         review: route("/create-event/review-invitation"),
     },
     banking: {

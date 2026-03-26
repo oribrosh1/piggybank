@@ -6,7 +6,9 @@
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { Event, EventSummary, CreateEventData, Guest, calculateGuestStats } from "@/types/events";
+import { getCloudFunctionAuthHeaders } from "@/src/lib/api";
+import { Event, EventSummary, CreateEventData, Guest, calculateGuestStats, PosterThemeId, EventPosterVersionRow } from "@/types/events";
+import { buildEventTitleFromChild } from "@/src/lib/eventTitle";
 import { UserProfile } from "@/types/user";
 
 export interface CreateEventResult {
@@ -41,6 +43,9 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
         // Calculate guest stats
         const guestStats = calculateGuestStats(eventData.guests);
 
+        const childName = eventData.formData.childName.trim();
+        const derivedTitle = buildEventTitleFromChild(childName, eventData.eventType, eventData.formData.age);
+
         // Build typed event object
         const event: Event = {
             id: eventId,
@@ -50,7 +55,8 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
             creatorEmail: user.email || null,
             // Event details
             eventType: eventData.eventType,
-            eventName: eventData.formData.eventName,
+            childName,
+            eventName: derivedTitle,
             // Optional event details
             eventCategory: eventData.formData.eventCategory,
             partyType: eventData.formData.partyType,
@@ -80,6 +86,7 @@ export async function createEvent(eventData: CreateEventData): Promise<CreateEve
             // Timestamps
             createdAt: new Date(),
             updatedAt: new Date(),
+            optionalDetailsLater: eventData.formData.optionalDetailsLater === true,
         };
 
         // Remove undefined values before saving
@@ -190,6 +197,7 @@ export async function getUserEventsStats(): Promise<EventSummary[]> {
                 creatorEmail: data.creatorEmail,
                 eventType: data.eventType,
                 eventName: data.eventName,
+                childName: data.childName,
                 eventCategory: data.eventCategory,
                 partyType: data.partyType,
                 otherPartyType: data.otherPartyType,
@@ -211,6 +219,8 @@ export async function getUserEventsStats(): Promise<EventSummary[]> {
                 stripeAccountId: data.stripeAccountId,
                 posterUrl: data.posterUrl,
                 posterPrompt: data.posterPrompt,
+                optionalDetailsLater: data.optionalDetailsLater === true,
+                posterThemeId: data.posterThemeId,
                 createdAt: data.createdAt?.toDate?.() || new Date(),
                 updatedAt: data.updatedAt?.toDate?.() || new Date(),
             } as EventSummary;
@@ -347,10 +357,84 @@ export async function refreshEventGuestStats(eventId: string): Promise<{ success
     }
 }
 
+const POSTER_VERSIONS_COLLECTION = "eventPosterVersions";
+
+/** Same base as `api.ts` — poster generation must hit the same Firebase project as auth/Firestore. */
+const CLOUD_API_BASE =
+    process.env.EXPO_PUBLIC_API_BASE_URL ||
+    "https://us-central1-piggybank-a0011.cloudfunctions.net/api";
+
+/** Poster URL on the event document (written by Cloud Functions; reliable even if version subcollection lags). */
+export function subscribeEventPosterFromEventDoc(
+    eventId: string,
+    onPosterUrl: (posterUrl: string | null) => void,
+    onError?: (e: Error) => void
+): () => void {
+    return firestore()
+        .collection("events")
+        .doc(eventId)
+        .onSnapshot(
+            (snap) => {
+                if (!snap.exists) {
+                    onPosterUrl(null);
+                    return;
+                }
+                const url = snap.data()?.posterUrl;
+                onPosterUrl(typeof url === "string" && url.length > 0 ? url : null);
+            },
+            (err) => {
+                console.error("subscribeEventPosterFromEventDoc", err);
+                onError?.(err as Error);
+            }
+        );
+}
+
 /**
- * Generate AI invitation poster for an event
+ * Realtime listener for all poster versions for an event (newest first in callback).
  */
-export async function generateEventPoster(eventId: string): Promise<{
+export function subscribeEventPosterVersions(
+    eventId: string,
+    onVersions: (rows: EventPosterVersionRow[]) => void,
+    onError?: (e: Error) => void
+): () => void {
+    return firestore()
+        .collection(POSTER_VERSIONS_COLLECTION)
+        .where("eventId", "==", eventId)
+        .onSnapshot(
+            (snap) => {
+                const rows: EventPosterVersionRow[] = snap.docs.map((doc) => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        accountId: d.accountId,
+                        eventId: d.eventId,
+                        posterUrl: d.posterUrl ?? null,
+                        versionNumber: d.versionNumber,
+                        posterPrompt: d.posterPrompt,
+                        posterThemeId: d.posterThemeId as PosterThemeId | undefined,
+                        createdAt: d.createdAt?.toDate?.(),
+                    };
+                });
+                rows.sort((a, b) => b.versionNumber - a.versionNumber);
+                onVersions(rows);
+            },
+            (err) => {
+                console.error("subscribeEventPosterVersions", err);
+                onError?.(err as Error);
+            }
+        );
+}
+
+/** Client wait for generatePoster (server timeout is 180s; image gen can be slow). */
+const GENERATE_POSTER_FETCH_MS = 170_000;
+
+/**
+ * Generate AI invitation poster for an event (same Cloud project as Firestore; sends App Check when enabled).
+ */
+export async function generateEventPoster(
+    eventId: string,
+    posterThemeId?: PosterThemeId
+): Promise<{
     success: boolean;
     posterUrl?: string;
     posterPrompt?: string;
@@ -362,26 +446,37 @@ export async function generateEventPoster(eventId: string): Promise<{
             throw new Error('User must be authenticated');
         }
 
-        // Get the user's ID token for authentication
-        const idToken = await user.getIdToken();
+        const headers = await getCloudFunctionAuthHeaders();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), GENERATE_POSTER_FETCH_MS);
 
-        // Call the Cloud Function
-        const response = await fetch(
-            'https://us-central1-piggybank-174f3.cloudfunctions.net/api/generatePoster',
-            {
+        let response: Response;
+        try {
+            response = await fetch(`${CLOUD_API_BASE}/generatePoster`, {
                 method: 'POST',
                 headers: {
+                    ...headers,
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${idToken}`,
                 },
-                body: JSON.stringify({ eventId }),
-            }
-        );
+                body: JSON.stringify({ eventId, ...(posterThemeId ? { posterThemeId } : {}) }),
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
 
-        const data = await response.json();
+        const raw = await response.text();
+        let data: { error?: string; posterUrl?: string; posterPrompt?: string } = {};
+        if (raw) {
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                throw new Error(raw.slice(0, 200) || 'Invalid response from server');
+            }
+        }
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate poster');
+            throw new Error(data.error || `Failed to generate poster (${response.status})`);
         }
 
         return {
@@ -390,8 +485,12 @@ export async function generateEventPoster(eventId: string): Promise<{
             posterPrompt: data.posterPrompt,
         };
     } catch (error: any) {
+        const msg =
+            error?.name === 'AbortError'
+                ? 'Poster generation timed out. Check your connection and try again from the event dashboard.'
+                : error?.message || 'Unknown error';
         console.error('Error generating event poster:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: msg };
     }
 }
 

@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 const axios = require("axios");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 
 const db = admin.firestore();
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";

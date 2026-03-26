@@ -1,18 +1,16 @@
 import { Tabs, Redirect } from "expo-router";
-import { Plus, Calendar, User, Home, CreditCard } from "lucide-react-native";
 import { View, Platform } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAuth } from "@/src/utils/auth/useAuth";
 import { routes } from "@/types/routes";
 
 export default function TabLayout() {
   const { isAuthenticated, isReady } = useAuth();
 
-  // Show nothing while checking auth status
   if (!isReady) {
     return null;
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Redirect href={routes.auth.login} />;
   }
@@ -24,26 +22,24 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: "#FFFFFF",
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 90 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          height: Platform.OS === "ios" ? 90 : 70,
+          paddingBottom: Platform.OS === "ios" ? 20 : 8,
           paddingTop: 8,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: -4,
-          },
+          shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 20,
         },
-        tabBarActiveTintColor: "#FBBF24",
+        tabBarActiveTintColor: "#7C3AED",
         tabBarInactiveTintColor: "#9CA3AF",
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "700",
           marginTop: 2,
+          letterSpacing: 0.3,
         },
         tabBarItemStyle: {
           paddingVertical: 2,
@@ -53,129 +49,94 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: "HOME",
           tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? "rgba(251, 191, 36, 0.15)" : "transparent",
-                borderRadius: 12,
-                padding: 8,
-                width: 44,
-                height: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Home
-                color={color}
-                size={24}
-                strokeWidth={focused ? 2.5 : 2}
-              />
-            </View>
+            <TabIcon
+              icon={focused ? "grid" : "grid-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="banking"
+        name="my-event"
         options={{
-          title: "Credit",
+          title: "MY EVENT",
           tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? "rgba(251, 191, 36, 0.15)" : "transparent",
-                borderRadius: 12,
-                padding: 8,
-                width: 44,
-                height: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CreditCard
-                color={color}
-                size={24}
-                strokeWidth={focused ? 2.5 : 2}
-              />
-            </View>
+            <TabIcon
+              icon={focused ? "calendar" : "calendar-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="create-event"
+        name="gifts"
         options={{
-          title: "Create",
+          title: "GIFTS",
           tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? "rgba(251, 191, 36, 0.15)" : "transparent",
-                borderRadius: 12,
-                padding: 8,
-                width: 44,
-                height: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Plus
-                color={color}
-                size={24}
-                strokeWidth={focused ? 2.5 : 2}
-              />
-            </View>
+            <TabIcon
+              icon={focused ? "gift" : "gift-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="my-events"
+        name="kids"
         options={{
-          title: "Events",
+          title: "MY CHILD",
           tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? "rgba(251, 191, 36, 0.15)" : "transparent",
-                borderRadius: 12,
-                padding: 8,
-                width: 44,
-                height: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Calendar
-                color={color}
-                size={24}
-                strokeWidth={focused ? 2.5 : 2}
-              />
-            </View>
+            <TabIcon
+              icon={focused ? "happy" : "happy-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
-
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "PROFILE",
           tabBarIcon: ({ color, focused }) => (
-            <View
-              style={{
-                backgroundColor: focused ? "rgba(251, 191, 36, 0.15)" : "transparent",
-                borderRadius: 12,
-                padding: 8,
-                width: 44,
-                height: 44,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <User
-                color={color}
-                size={24}
-                strokeWidth={focused ? 2.5 : 2}
-              />
-            </View>
+            <TabIcon
+              icon={focused ? "settings" : "settings-outline"}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
     </Tabs>
+  );
+}
+
+function TabIcon({
+  icon,
+  color,
+  focused,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={{
+        backgroundColor: focused ? "rgba(124, 58, 237, 0.12)" : "transparent",
+        borderRadius: 12,
+        padding: 8,
+        width: 44,
+        height: 44,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Ionicons name={icon} size={22} color={color} />
+    </View>
   );
 }

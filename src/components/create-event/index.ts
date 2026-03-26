@@ -1,4 +1,6 @@
+export { default as CreateEventTopBar } from "./CreateEventTopBar";
 export { default as EventDetailsScreenHeader } from "./EventDetailsScreenHeader";
+export { default as EventDetailsAddressField } from "./EventDetailsAddressField";
 export { default as EventDetailsScreenFooter } from "./EventDetailsScreenFooter";
 export { default as EventDatePickerModal } from "./EventDatePickerModal";
 export { default as EventTimePickerModal } from "./EventTimePickerModal";

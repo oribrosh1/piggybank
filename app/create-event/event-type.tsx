@@ -2,8 +2,118 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Gift, Star } from "lucide-react-native";
 import { routes } from "@/types/routes";
+import CreateEventTopBar from "@/src/components/create-event/CreateEventTopBar";
+
+const BG = "#F4FAF5";
+const PURPLE = "#8A63E5";
+const ORANGE = "#FFB72B";
+
+type EventOption = {
+  id: string;
+  title: string;
+  description: string;
+  tags: [string, string];
+  iconBg: string;
+  Icon: typeof Gift;
+  iconColor: string;
+};
+
+const OPTIONS: EventOption[] = [
+  {
+    id: "birthday",
+    title: "Birthday",
+    description: "Celebrate another year with cake, games, and a party tailored to your child.",
+    tags: ["PARTY GAMES", "CAKE DESIGN"],
+    iconBg: "#8A63E5",
+    Icon: Gift,
+    iconColor: "#FFFFFF",
+  },
+  {
+    id: "barMitzvah",
+    title: "Bar Mitzvah",
+    description: "Mark the milestone with ceremony details, tradition, and a meaningful celebration.",
+    tags: ["TRADITION", "MILESTONE"],
+    iconBg: "#14B8A6",
+    Icon: Star,
+    iconColor: "#FFFFFF",
+  },
+  {
+    id: "batMitzvah",
+    title: "Bat Mitzvah",
+    description: "Honor her journey with community, joy, and a celebration to remember.",
+    tags: ["HONOR", "COMMUNITY"],
+    iconBg: "#FBBF24",
+    Icon: Star,
+    iconColor: "#FFFFFF",
+  },
+];
+
+function EventTypeCard({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: EventOption;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { Icon } = option;
+  return (
+    <TouchableOpacity
+      onPress={onSelect}
+      activeOpacity={0.88}
+      style={{
+        backgroundColor: "#FFFFFF",
+        borderRadius: 28,
+        padding: 20,
+        marginBottom: 14,
+        borderWidth: selected ? 2 : 1,
+        borderColor: selected ? PURPLE : "#E5E7EB",
+        shadowColor: "#000",
+        shadowOpacity: selected ? 0.08 : 0.04,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: selected ? 4 : 2,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
+        <View
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: option.iconBg,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Icon size={28} color={option.iconColor} strokeWidth={2.2} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 20, fontWeight: "800", color: "#111827", marginBottom: 6 }}>{option.title}</Text>
+          <Text style={{ fontSize: 13, color: "#6B7280", lineHeight: 20, fontWeight: "500" }}>{option.description}</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+            {option.tags.map((tag) => (
+              <View
+                key={tag}
+                style={{
+                  backgroundColor: "#EEF2FF",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 20,
+                }}
+              >
+                <Text style={{ fontSize: 10, fontWeight: "800", color: "#4C1D95", letterSpacing: 0.6 }}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function EventTypeScreen() {
   const insets = useSafeAreaInsets();
@@ -20,280 +130,58 @@ export default function EventTypeScreen() {
   };
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: "#F0FFFE" }}
-    >
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top + 12,
-          paddingHorizontal: 20,
-          paddingBottom: 20,
-          backgroundColor: "#FBBF24",
-          borderBottomLeftRadius: 20,
-          borderBottomRightRadius: 20,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ marginBottom: 12 }}
-        >
-          <Text style={{ fontSize: 20 }}>← BACK</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 28, fontWeight: "900", color: "#FFFFFF" }}>
-          STEP 1️⃣
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "600",
-            color: "rgba(255,255,255,0.9)",
-            marginTop: 4,
-          }}
-        >
-          Pick your event type
-        </Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <CreateEventTopBar onBack={() => router.back()} />
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 24,
+          paddingTop: 8,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "900",
-            color: "#6B3AA0",
-            marginBottom: 16,
-            letterSpacing: 0.3,
-          }}
-        >
-          WHAT ARE WE CELEBRATING? 🎊
-        </Text>
+        <Text style={{ fontSize: 11, fontWeight: "800", color: PURPLE, letterSpacing: 1.2, marginBottom: 8 }}>STEP 1 OF 3</Text>
+        <Text style={{ fontSize: 28, fontWeight: "800", color: "#111827", marginBottom: 6, letterSpacing: -0.5 }}>Pick your event type</Text>
+        <Text style={{ fontSize: 16, fontWeight: "600", color: "#374151", marginBottom: 22 }}>What are we celebrating?</Text>
 
-        {/* Birthday Option */}
-        <TouchableOpacity
-          onPress={() => setSelectedType("birthday")}
-          activeOpacity={0.8}
-          style={{
-            backgroundColor:
-              selectedType === "birthday" ? "#FEF3C7" : "#FFFFFF",
-            borderRadius: 20,
-            padding: 20,
-            marginBottom: 14,
-            borderWidth: 3,
-            borderColor: selectedType === "birthday" ? "#FBBF24" : "#E5E7EB",
-            shadowColor: "#000",
-            shadowOpacity: selectedType === "birthday" ? 0.12 : 0.04,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: selectedType === "birthday" ? 4 : 1,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 16,
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ fontSize: 60 }}>🎂</Text>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "900",
-                  color: selectedType === "birthday" ? "#FBBF24" : "#1F2937",
-                }}
-              >
-                Birthday
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: "#9CA3AF",
-                  fontWeight: "600",
-                  marginTop: 4,
-                }}
-              >
-                Celebrate another year of awesomeness! 🎉
-              </Text>
-            </View>
-            {selectedType === "birthday" && (
-              <View
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  backgroundColor: "#FBBF24",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{ fontSize: 16, fontWeight: "bold", color: "#FFFFFF" }}
-                >
-                  ✓
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View
-            style={{
-              backgroundColor:
-                selectedType === "birthday"
-                  ? "rgba(255,255,255,0.6)"
-                  : "#F3F4F6",
-              borderRadius: 12,
-              paddingVertical: 10,
-              paddingHorizontal: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 11,
-                color: selectedType === "birthday" ? "#B45309" : "#6B7280",
-                fontWeight: "600",
-              }}
-            >
-              ✨ Get a customized invitation with age, cake theme, and party
-              details
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Bar Mitzvah Option */}
-        <TouchableOpacity
-          onPress={() => setSelectedType("barMitzvah")}
-          activeOpacity={0.8}
-          style={{
-            backgroundColor:
-              selectedType === "barMitzvah" ? "#F3E8FF" : "#FFFFFF",
-            borderRadius: 20,
-            padding: 20,
-            marginBottom: 28,
-            borderWidth: 3,
-            borderColor: selectedType === "barMitzvah" ? "#6B3AA0" : "#E5E7EB",
-            shadowColor: "#000",
-            shadowOpacity: selectedType === "barMitzvah" ? 0.12 : 0.04,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: selectedType === "barMitzvah" ? 4 : 1,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 16,
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ fontSize: 60 }}>📖</Text>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "900",
-                  color: selectedType === "barMitzvah" ? "#6B3AA0" : "#1F2937",
-                }}
-              >
-                Bar Mitzvah
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: "#9CA3AF",
-                  fontWeight: "600",
-                  marginTop: 4,
-                }}
-              >
-                A coming-of-age milestone! 🕎
-              </Text>
-            </View>
-            {selectedType === "barMitzvah" && (
-              <View
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  backgroundColor: "#6B3AA0",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{ fontSize: 16, fontWeight: "bold", color: "#FFFFFF" }}
-                >
-                  ✓
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View
-            style={{
-              backgroundColor:
-                selectedType === "barMitzvah"
-                  ? "rgba(255,255,255,0.6)"
-                  : "#F3F4F6",
-              borderRadius: 12,
-              paddingVertical: 10,
-              paddingHorizontal: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 11,
-                color: selectedType === "barMitzvah" ? "#7C3AED" : "#6B7280",
-                fontWeight: "600",
-              }}
-            >
-              ✨ Include ceremony details, dress code, and spiritual
-              significance
-            </Text>
-          </View>
-        </TouchableOpacity>
+        {OPTIONS.map((opt) => (
+          <EventTypeCard key={opt.id} option={opt} selected={selectedType === opt.id} onSelect={() => setSelectedType(opt.id)} />
+        ))}
       </ScrollView>
 
-      {/* Footer with Continue Button */}
       <View
         style={{
           paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 20,
-          backgroundColor: "rgba(0, 0, 0, 0.02)",
+          paddingBottom: insets.bottom + 16,
+          paddingTop: 8,
+          backgroundColor: BG,
+          borderTopWidth: 1,
+          borderTopColor: "rgba(0,0,0,0.04)",
         }}
       >
         <TouchableOpacity
           onPress={handleContinue}
           disabled={!selectedType}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
           style={{
-            backgroundColor: selectedType ? "#FBBF24" : "#D1D5DB",
-            borderRadius: 16,
+            backgroundColor: selectedType ? ORANGE : "#D1D5DB",
+            borderRadius: 18,
             paddingVertical: 16,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            gap: 10,
-            opacity: selectedType ? 1 : 0.5,
+            gap: 8,
+            opacity: selectedType ? 1 : 0.65,
           }}
         >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "900",
-              color: "#FFFFFF",
-              letterSpacing: 0.5,
-            }}
-          >
-            CONTINUE 🚀
-          </Text>
-          <ChevronRight size={18} color="#FFFFFF" />
+          <Text style={{ fontSize: 17, fontWeight: "800", color: "#111827" }}>Continue</Text>
+          <ChevronRight size={20} color="#111827" strokeWidth={2.5} />
         </TouchableOpacity>
+        <Text style={{ fontSize: 12, color: "#9CA3AF", textAlign: "center", marginTop: 12, fontWeight: "500" }}>
+          You can change this later in settings
+        </Text>
       </View>
     </View>
   );

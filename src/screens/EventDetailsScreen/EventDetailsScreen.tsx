@@ -1,5 +1,4 @@
 import { View, Animated, KeyboardAvoidingView, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   EventDetailsScreenHeader,
@@ -11,8 +10,10 @@ import {
   EventDetailsOptionalCard,
   EventDetailsDateTimeCard,
   EventDetailsLocationCard,
+  EventDetailsAddressField,
 } from "@/src/components/create-event";
 import { useEventDetailsScreen } from "./useEventDetailsScreen";
+import { MINT_BG } from "@/src/components/create-event/designInviteTheme";
 
 function parseTimeToDate(timeStr: string): Date | null {
   const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -28,7 +29,6 @@ function parseTimeToDate(timeStr: string): Date | null {
 }
 
 export default function EventDetailsScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const {
     eventType,
@@ -54,9 +54,10 @@ export default function EventDetailsScreen() {
     formatDateDisplay,
     handleDateConfirm,
     handleTimeConfirm,
-    isBirthday,
     isBarBatMitzvah,
     isPartyMode,
+    setOptionalDetailsLater,
+    isCreating,
   } = useEventDetailsScreen();
 
   const openDatePicker = () => {
@@ -86,11 +87,11 @@ export default function EventDetailsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+      style={{ flex: 1, backgroundColor: MINT_BG }}
     >
-      <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+      <View style={{ flex: 1, backgroundColor: MINT_BG }}>
         <Animated.ScrollView
-          style={{ flex: 1, opacity: fadeAnim, backgroundColor: "#FFFFFF" }}
+          style={{ flex: 1, opacity: fadeAnim, backgroundColor: MINT_BG }}
           contentContainerStyle={{ paddingBottom: 140 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -98,41 +99,29 @@ export default function EventDetailsScreen() {
         >
           <EventDetailsScreenHeader
             progressWidth={progressWidth}
-            isBirthday={!!isBirthday}
+            progressPercentLabel="50%"
+            stepLabel="STEP 2 OF 4"
             onBack={() => router.back()}
           />
 
-          <View style={{ backgroundColor: "#FFFFFF", paddingHorizontal: 24, paddingTop: 28 }}>
-            {isBirthday && (
-              <EventDetailsAgeField
-                value={formData.age}
-                error={errors.age}
-                focused={focusedField === "age"}
-                onChange={(v) => handleInputChange("age", v)}
-                onFocus={() => setFocusedField("age")}
-                onBlur={clearFocus}
-              />
-            )}
-
+          <View style={{ backgroundColor: MINT_BG, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
             <EventDetailsNameField
-              value={formData.eventName}
-              error={errors.eventName}
-              focused={focusedField === "eventName"}
-              placeholder={isBirthday ? "Emma's Sweet 16 Birthday" : "Sarah's Bat Mitzvah"}
-              onChange={(v) => handleInputChange("eventName", v)}
-              onFocus={() => setFocusedField("eventName")}
+              value={formData.childName}
+              error={errors.childName}
+              focused={focusedField === "childName"}
+              placeholder="Emma"
+              onChange={(v) => handleInputChange("childName", v)}
+              onFocus={() => setFocusedField("childName")}
               onBlur={clearFocus}
             />
 
-            <EventDetailsOptionalCard
-              formData={formData}
-              showEventDetails={showEventDetails}
-              focusedField={focusedField}
-              isBarBatMitzvah={!!isBarBatMitzvah}
-              isPartyMode={!!isPartyMode}
-              onToggleDetails={() => setShowEventDetails(!showEventDetails)}
-              onInputChange={handleInputChange}
-              setFocusedField={setFocusedField}
+            <EventDetailsAgeField
+              value={formData.age}
+              error={errors.age}
+              focused={focusedField === "age"}
+              onChange={(v) => handleInputChange("age", v)}
+              onFocus={() => setFocusedField("age")}
+              onBlur={clearFocus}
             />
 
             <EventDetailsDateTimeCard
@@ -147,24 +136,40 @@ export default function EventDetailsScreen() {
               onTimePress={openTimePicker}
             />
 
+            <EventDetailsAddressField
+              addressError={errors.address1}
+              addressFocused={focusedField === "address1"}
+              onAddressSelect={setAddressFromPlace}
+              onAddressFocus={() => setFocusedField("address1")}
+              onAddressBlur={clearFocus}
+            />
+
+            <EventDetailsOptionalCard
+              formData={formData}
+              showEventDetails={showEventDetails}
+              optionalDetailsLater={formData.optionalDetailsLater ?? false}
+              onOptionalDetailsLaterChange={setOptionalDetailsLater}
+              focusedField={focusedField}
+              isBarBatMitzvah={!!isBarBatMitzvah}
+              isPartyMode={!!isPartyMode}
+              onToggleDetails={() => setShowEventDetails(!showEventDetails)}
+              onInputChange={handleInputChange}
+              setFocusedField={setFocusedField}
+            />
+
             <EventDetailsLocationCard
               address1={formData.address1}
               address2={formData.address2}
               parking={formData.parking ?? ""}
-              addressError={errors.address1}
-              addressFocused={focusedField === "address1"}
               parkingFocused={focusedField === "parking"}
-              onAddressSelect={setAddressFromPlace}
               onParkingChange={(v) => handleInputChange("parking", v)}
-              onAddressFocus={() => setFocusedField("address1")}
-              onAddressBlur={clearFocus}
               onParkingFocus={() => setFocusedField("parking")}
               onParkingBlur={clearFocus}
             />
           </View>
         </Animated.ScrollView>
 
-        <EventDetailsScreenFooter onContinue={handleContinue} />
+        <EventDetailsScreenFooter onContinue={handleContinue} loading={isCreating} disabled={isCreating} />
       </View>
 
       <EventDatePickerModal

@@ -36,7 +36,7 @@ function createStripeController(stripeConnectService) {
         const uid = req.user.uid;
         console.log(`[createOnboardingLink] uid=${uid}`);
         try {
-            const result = await stripeConnectService.createOnboardingLink(uid);
+            const result = await stripeConnectService.createOnboardingLink(uid, req.body || {});
             console.log(`[createOnboardingLink] success uid=${uid}`);
             res.json(result);
         } catch (err) {
