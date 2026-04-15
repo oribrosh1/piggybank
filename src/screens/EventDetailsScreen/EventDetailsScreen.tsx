@@ -1,19 +1,20 @@
-import { View, Animated, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Animated, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import {
   EventDetailsScreenHeader,
   EventDetailsScreenFooter,
   EventDatePickerModal,
   EventTimePickerModal,
-  EventDetailsAgeField,
-  EventDetailsNameField,
+  EventDetailsCelebrationCard,
+  EventDetailsCelebrationTypeCard,
   EventDetailsOptionalCard,
   EventDetailsDateTimeCard,
   EventDetailsLocationCard,
   EventDetailsAddressField,
+  EventDetailsKosherCateringCard,
 } from "@/src/components/create-event";
 import { useEventDetailsScreen } from "./useEventDetailsScreen";
-import { MINT_BG } from "@/src/components/create-event/designInviteTheme";
+import { colors, spacing } from "@/src/theme";
 
 function parseTimeToDate(timeStr: string): Date | null {
   const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -31,7 +32,6 @@ function parseTimeToDate(timeStr: string): Date | null {
 export default function EventDetailsScreen() {
   const router = useRouter();
   const {
-    eventType,
     formData,
     errors,
     focusedField,
@@ -50,6 +50,8 @@ export default function EventDetailsScreen() {
     progressWidth,
     handleContinue,
     handleInputChange,
+    setCelebrationType,
+    setMitzvahCelebrationFocus,
     setAddressFromPlace,
     formatDateDisplay,
     handleDateConfirm,
@@ -58,6 +60,8 @@ export default function EventDetailsScreen() {
     isPartyMode,
     setOptionalDetailsLater,
     isCreating,
+    pickHonoreePhoto,
+    clearHonoreePhoto,
   } = useEventDetailsScreen();
 
   const openDatePicker = () => {
@@ -87,41 +91,48 @@ export default function EventDetailsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: MINT_BG }}
+      style={styles.screen}
     >
-      <View style={{ flex: 1, backgroundColor: MINT_BG }}>
+      <View style={styles.screen}>
         <Animated.ScrollView
-          style={{ flex: 1, opacity: fadeAnim, backgroundColor: MINT_BG }}
-          contentContainerStyle={{ paddingBottom: 140 }}
+          style={[styles.scroll, { opacity: fadeAnim }]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
         >
           <EventDetailsScreenHeader
             progressWidth={progressWidth}
-            progressPercentLabel="50%"
-            stepLabel="STEP 2 OF 4"
+            progressPercentLabel="33%"
+            stepLabel="STEP 1 OF 3"
             onBack={() => router.back()}
           />
 
-          <View style={{ backgroundColor: MINT_BG, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 }}>
-            <EventDetailsNameField
-              value={formData.childName}
-              error={errors.childName}
-              focused={focusedField === "childName"}
-              placeholder="Emma"
-              onChange={(v) => handleInputChange("childName", v)}
-              onFocus={() => setFocusedField("childName")}
-              onBlur={clearFocus}
+          <View style={styles.formBlock}>
+            <EventDetailsCelebrationCard
+              childName={formData.childName}
+              age={formData.age}
+              honoreePhotoUri={formData.honoreePhotoUri}
+              nameError={errors.childName}
+              ageError={errors.age}
+              nameFocused={focusedField === "childName"}
+              ageFocused={focusedField === "age"}
+              onNameChange={(v) => handleInputChange("childName", v)}
+              onAgeChange={(v) => handleInputChange("age", v)}
+              onNameFocus={() => setFocusedField("childName")}
+              onNameBlur={clearFocus}
+              onAgeFocus={() => setFocusedField("age")}
+              onAgeBlur={clearFocus}
+              onPickHonoreePhoto={pickHonoreePhoto}
+              onClearHonoreePhoto={clearHonoreePhoto}
             />
 
-            <EventDetailsAgeField
-              value={formData.age}
-              error={errors.age}
-              focused={focusedField === "age"}
-              onChange={(v) => handleInputChange("age", v)}
-              onFocus={() => setFocusedField("age")}
-              onBlur={clearFocus}
+            <EventDetailsCelebrationTypeCard
+              celebrationType={formData.celebrationType ?? "birthday"}
+              mitzvahCelebrationFocus={formData.mitzvahCelebrationFocus}
+              mitzvahFocusError={errors.mitzvahCelebrationFocus}
+              onCelebrationTypeChange={setCelebrationType}
+              onMitzvahFocusChange={setMitzvahCelebrationFocus}
             />
 
             <EventDetailsDateTimeCard
@@ -142,6 +153,11 @@ export default function EventDetailsScreen() {
               onAddressSelect={setAddressFromPlace}
               onAddressFocus={() => setFocusedField("address1")}
               onAddressBlur={clearFocus}
+            />
+
+            <EventDetailsKosherCateringCard
+              selected={formData.kosherCateringPartnerId}
+              onSelect={(value) => handleInputChange("kosherCateringPartnerId", value)}
             />
 
             <EventDetailsOptionalCard
@@ -202,3 +218,24 @@ export default function EventDetailsScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  scroll: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  /** Space for absolute footer + comfortable scroll end */
+  scrollContent: {
+    paddingBottom: spacing[6] * 6,
+  },
+  formBlock: {
+    backgroundColor: "transparent",
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[2],
+  },
+});

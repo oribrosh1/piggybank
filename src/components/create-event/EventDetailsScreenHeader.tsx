@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text, Animated } from "react-native";
+import { View, Text, Animated, StyleSheet } from "react-native";
 import CreateEventTopBar from "./CreateEventTopBar";
-import { FOREST, INPUT_BG, TRACK } from "./designInviteTheme";
+import { colors, spacing, typography, fontFamily, radius } from "@/src/theme";
 
 type EventDetailsScreenHeaderProps = {
   progressWidth: Animated.AnimatedInterpolation<string | number>;
@@ -11,50 +11,83 @@ type EventDetailsScreenHeaderProps = {
 };
 
 export default function EventDetailsScreenHeader(props: EventDetailsScreenHeaderProps) {
-  const { progressWidth, progressPercentLabel, stepLabel = "STEP 2 OF 4", onBack } = props;
+  const { progressWidth, progressPercentLabel, stepLabel = "STEP 1 OF 3", onBack } = props;
   return (
-    <View style={{ backgroundColor: INPUT_BG, paddingBottom: 8 }}>
+    <View style={styles.wrap}>
       <CreateEventTopBar onBack={onBack} />
-      <View style={{ paddingHorizontal: 20, paddingTop: 4 }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: "800",
-            color: FOREST,
-            letterSpacing: 1.2,
-            marginBottom: 6,
-          }}
-        >
-          {stepLabel}
-        </Text>
-        <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={{ fontSize: 26, fontWeight: "800", color: FOREST, letterSpacing: -0.5 }}>Design your invitation</Text>
-            <Text style={{ fontSize: 14, fontWeight: "500", color: "#4B5563", marginTop: 8, lineHeight: 20 }}>
+      <View style={styles.inner}>
+        <Text style={styles.stepLabel}>{stepLabel}</Text>
+        <View style={styles.titleRow}>
+          <View style={styles.titleCol}>
+            <Text style={styles.title}>Design your invitation</Text>
+            <Text style={styles.subtitle}>
               We&apos;ll use your answers to generate a unique poster and fill in your event.
             </Text>
           </View>
-          <Text style={{ fontSize: 16, fontWeight: "800", color: FOREST }}>{progressPercentLabel}</Text>
+          <Text style={styles.percent}>{progressPercentLabel}</Text>
         </View>
-        <View
-          style={{
-            height: 8,
-            backgroundColor: TRACK,
-            borderRadius: 4,
-            overflow: "hidden",
-            marginBottom: 8,
-          }}
-        >
-          <Animated.View
-            style={{
-              height: "100%",
-              backgroundColor: FOREST,
-              width: progressWidth,
-              borderRadius: 4,
-            }}
-          />
+        <View style={styles.track}>
+          <Animated.View style={[styles.trackFill, { width: progressWidth }]} />
         </View>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    backgroundColor: colors.surface,
+    paddingBottom: spacing[2],
+  },
+  inner: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[1],
+  },
+  stepLabel: {
+    ...typography.labelMd,
+    color: colors.secondary,
+    letterSpacing: 1.2,
+    marginBottom: spacing[2] - 2,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: spacing[2],
+  },
+  titleCol: {
+    flex: 1,
+    paddingRight: spacing[3],
+  },
+  title: {
+    fontFamily: fontFamily.headline,
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
+    marginTop: spacing[2],
+    lineHeight: 20,
+  },
+  percent: {
+    fontFamily: fontFamily.title,
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  track: {
+    height: spacing[2],
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radius.sm,
+    overflow: "hidden",
+    marginBottom: spacing[2],
+  },
+  trackFill: {
+    height: "100%",
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+  },
+});

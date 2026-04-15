@@ -13,10 +13,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Search, X, ChevronRight } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import CreateEventTopBar from "@/src/components/create-event/CreateEventTopBar";
+import { ContactAvatar } from "@/src/components/common/ContactAvatar";
 import { useSelectGuestsScreen } from "./useSelectGuestsScreen";
 
 const PURPLE = "#8A63E5";
-const BG = "#FFFFFF";
+const BG = "transparent";
 
 export default function SelectGuestsScreen() {
   const insets = useSafeAreaInsets();
@@ -64,7 +65,7 @@ export default function SelectGuestsScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ paddingHorizontal: 20, paddingTop: 4 }}>
-            <Text style={{ fontSize: 11, fontWeight: "800", color: PURPLE, letterSpacing: 1.2, marginBottom: 8 }}>STEP 4 OF 4</Text>
+            <Text style={{ fontSize: 11, fontWeight: "800", color: PURPLE, letterSpacing: 1.2, marginBottom: 8 }}>STEP 3 OF 3</Text>
             <Text style={{ fontSize: 26, fontWeight: "800", color: PURPLE, marginBottom: 16, letterSpacing: -0.3 }}>Invite your guests</Text>
 
             <View style={{ height: 6, backgroundColor: "#E5E7EB", borderRadius: 3, overflow: "hidden", marginBottom: 16 }}>
@@ -143,18 +144,7 @@ export default function SelectGuestsScreen() {
                     gap: 8,
                   }}
                 >
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: "#EDE9FE",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text style={{ fontSize: 14, fontWeight: "800", color: PURPLE }}>{guest.name.charAt(0).toUpperCase()}</Text>
-                  </View>
+                  <ContactAvatar name={guest.name} imageUri={guest.imageUri} size={36} backgroundColor="#EDE9FE" textColor={PURPLE} />
                   <Text style={{ fontSize: 14, fontWeight: "700", color: "#111827", maxWidth: 100 }} numberOfLines={1}>
                     {guest.name}
                   </Text>
@@ -211,25 +201,13 @@ export default function SelectGuestsScreen() {
                       borderColor: "#EEF2F6",
                     }}
                   >
-                    <View
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: "#EDE9FE",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text style={{ fontSize: 16, fontWeight: "800", color: PURPLE }}>
-                        {(() => {
-                          const p = contact.name.trim().split(/\s+/);
-                          const a = (p[0]?.[0] ?? "").toUpperCase();
-                          const b = (p[1]?.[0] ?? "").toUpperCase();
-                          return (a + b) || "?";
-                        })()}
-                      </Text>
-                    </View>
+                    <ContactAvatar
+                      name={contact.name}
+                      imageUri={contact.imageUri}
+                      size={44}
+                      backgroundColor="#EDE9FE"
+                      textColor={PURPLE}
+                    />
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>{contact.name}</Text>
                       <Text style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{contact.phone}</Text>

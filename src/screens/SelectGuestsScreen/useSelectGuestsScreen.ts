@@ -60,7 +60,12 @@ export function useSelectGuestsScreen() {
       }
       setHasPermission(true);
       const { data } = await Contacts.getContactsAsync({
-        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+        fields: [
+          Contacts.Fields.Name,
+          Contacts.Fields.PhoneNumbers,
+          Contacts.Fields.Image,
+          Contacts.Fields.ImageAvailable,
+        ],
         sort: Contacts.SortTypes.FirstName,
       });
       const transformedContacts: Guest[] = data
@@ -69,13 +74,17 @@ export function useSelectGuestsScreen() {
             contact.phoneNumbers?.length &&
             contact.name
         )
-        .map((contact) => ({
-          id: contact.id || String(Math.random()),
-          name: contact.name || "Unknown",
-          phone: contact.phoneNumbers?.[0]?.number || "",
-          status: "added" as const,
-          addedAt: new Date(),
-        }))
+        .map((contact) => {
+          const imageUri = contact.image?.uri || contact.rawImage?.uri;
+          return {
+            id: contact.id || String(Math.random()),
+            name: contact.name || "Unknown",
+            phone: contact.phoneNumbers?.[0]?.number || "",
+            status: "added" as const,
+            addedAt: new Date(),
+            ...(imageUri ? { imageUri } : {}),
+          };
+        })
         .filter((c) => c.phone);
       setPhoneContacts(transformedContacts);
     } catch (error) {

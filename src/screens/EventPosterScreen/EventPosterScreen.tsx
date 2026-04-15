@@ -35,6 +35,7 @@ export default function EventPosterScreen() {
     posterReady,
     continueToGuests,
     latestVersionNumber,
+    skipPosterAndGoToMyEvent,
   } = useEventPosterScreen();
 
   if (!eventId) {
@@ -42,7 +43,7 @@ export default function EventPosterScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: BG }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <View
         style={{
           paddingTop: insets.top + 8,
@@ -82,7 +83,7 @@ export default function EventPosterScreen() {
 
       <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-          <Text style={{ fontSize: 11, fontWeight: "800", color: ACCENT, letterSpacing: 1.2 }}>STEP 3 OF 4</Text>
+          <Text style={{ fontSize: 11, fontWeight: "800", color: ACCENT, letterSpacing: 1.2 }}>STEP 2 OF 3</Text>
           <Text style={{ fontSize: 11, fontWeight: "800", color: ACCENT }}>PICK YOUR DESIGN</Text>
         </View>
         <View style={{ height: 6, backgroundColor: "#1e293b", borderRadius: 3, overflow: "hidden", marginBottom: 20 }}>
@@ -221,17 +222,18 @@ export default function EventPosterScreen() {
         })}
       </ScrollView>
 
-      {posterReady && displayPosterUrl ? (
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingBottom: insets.bottom + 16,
-            paddingTop: 12,
-            borderTopWidth: 1,
-            borderTopColor: "rgba(148,163,184,0.15)",
-            backgroundColor: BG,
-          }}
-        >
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 16,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: "rgba(148,163,184,0.15)",
+          backgroundColor: BG,
+          gap: 12,
+        }}
+      >
+        {posterReady && displayPosterUrl ? (
           <TouchableOpacity
             onPress={continueToGuests}
             activeOpacity={0.92}
@@ -248,8 +250,27 @@ export default function EventPosterScreen() {
             <Text style={{ fontSize: 16, fontWeight: "900", color: "#0f172a" }}>Continue to guests</Text>
             <ChevronRight size={22} color="#0f172a" strokeWidth={2.5} />
           </TouchableOpacity>
-        </View>
-      ) : null}
+        ) : null}
+        <TouchableOpacity
+          onPress={skipPosterAndGoToMyEvent}
+          disabled={isGenerating}
+          activeOpacity={0.88}
+          style={{
+            paddingVertical: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: "rgba(148,163,184,0.45)",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: isGenerating ? 0.45 : 1,
+          }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: "800", color: "#e2e8f0" }}>Skip and create event</Text>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#94a3b8", marginTop: 4, textAlign: "center" }}>
+            No poster — go to My event
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

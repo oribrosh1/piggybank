@@ -22,9 +22,9 @@ export default function BankingScreen() {
       : "0.00";
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F0FFFE", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}>
       <ScrollView
-        style={{ flex: 1, backgroundColor: "#F0FFFE" }}
+        style={{ flex: 1, backgroundColor: "transparent" }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20, backgroundColor: "#6B3AA0" }}
         showsVerticalScrollIndicator={false}
         refreshControl={

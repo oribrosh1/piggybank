@@ -8,7 +8,10 @@ import {
     TextInput,
     Alert,
     Pressable,
+    Image,
+    StyleSheet,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
     X,
     Search,
@@ -27,8 +30,317 @@ import {
     Square,
     PhoneOff,
     UserX,
+    Settings,
+    LayoutGrid,
+    Bot,
+    BarChart3,
+    Lock,
 } from "lucide-react-native";
-import { Event, Guest, GuestStatus } from "@/types/events";
+import { Event, Guest, GuestStatus, calculateGuestStats } from "@/types/events";
+import { honoreeNameFromEvent } from "@/src/lib/eventTitle";
+
+const PAGE_BG = "#F8F9FB";
+const ACCENT = "#7B57E4";
+const TAB_BAR_HEIGHT = 58;
+
+type GuestMgmtTab = "overview" | "guestList" | "automations" | "analytics";
+type SetupStepState = "completed" | "active" | "locked";
+
+const styles = StyleSheet.create({
+    tabBar: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-around",
+        paddingTop: 8,
+        backgroundColor: "#FFFFFF",
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: "#E5E7EB",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 12,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 4,
+        gap: 4,
+    },
+    tabItemSelected: {
+        backgroundColor: "rgba(123, 87, 228, 0.1)",
+        borderRadius: 14,
+        marginHorizontal: 2,
+    },
+    tabLabel: {
+        fontSize: 9,
+        fontWeight: "800",
+        color: "#9CA3AF",
+        letterSpacing: 0.4,
+    },
+    tabLabelSelected: {
+        color: ACCENT,
+    },
+    gmHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingBottom: 14,
+        backgroundColor: "#FFFFFF",
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#E8E8ED",
+    },
+    gmAvatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "#EDE9FE",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 2,
+        borderColor: "rgba(123, 87, 228, 0.25)",
+    },
+    gmAvatarText: { fontSize: 18, fontWeight: "800", color: ACCENT },
+    gmHeaderTitle: {
+        flex: 1,
+        textAlign: "center",
+        fontSize: 17,
+        fontWeight: "800",
+        color: "#111827",
+        letterSpacing: -0.3,
+    },
+    gmHeaderActions: { flexDirection: "row", alignItems: "center", gap: 6 },
+    gmIconBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#F3F4F6",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    card: {
+        marginHorizontal: 20,
+        marginTop: 16,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        padding: 18,
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.06)",
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 14,
+        elevation: 3,
+    },
+    setupLabel: {
+        fontSize: 11,
+        fontWeight: "800",
+        color: ACCENT,
+        letterSpacing: 1.2,
+        marginBottom: 16,
+    },
+    setupRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        marginBottom: 18,
+    },
+    setupRail: { width: 22, alignItems: "center", marginRight: 12 },
+    setupDot: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    setupLine: {
+        width: 2,
+        flex: 1,
+        minHeight: 18,
+        backgroundColor: "#E5E7EB",
+        marginTop: 4,
+    },
+    setupTitle: { fontSize: 15, fontWeight: "800", color: "#111827", letterSpacing: -0.2 },
+    setupSub: { fontSize: 12, fontWeight: "600", color: "#6B7280", marginTop: 4 },
+    setupSubActive: { color: ACCENT },
+    setupSubDone: { color: "#059669" },
+    setupSubLocked: { color: "#9CA3AF" },
+    statRow: {
+        flexDirection: "row",
+        gap: 10,
+        marginHorizontal: 20,
+        marginTop: 12,
+    },
+    statCell: {
+        flex: 1,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 10,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.06)",
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    statLabel: {
+        fontSize: 10,
+        fontWeight: "800",
+        color: "#9CA3AF",
+        letterSpacing: 0.8,
+        marginBottom: 6,
+    },
+    statValue: { fontSize: 20, fontWeight: "900", color: "#111827", letterSpacing: -0.5 },
+    emptyHero: {
+        marginHorizontal: 20,
+        marginTop: 20,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 24,
+        padding: 24,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.06)",
+        shadowColor: "#0F172A",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.07,
+        shadowRadius: 16,
+        elevation: 4,
+    },
+    emptyArt: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: "#EEF2FF",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 16,
+    },
+    emptyTitle: { fontSize: 20, fontWeight: "900", color: "#111827", letterSpacing: -0.4, textAlign: "center" },
+    emptySub: {
+        fontSize: 14,
+        fontWeight: "500",
+        color: "#6B7280",
+        textAlign: "center",
+        lineHeight: 21,
+        marginTop: 10,
+        marginBottom: 20,
+        paddingHorizontal: 8,
+    },
+    emptyCta: {
+        width: "100%",
+        backgroundColor: ACCENT,
+        borderRadius: 999,
+        paddingVertical: 16,
+        alignItems: "center",
+        shadowColor: ACCENT,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.35,
+        shadowRadius: 16,
+        elevation: 6,
+    },
+    emptyCtaText: { fontSize: 16, fontWeight: "800", color: "#FFFFFF", letterSpacing: -0.2 },
+    smsCard: {
+        marginHorizontal: 20,
+        marginTop: 16,
+        marginBottom: 8,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.06)",
+    },
+    smsCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12,
+    },
+    smsCardHeaderText: {
+        fontSize: 11,
+        fontWeight: "800",
+        color: ACCENT,
+        letterSpacing: 1,
+    },
+    smsBubble: {
+        backgroundColor: "#F3F4F6",
+        borderRadius: 16,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+    },
+    smsPoster: { width: "100%", height: 120, backgroundColor: "#E0E7FF" },
+    smsBody: { padding: 14, fontSize: 14, fontWeight: "600", color: "#374151", lineHeight: 20 },
+    smsMeta: {
+        fontSize: 11,
+        fontWeight: "600",
+        color: "#9CA3AF",
+        textAlign: "right",
+        paddingHorizontal: 14,
+        paddingBottom: 12,
+    },
+    placeholderCard: {
+        marginHorizontal: 20,
+        marginTop: 24,
+        padding: 28,
+        backgroundColor: "#FFFFFF",
+        borderRadius: 20,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.06)",
+    },
+    placeholderTitle: { fontSize: 17, fontWeight: "800", color: "#111827", marginBottom: 8 },
+    placeholderBody: { fontSize: 14, color: "#6B7280", textAlign: "center", lineHeight: 21 },
+});
+
+function formatGiftVolume(cents: number): string {
+    if (!cents || cents <= 0) return "$0";
+    return `$${(cents / 100).toFixed(0)}`;
+}
+
+function GuestManagementTabBar({
+    active,
+    onChange,
+    bottomInset,
+}: {
+    active: GuestMgmtTab;
+    onChange: (t: GuestMgmtTab) => void;
+    bottomInset: number;
+}) {
+    const tabs: { id: GuestMgmtTab; label: string; Icon: typeof LayoutGrid }[] = [
+        { id: "overview", label: "Overview", Icon: LayoutGrid },
+        { id: "guestList", label: "Guest list", Icon: Users },
+        { id: "automations", label: "Automations", Icon: Bot },
+        { id: "analytics", label: "Analytics", Icon: BarChart3 },
+    ];
+    return (
+        <View style={[styles.tabBar, { paddingBottom: Math.max(12, bottomInset) }]}>
+            {tabs.map((t) => {
+                const selected = active === t.id;
+                const Icon = t.Icon;
+                return (
+                    <TouchableOpacity
+                        key={t.id}
+                        onPress={() => onChange(t.id)}
+                        style={[styles.tabItem, selected && styles.tabItemSelected]}
+                        activeOpacity={0.85}
+                    >
+                        <Icon size={22} color={selected ? ACCENT : "#9CA3AF"} strokeWidth={selected ? 2.4 : 2} />
+                        <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]} numberOfLines={1}>
+                            {t.label.toUpperCase()}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+}
 
 /** Filter options: coming = accepted invitation only (confirmed); paid = confirmed+paid (gifted) */
 type SortOption = "all" | "added" | "invited" | "coming" | "paid" | "invalid_phone" | "declined";
@@ -42,6 +354,8 @@ interface GuestManagementModalProps {
     initialFilter?: "added" | "invited" | "confirmed" | "paid" | "invalid_phone";
     /** Called when user taps Add guest (e.g. navigate to add-guests screen); modal typically closes first */
     onAddGuest?: () => void;
+    /** Opens the “how it works” overlay; parent should close this modal then show the guide. */
+    onOpenGuestGuide?: () => void;
 }
 
 const STATUS_CONFIG: Record<GuestStatus, { bg: string; color: string; label: string; icon: any }> = {
@@ -67,6 +381,7 @@ export default function GuestManagementModal({
     onSendInvites,
     initialFilter,
     onAddGuest,
+    onOpenGuestGuide,
 }: GuestManagementModalProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedFilters, setSelectedFilters] = useState<Set<SortOption>>(new Set(["all"]));
@@ -148,6 +463,68 @@ export default function GuestManagementModal({
     const uninvitedGuests = useMemo(() => {
         return event.guests.filter((g) => g.status === "added");
     }, [event.guests]);
+
+    const insets = useSafeAreaInsets();
+    const [guestTab, setGuestTab] = useState<GuestMgmtTab>("guestList");
+
+    useEffect(() => {
+        if (guestTab !== "guestList") {
+            setSelectionMode(false);
+            setSelectedGuests(new Set());
+        }
+    }, [guestTab]);
+
+    const guestStatsResolved = useMemo(
+        () => event.guestStats ?? calculateGuestStats(event.guests),
+        [event.guestStats, event.guests]
+    );
+
+    const totalGuests = event.totalGuests ?? event.guests.length;
+    const outreachDenom = Math.max(totalGuests - guestStatsResolved.added, 1);
+    const rsvpPct = Math.min(
+        100,
+        Math.round(((guestStatsResolved.confirmed + guestStatsResolved.paid) / outreachDenom) * 100)
+    );
+
+    const setupSteps = useMemo(() => {
+        const gs = guestStatsResolved;
+        const added = gs.added;
+        const invited = gs.invited;
+        const s1: SetupStepState = "completed";
+        const s2: SetupStepState = totalGuests > 0 ? "completed" : "active";
+        let s3: SetupStepState;
+        if (totalGuests === 0) s3 = "locked";
+        else if (added > 0) s3 = "active";
+        else s3 = "completed";
+        let s4: SetupStepState;
+        if (totalGuests === 0 || added > 0) s4 = "locked";
+        else if (invited > 0) s4 = "active";
+        else s4 = "locked";
+        return [
+            { key: "1", title: "Create guest list", subtitle: "Completed", state: s1 },
+            {
+                key: "2",
+                title: "Add first guest",
+                subtitle: s2 === "active" ? "Active action" : "Completed",
+                state: s2,
+            },
+            {
+                key: "3",
+                title: "Send invitations",
+                subtitle: s3 === "locked" ? "Locked" : s3 === "active" ? "Active action" : "Completed",
+                state: s3,
+            },
+            {
+                key: "4",
+                title: "Automate reminders",
+                subtitle: s4 === "locked" ? "Locked" : "Active action",
+                state: s4,
+            },
+        ];
+    }, [guestStatsResolved, totalGuests]);
+
+    const hostInitial = (event.childName || event.creatorName || "?").trim().charAt(0).toUpperCase() || "?";
+    const bottomDockOffset = TAB_BAR_HEIGHT + Math.max(insets.bottom, 12);
 
     const toggleGuestSelection = (guestId: string) => {
         const newSelected = new Set(selectedGuests);
@@ -253,255 +630,45 @@ export default function GuestManagementModal({
             presentationStyle="pageSheet"
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
-                {/* Header */}
-                <View
-                    style={{
-                        backgroundColor: "#FFFFFF",
-                        paddingHorizontal: 20,
-                        paddingTop: 16,
-                        paddingBottom: 16,
-                        borderBottomWidth: 1,
-                        borderBottomColor: "#E5E7EB",
-                    }}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", flex: 1, minWidth: 0 }}>
-                            <Users size={24} color="#8B5CF6" strokeWidth={2} />
-                            <Text style={{ fontSize: 20, fontWeight: "800", color: "#111827", marginLeft: 10 }}>
-                                Guest List
-                            </Text>
-                            <View
-                                style={{
-                                    backgroundColor: "#EDE9FE",
-                                    borderRadius: 10,
-                                    paddingVertical: 4,
-                                    paddingHorizontal: 10,
-                                    marginLeft: 10,
-                                }}
-                            >
-                                <Text style={{ fontSize: 14, fontWeight: "800", color: "#8B5CF6" }}>
-                                    {event.totalGuests}
-                                </Text>
-                            </View>
+            <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+                <View style={[styles.gmHeader, { paddingTop: insets.top + 10 }]}>
+                    <View style={{ width: 44, alignItems: "flex-start" }}>
+                        <View style={styles.gmAvatar}>
+                            <Text style={styles.gmAvatarText}>{hostInitial}</Text>
                         </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                            {onAddGuest && (
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        onClose();
-                                        onAddGuest();
-                                    }}
-                                    style={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: 20,
-                                        backgroundColor: "#8B5CF6",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <UserPlus size={20} color="#FFFFFF" strokeWidth={2.5} />
-                                </TouchableOpacity>
-                            )}
+                    </View>
+                    <Text style={styles.gmHeaderTitle}>Guest Management</Text>
+                    <View style={[styles.gmHeaderActions, { width: 112, justifyContent: "flex-end" }]}>
+                        {onAddGuest ? (
                             <TouchableOpacity
-                                onPress={onClose}
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 18,
-                                    backgroundColor: "#F3F4F6",
-                                    alignItems: "center",
-                                    justifyContent: "center",
+                                onPress={() => {
+                                    onClose();
+                                    onAddGuest();
                                 }}
+                                style={[styles.gmIconBtn, { backgroundColor: ACCENT }]}
                             >
-                                <X size={20} color="#374151" strokeWidth={2} />
+                                <UserPlus size={20} color="#FFFFFF" strokeWidth={2.5} />
                             </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Amount card + Apply filters – same row */}
-                    <View style={{ flexDirection: "row", alignItems: "stretch", gap: 12, marginBottom: 12 }}>
-                        {/* Filtered result count – minimal stat card */}
-                        <View
-                            style={{
-                                flex: 1,
-                                backgroundColor: "#FAF5FF",
-                                borderRadius: 14,
-                                paddingVertical: 12,
-                                paddingHorizontal: 16,
-                                borderWidth: 1,
-                                borderColor: "#EDE9FE",
-                                shadowColor: "#000",
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: 0.04,
-                                shadowRadius: 3,
-                                elevation: 2,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    fontSize: 11,
-                                    fontWeight: "700",
-                                    color: "#7C3AED",
-                                    letterSpacing: 0.5,
-                                    marginBottom: 2,
+                        ) : null}
+                        {onOpenGuestGuide ? (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    onClose();
+                                    setTimeout(() => onOpenGuestGuide(), 280);
                                 }}
+                                style={styles.gmIconBtn}
                             >
-                                FILTERED RESULT
-                            </Text>
-                            <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-                                <Text style={{ fontSize: 26, fontWeight: "800", color: "#5B21B6", letterSpacing: -0.5 }}>
-                                    {filteredGuests.length}
-                                </Text>
-                                <Text style={{ fontSize: 14, fontWeight: "600", color: "#6D28D9", marginLeft: 6 }}>
-                                    {filteredGuests.length === 1 ? "guest" : "guests"}
-                                </Text>
-                            </View>
-                        </View>
-                        <TouchableOpacity
-                            onPress={() => setShowFilterModal(true)}
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "#8B5CF6",
-                                borderRadius: 12,
-                                paddingVertical: 12,
-                                paddingHorizontal: 16,
-                            }}
-                        >
-                            <Filter size={18} color="#FFFFFF" strokeWidth={2} />
-                            <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 8 }}>
-                                Apply filters
-                            </Text>
+                                <Settings size={20} color="#374151" strokeWidth={2} />
+                            </TouchableOpacity>
+                        ) : null}
+                        <TouchableOpacity onPress={onClose} style={styles.gmIconBtn}>
+                            <X size={20} color="#374151" strokeWidth={2} />
                         </TouchableOpacity>
-                    </View>
-
-                    {/* Showing – active filters as chips */}
-                    <View
-                        style={{
-                            width: "100%",
-                            marginBottom: 12,
-                        }}
-                    >
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                            <Text
-                                style={{
-                                    fontSize: 11,
-                                    fontWeight: "800",
-                                    color: "#9CA3AF",
-                                    letterSpacing: 0.8,
-                                }}
-                            >
-                                SHOWING
-                            </Text>
-                            {!(selectedFilters.size === 0 || selectedFilters.has("all")) && (
-                                <TouchableOpacity
-                                    onPress={() => setSelectedFilters(new Set(["all"]))}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                    style={{ paddingVertical: 4, paddingHorizontal: 8 }}
-                                >
-                                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#8B5CF6" }}>
-                                        Reset filters
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        {(selectedFilters.size === 0 || selectedFilters.has("all")) ? (
-                            <View
-                                style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    alignSelf: "flex-start",
-                                    backgroundColor: "#EDE9FE",
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 20,
-                                    borderWidth: 1,
-                                    borderColor: "#DDD6FE",
-                                }}
-                            >
-                                <Text style={{ fontSize: 16 }}>👥</Text>
-                                <Text style={{ fontSize: 14, fontWeight: "700", color: "#5B21B6", marginLeft: 8 }}>
-                                    All guests
-                                </Text>
-                            </View>
-                        ) : (
-                            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                                {FILTER_OPTIONS.filter((o) => o.key !== "all" && selectedFilters.has(o.key)).map((opt) => {
-                                    const chipStyle = CHIP_STYLES[opt.key];
-                                    return (
-                                        <View
-                                            key={opt.key}
-                                            style={{
-                                                flexDirection: "row",
-                                                alignItems: "center",
-                                                backgroundColor: chipStyle.bg,
-                                                paddingVertical: 8,
-                                                paddingHorizontal: 12,
-                                                borderRadius: 16,
-                                                borderWidth: 1,
-                                                borderColor: chipStyle.border,
-                                            }}
-                                        >
-                                            <Text style={{ fontSize: 14 }}>{opt.emoji}</Text>
-                                            <Text
-                                                style={{
-                                                    fontSize: 13,
-                                                    fontWeight: "700",
-                                                    color: chipStyle.color,
-                                                    marginLeft: 6,
-                                                }}
-                                                numberOfLines={1}
-                                            >
-                                                {opt.label}
-                                            </Text>
-                                        </View>
-                                    );
-                                })}
-                            </View>
-                        )}
-                    </View>
-
-
-                    {/* Search Bar */}
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            backgroundColor: "#F3F4F6",
-                            borderRadius: 12,
-                            paddingHorizontal: 14,
-                            borderWidth: 1,
-                            borderColor: "#E5E7EB",
-                        }}
-                    >
-                        <Search size={18} color="#9CA3AF" />
-                        <TextInput
-                            style={{
-                                flex: 1,
-                                paddingVertical: 12,
-                                paddingHorizontal: 10,
-                                fontSize: 15,
-                                fontWeight: "500",
-                                color: "#111827",
-                            }}
-                            placeholder="Search by name or phone..."
-                            placeholderTextColor="#9CA3AF"
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                        />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery("")}>
-                                <X size={18} color="#9CA3AF" />
-                            </TouchableOpacity>
-                        )}
                     </View>
                 </View>
 
                 {/* Selection Mode Header */}
-                {selectionMode && (
+                {guestTab === "guestList" && selectionMode && (
                     <View
                         style={{
                             backgroundColor: "#EDE9FE",
@@ -558,33 +725,367 @@ export default function GuestManagementModal({
                     </View>
                 )}
 
-                {/* Guest List */}
                 <ScrollView
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ padding: 20, paddingBottom: selectionMode ? 120 : 100 }}
+                    contentContainerStyle={{
+                        paddingBottom:
+                            guestTab === "guestList" && event.guests.length > 0
+                                ? (selectionMode ? 140 : 120) + bottomDockOffset
+                                : 32 + bottomDockOffset,
+                        paddingTop: 4,
+                    }}
                     showsVerticalScrollIndicator={false}
                 >
-                    {filteredGuests.length === 0 ? (
-                        <View
-                            style={{
-                                backgroundColor: "#FFFFFF",
-                                borderRadius: 20,
-                                padding: 40,
-                                alignItems: "center",
-                            }}
-                        >
-                            <Text style={{ fontSize: 48, marginBottom: 16 }}>🔍</Text>
-                            <Text style={{ fontSize: 17, fontWeight: "700", color: "#374151", marginBottom: 8 }}>
-                                No Guests Found
+                    {guestTab === "overview" && (
+                        <View style={styles.placeholderCard}>
+                            <LayoutGrid size={36} color={ACCENT} strokeWidth={2} />
+                            <Text style={[styles.placeholderTitle, { marginTop: 14 }]}>Overview</Text>
+                            <Text style={styles.placeholderBody}>
+                                See setup progress and stats on the Guest list tab. Invite people, track RSVPs, and collect
+                                gifts in one place.
                             </Text>
-                            <Text style={{ fontSize: 14, color: "#9CA3AF", textAlign: "center" }}>
-                                {searchQuery
-                                    ? "Try a different search term"
-                                    : "No guests match the current filter"}
+                            <TouchableOpacity
+                                onPress={() => setGuestTab("guestList")}
+                                style={{ marginTop: 18, paddingVertical: 12, paddingHorizontal: 20 }}
+                            >
+                                <Text style={{ fontSize: 15, fontWeight: "800", color: ACCENT }}>Go to guest list →</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {guestTab === "automations" && (
+                        <View style={styles.placeholderCard}>
+                            <Bot size={36} color={ACCENT} strokeWidth={2} />
+                            <Text style={[styles.placeholderTitle, { marginTop: 14 }]}>Automations</Text>
+                            <Text style={styles.placeholderBody}>
+                                Reminder schedules and nudges are coming here soon. For now, use the event dashboard quick
+                                actions to open reminders.
                             </Text>
                         </View>
-                    ) : (
-                        <View style={{ gap: 10 }}>
+                    )}
+
+                    {guestTab === "analytics" && (
+                        <View style={styles.placeholderCard}>
+                            <BarChart3 size={36} color={ACCENT} strokeWidth={2} />
+                            <Text style={[styles.placeholderTitle, { marginTop: 14 }]}>Analytics</Text>
+                            <Text style={styles.placeholderBody}>
+                                Deeper RSVP and gift trends will appear here. Open Guest stats from the event home for a
+                                snapshot today.
+                            </Text>
+                        </View>
+                    )}
+
+                    {guestTab === "guestList" && (
+                        <>
+                            <View style={styles.card}>
+                                <Text style={styles.setupLabel}>SETUP PROGRESS</Text>
+                                {setupSteps.map((step, idx) => {
+                                    const isLast = idx === setupSteps.length - 1;
+                                    const subStyle =
+                                        step.state === "completed"
+                                            ? styles.setupSubDone
+                                            : step.state === "active"
+                                              ? styles.setupSubActive
+                                              : styles.setupSubLocked;
+                                    return (
+                                        <View key={step.key} style={styles.setupRow}>
+                                            <View style={styles.setupRail}>
+                                                <View
+                                                    style={[
+                                                        styles.setupDot,
+                                                        step.state === "completed" && { backgroundColor: "#10B981" },
+                                                        step.state === "active" && { backgroundColor: ACCENT },
+                                                        step.state === "locked" && { backgroundColor: "#E5E7EB" },
+                                                    ]}
+                                                >
+                                                    {step.state === "completed" ? (
+                                                        <CheckCircle size={16} color="#FFFFFF" strokeWidth={2.5} />
+                                                    ) : step.state === "active" ? (
+                                                        <Text style={{ fontSize: 13, fontWeight: "900", color: "#FFFFFF" }}>
+                                                            {step.key}
+                                                        </Text>
+                                                    ) : (
+                                                        <Lock size={14} color="#9CA3AF" strokeWidth={2.5} />
+                                                    )}
+                                                </View>
+                                                {!isLast ? <View style={styles.setupLine} /> : null}
+                                            </View>
+                                            <View style={{ flex: 1, paddingTop: 2 }}>
+                                                <Text style={styles.setupTitle}>{step.title}</Text>
+                                                <Text style={[styles.setupSub, subStyle]}>{step.subtitle}</Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+
+                            <View style={styles.statRow}>
+                                <View style={styles.statCell}>
+                                    <Text style={styles.statLabel}>GUESTS</Text>
+                                    <Text style={styles.statValue}>{totalGuests}</Text>
+                                </View>
+                                <View style={styles.statCell}>
+                                    <Text style={styles.statLabel}>RSVP</Text>
+                                    <Text style={styles.statValue}>{rsvpPct}%</Text>
+                                </View>
+                                <View style={styles.statCell}>
+                                    <Text style={styles.statLabel}>GIFT VOL</Text>
+                                    <Text style={styles.statValue}>{formatGiftVolume(guestStatsResolved.totalPaid)}</Text>
+                                </View>
+                            </View>
+
+                            {event.guests.length === 0 ? (
+                                <>
+                                    <View style={styles.emptyHero}>
+                                        <View style={styles.emptyArt}>
+                                            <Text style={{ fontSize: 52 }}>👨‍👧</Text>
+                                        </View>
+                                        <Text style={styles.emptyTitle}>No guests yet</Text>
+                                        <Text style={styles.emptySub}>
+                                            Start your celebration by adding family and friends to your guest list.
+                                        </Text>
+                                        {onAddGuest ? (
+                                            <TouchableOpacity
+                                                style={styles.emptyCta}
+                                                onPress={() => {
+                                                    onClose();
+                                                    onAddGuest();
+                                                }}
+                                                activeOpacity={0.92}
+                                            >
+                                                <Text style={styles.emptyCtaText}>Add new guest</Text>
+                                            </TouchableOpacity>
+                                        ) : null}
+                                    </View>
+                                    <View style={styles.smsCard}>
+                                        <View style={styles.smsCardHeader}>
+                                            <MessageSquare size={16} color={ACCENT} strokeWidth={2.2} />
+                                            <Text style={styles.smsCardHeaderText}>PREVIEW: SMS INVITE</Text>
+                                        </View>
+                                        <View style={styles.smsBubble}>
+                                            {event.posterUrl ? (
+                                                <Image source={{ uri: event.posterUrl }} style={styles.smsPoster} resizeMode="cover" />
+                                            ) : (
+                                                <View style={[styles.smsPoster, { alignItems: "center", justifyContent: "center" }]}>
+                                                    <Text style={{ fontSize: 28 }}>🎈</Text>
+                                                    <Text style={{ marginTop: 6, fontWeight: "800", color: "#4C1D95" }}>
+                                                        {event.eventName}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                            <Text style={styles.smsBody}>
+                                                {`Hey! You're invited to ${honoreeNameFromEvent(event)}'s celebration — ${event.eventName}. Tap to RSVP and see details: [your invite link]`}
+                                            </Text>
+                                            <Text style={styles.smsMeta}>Delivered • Just now</Text>
+                                        </View>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
+                                        <View style={{ flexDirection: "row", alignItems: "stretch", gap: 12, marginBottom: 12 }}>
+                                            <View
+                                                style={{
+                                                    flex: 1,
+                                                    backgroundColor: "#FAF5FF",
+                                                    borderRadius: 14,
+                                                    paddingVertical: 12,
+                                                    paddingHorizontal: 16,
+                                                    borderWidth: 1,
+                                                    borderColor: "#EDE9FE",
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        fontSize: 11,
+                                                        fontWeight: "700",
+                                                        color: ACCENT,
+                                                        letterSpacing: 0.5,
+                                                        marginBottom: 2,
+                                                    }}
+                                                >
+                                                    FILTERED RESULT
+                                                </Text>
+                                                <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+                                                    <Text
+                                                        style={{
+                                                            fontSize: 26,
+                                                            fontWeight: "800",
+                                                            color: "#5B21B6",
+                                                            letterSpacing: -0.5,
+                                                        }}
+                                                    >
+                                                        {filteredGuests.length}
+                                                    </Text>
+                                                    <Text
+                                                        style={{ fontSize: 14, fontWeight: "600", color: "#6D28D9", marginLeft: 6 }}
+                                                    >
+                                                        {filteredGuests.length === 1 ? "guest" : "guests"}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                            <TouchableOpacity
+                                                onPress={() => setShowFilterModal(true)}
+                                                style={{
+                                                    flexDirection: "row",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    backgroundColor: ACCENT,
+                                                    borderRadius: 12,
+                                                    paddingVertical: 12,
+                                                    paddingHorizontal: 16,
+                                                }}
+                                            >
+                                                <Filter size={18} color="#FFFFFF" strokeWidth={2} />
+                                                <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 8 }}>
+                                                    Filters
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={{ marginBottom: 12 }}>
+                                            <View
+                                                style={{
+                                                    flexDirection: "row",
+                                                    alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                    marginBottom: 8,
+                                                }}
+                                            >
+                                                <Text
+                                                    style={{
+                                                        fontSize: 11,
+                                                        fontWeight: "800",
+                                                        color: "#9CA3AF",
+                                                        letterSpacing: 0.8,
+                                                    }}
+                                                >
+                                                    SHOWING
+                                                </Text>
+                                                {!(selectedFilters.size === 0 || selectedFilters.has("all")) && (
+                                                    <TouchableOpacity
+                                                        onPress={() => setSelectedFilters(new Set(["all"]))}
+                                                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                                        style={{ paddingVertical: 4, paddingHorizontal: 8 }}
+                                                    >
+                                                        <Text style={{ fontSize: 13, fontWeight: "700", color: ACCENT }}>
+                                                            Reset filters
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                            {selectedFilters.size === 0 || selectedFilters.has("all") ? (
+                                                <View
+                                                    style={{
+                                                        flexDirection: "row",
+                                                        alignItems: "center",
+                                                        alignSelf: "flex-start",
+                                                        backgroundColor: "#EDE9FE",
+                                                        paddingVertical: 10,
+                                                        paddingHorizontal: 14,
+                                                        borderRadius: 20,
+                                                        borderWidth: 1,
+                                                        borderColor: "#DDD6FE",
+                                                    }}
+                                                >
+                                                    <Text style={{ fontSize: 16 }}>👥</Text>
+                                                    <Text style={{ fontSize: 14, fontWeight: "700", color: "#5B21B6", marginLeft: 8 }}>
+                                                        All guests
+                                                    </Text>
+                                                </View>
+                                            ) : (
+                                                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                                                    {FILTER_OPTIONS.filter((o) => o.key !== "all" && selectedFilters.has(o.key)).map(
+                                                        (opt) => {
+                                                            const chipStyle = CHIP_STYLES[opt.key];
+                                                            return (
+                                                                <View
+                                                                    key={opt.key}
+                                                                    style={{
+                                                                        flexDirection: "row",
+                                                                        alignItems: "center",
+                                                                        backgroundColor: chipStyle.bg,
+                                                                        paddingVertical: 8,
+                                                                        paddingHorizontal: 12,
+                                                                        borderRadius: 16,
+                                                                        borderWidth: 1,
+                                                                        borderColor: chipStyle.border,
+                                                                    }}
+                                                                >
+                                                                    <Text style={{ fontSize: 14 }}>{opt.emoji}</Text>
+                                                                    <Text
+                                                                        style={{
+                                                                            fontSize: 13,
+                                                                            fontWeight: "700",
+                                                                            color: chipStyle.color,
+                                                                            marginLeft: 6,
+                                                                        }}
+                                                                        numberOfLines={1}
+                                                                    >
+                                                                        {opt.label}
+                                                                    </Text>
+                                                                </View>
+                                                            );
+                                                        }
+                                                    )}
+                                                </View>
+                                            )}
+                                        </View>
+                                        <View
+                                            style={{
+                                                flexDirection: "row",
+                                                alignItems: "center",
+                                                backgroundColor: "#FFFFFF",
+                                                borderRadius: 12,
+                                                paddingHorizontal: 14,
+                                                borderWidth: 1,
+                                                borderColor: "#E5E7EB",
+                                                marginBottom: 16,
+                                            }}
+                                        >
+                                            <Search size={18} color="#9CA3AF" />
+                                            <TextInput
+                                                style={{
+                                                    flex: 1,
+                                                    paddingVertical: 12,
+                                                    paddingHorizontal: 10,
+                                                    fontSize: 15,
+                                                    fontWeight: "500",
+                                                    color: "#111827",
+                                                }}
+                                                placeholder="Search by name or phone..."
+                                                placeholderTextColor="#9CA3AF"
+                                                value={searchQuery}
+                                                onChangeText={setSearchQuery}
+                                            />
+                                            {searchQuery.length > 0 ? (
+                                                <TouchableOpacity onPress={() => setSearchQuery("")}>
+                                                    <X size={18} color="#9CA3AF" />
+                                                </TouchableOpacity>
+                                            ) : null}
+                                        </View>
+                                    </View>
+                                    {filteredGuests.length === 0 ? (
+                                        <View
+                                            style={{
+                                                marginHorizontal: 20,
+                                                backgroundColor: "#FFFFFF",
+                                                borderRadius: 20,
+                                                padding: 40,
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <Text style={{ fontSize: 48, marginBottom: 16 }}>🔍</Text>
+                                            <Text style={{ fontSize: 17, fontWeight: "700", color: "#374151", marginBottom: 8 }}>
+                                                No guests found
+                                            </Text>
+                                            <Text style={{ fontSize: 14, color: "#9CA3AF", textAlign: "center" }}>
+                                                {searchQuery
+                                                    ? "Try a different search term"
+                                                    : "No guests match the current filter"}
+                                            </Text>
+                                        </View>
+                                    ) : (
+                                        <View style={{ gap: 10, paddingHorizontal: 20 }}>
                             {filteredGuests.map((guest) => {
                                 const status = STATUS_CONFIG[guest.status];
                                 const StatusIcon = status.icon;
@@ -694,19 +1195,23 @@ export default function GuestManagementModal({
                                 );
                             })}
                         </View>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </ScrollView>
 
-                {/* Bottom Action */}
+                {guestTab === "guestList" && event.guests.length > 0 && (
                 <View
                     style={{
                         position: "absolute",
-                        bottom: 0,
+                        bottom: bottomDockOffset,
                         left: 0,
                         right: 0,
                         paddingHorizontal: 20,
                         paddingTop: 16,
-                        paddingBottom: 34,
+                        paddingBottom: 16,
                         backgroundColor: "#FFFFFF",
                         borderTopWidth: 1,
                         borderTopColor: "#E5E7EB",
@@ -787,6 +1292,9 @@ export default function GuestManagementModal({
                         </TouchableOpacity>
                     )}
                 </View>
+                )}
+
+                <GuestManagementTabBar active={guestTab} onChange={setGuestTab} bottomInset={insets.bottom} />
             </View>
 
             {/* Apply filters modal – all options and combinations */}

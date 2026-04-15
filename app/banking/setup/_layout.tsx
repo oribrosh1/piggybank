@@ -19,6 +19,7 @@ export default function SetupLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
+        contentStyle: { backgroundColor: "transparent" },
       }}
     >
       <Stack.Screen name="index" />

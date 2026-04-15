@@ -19,7 +19,8 @@ const firebaseConfig = {
  * If Firebase is initialized multiple times, it throws an error.
  * To prevent this, check for existing apps before initializing
  */
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+export const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const app = firebaseApp;
 
 // Initialize Auth with AsyncStorage for React Native persistence
 

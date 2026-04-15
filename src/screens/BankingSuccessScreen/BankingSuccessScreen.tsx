@@ -37,12 +37,12 @@ export default function BankingSuccessScreen() {
     <View
       style={{
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "transparent",
         paddingTop: insets.top,
       }}
     >
       <ScrollView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: "transparent" }}
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingTop: 24,

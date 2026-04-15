@@ -11,6 +11,7 @@ import {
     ActivityIndicator,
     Alert,
 } from "react-native";
+import { ContactAvatar } from "@/src/components/common/ContactAvatar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -76,19 +77,28 @@ export default function AddGuestsScreen() {
             setHasPermission(true);
 
             const { data } = await Contacts.getContactsAsync({
-                fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+                fields: [
+                    Contacts.Fields.Name,
+                    Contacts.Fields.PhoneNumbers,
+                    Contacts.Fields.Image,
+                    Contacts.Fields.ImageAvailable,
+                ],
                 sort: Contacts.SortTypes.FirstName,
             });
 
             const transformedContacts: Guest[] = data
                 .filter((contact) => contact.phoneNumbers && contact.phoneNumbers.length > 0 && contact.name)
-                .map((contact) => ({
-                    id: contact.id || String(Math.random()),
-                    name: contact.name || "Unknown",
-                    phone: contact.phoneNumbers?.[0]?.number || "",
-                    status: "added" as const,
-                    addedAt: new Date(),
-                }))
+                .map((contact) => {
+                    const imageUri = contact.image?.uri || contact.rawImage?.uri;
+                    return {
+                        id: contact.id || String(Math.random()),
+                        name: contact.name || "Unknown",
+                        phone: contact.phoneNumbers?.[0]?.number || "",
+                        status: "added" as const,
+                        addedAt: new Date(),
+                        ...(imageUri ? { imageUri } : {}),
+                    };
+                })
                 .filter((contact) => contact.phone);
 
             setPhoneContacts(transformedContacts);
@@ -145,7 +155,7 @@ export default function AddGuestsScreen() {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: "#F9FAFB", alignItems: "center", justifyContent: "center" }}>
+            <View style={{ flex: 1, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" }}>
                 <ActivityIndicator size="large" color="#8B5CF6" />
                 <Text style={{ marginTop: 16, fontSize: 16, color: "#6B7280" }}>Loading event...</Text>
             </View>
@@ -170,11 +180,11 @@ export default function AddGuestsScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+            style={{ flex: 1, backgroundColor: "transparent" }}
         >
-            <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+            <View style={{ flex: 1, backgroundColor: "transparent" }}>
                 <Animated.ScrollView
-                    style={{ flex: 1, opacity: fadeAnim }}
+                    style={{ flex: 1, opacity: fadeAnim, backgroundColor: "transparent" }}
                     contentContainerStyle={{ paddingBottom: 140 }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
@@ -350,11 +360,13 @@ export default function AddGuestsScreen() {
                                                     borderBottomColor: "#F3F4F6",
                                                 }}
                                             >
-                                                <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center" }}>
-                                                    <Text style={{ fontSize: 18, fontWeight: "700", color: "#8B5CF6" }}>
-                                                        {contact.name.charAt(0).toUpperCase()}
-                                                    </Text>
-                                                </View>
+                                                <ContactAvatar
+                                                    name={contact.name}
+                                                    imageUri={contact.imageUri}
+                                                    size={42}
+                                                    backgroundColor="#EDE9FE"
+                                                    textColor="#8B5CF6"
+                                                />
                                                 <View style={{ flex: 1, marginLeft: 12 }}>
                                                     <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>
                                                         {contact.name}
@@ -454,11 +466,13 @@ export default function AddGuestsScreen() {
                                                         alignItems: "center",
                                                     }}
                                                 >
-                                                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center" }}>
-                                                        <Text style={{ fontSize: 18, fontWeight: "700", color: "#8B5CF6" }}>
-                                                            {guest.name.charAt(0)}
-                                                        </Text>
-                                                    </View>
+                                                    <ContactAvatar
+                                                        name={guest.name}
+                                                        imageUri={guest.imageUri}
+                                                        size={44}
+                                                        backgroundColor="#EDE9FE"
+                                                        textColor="#8B5CF6"
+                                                    />
                                                     <View style={{ flex: 1, marginLeft: 12 }}>
                                                         <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>
                                                             {guest.name}

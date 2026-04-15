@@ -28,7 +28,7 @@ function formatDate(dateStr) {
   });
 }
 
-function buildPromptForPrompt(event, posterThemeId) {
+function buildPromptForPrompt(event, posterThemeId, hasHonoreeReferencePhoto) {
   const eventTypeLabel = { birthday: "Birthday Party", barMitzvah: "Bar Mitzvah", batMitzvah: "Bat Mitzvah" }[event.eventType] || "Celebration";
   const promptDetails = [
     `Event Type: ${eventTypeLabel}`,
@@ -39,15 +39,30 @@ function buildPromptForPrompt(event, posterThemeId) {
     `Location: ${(event.address1 || "") + (event.address2 ? ", " + event.address2 : "")}`.trim() || "TBD",
   ].filter(Boolean);
 
-  return `Generate a detailed invitation poster prompt for: ${promptDetails.join(", ")}. Style: ${getStyleInstructions(posterThemeId)}. Ensure sharp, readable text for the name and date.`;
+  const portraitNote = hasHonoreeReferencePhoto
+    ? " A parent-supplied reference photo of the honoree will be used in the image step — describe layout and style so a clear, celebratory portrait of this same child can be integrated (face and hair should read recognizably)."
+    : "";
+
+  return `Generate a detailed invitation poster prompt for: ${promptDetails.join(", ")}. Style: ${getStyleInstructions(posterThemeId)}. Ensure sharp, readable text for the name and date.${portraitNote}`;
+}
+
+function isGeminiImageModel(modelId) {
+  return typeof modelId === "string" && modelId.startsWith("gemini") && modelId.includes("image");
 }
 
 async function generatePoster(eventId, event, posterThemeId) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
+  let honoreeRef = null;
+  try {
+    honoreeRef = await storageRepository.readHonoreePhotoIfExists(eventId);
+  } catch (err) {
+    console.warn(`[AIService] honoree reference read skipped: ${err.message}`);
+  }
+
   const genAI = new GoogleGenerativeAI(apiKey);
-  const promptForPrompt = buildPromptForPrompt(event, posterThemeId);
+  const promptForPrompt = buildPromptForPrompt(event, posterThemeId, Boolean(honoreeRef));
 
   let imagePrompt = null;
   for (const modelId of PROMPT_MODELS) {
@@ -70,8 +85,31 @@ async function generatePoster(eventId, event, posterThemeId) {
   for (const modelId of IMAGE_MODELS) {
     try {
       const imageModel = genAI.getGenerativeModel({ model: modelId });
+      const parts = [];
+      if (honoreeRef && isGeminiImageModel(modelId)) {
+        parts.push({
+          text:
+            "Create one invitation poster image from the brief below. The next part is a REFERENCE PHOTO of the honoree — match this child's face, hair, skin tone, and general appearance closely in the artwork (celebratory, age-appropriate portrait integrated into the scene).\n\n--- BRIEF ---\n\n" +
+            imagePrompt,
+        });
+        parts.push({
+          inlineData: {
+            mimeType: honoreeRef.mimeType,
+            data: honoreeRef.buffer.toString("base64"),
+          },
+        });
+      } else {
+        parts.push({
+          text:
+            imagePrompt +
+            (honoreeRef && !isGeminiImageModel(modelId)
+              ? "\n\nInclude a prominent, warm portrait of the honoree child consistent with the name and age given."
+              : ""),
+        });
+      }
+
       const imageResult = await imageModel.generateContent({
-        contents: [{ role: "user", parts: [{ text: imagePrompt }] }],
+        contents: [{ role: "user", parts }],
         generationConfig: { responseModalities: ["IMAGE"] },
       });
 

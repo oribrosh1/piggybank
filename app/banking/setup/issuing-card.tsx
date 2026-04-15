@@ -1,10 +1,12 @@
 import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import { routes } from "@/types/routes";
 import { getAccountDetails } from "@/src/lib/api";
 import { useProvisioningStatus } from "@/src/hooks/useProvisioningStatus";
 import firebase from "@/src/firebase";
+import { colors, primaryGradient, radius, spacing, typography } from "@/src/theme";
 
 export default function IssuingCardScreen() {
   const router = useRouter();
@@ -51,27 +53,48 @@ export default function IssuingCardScreen() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#FFFFFF",
+          backgroundColor: colors.surfaceContainerLowest,
           paddingHorizontal: 28,
         }}
       >
-        <Text style={{ fontSize: 18, fontWeight: "800", color: "#111827", marginBottom: 12, textAlign: "center" }}>
+        <Text
+          style={[
+            typography.titleLg,
+            { fontWeight: "800", marginBottom: spacing[3], textAlign: "center" },
+          ]}
+        >
           Card issuing not ready
         </Text>
-        <Text style={{ fontSize: 15, color: "#6B7280", textAlign: "center", lineHeight: 22, marginBottom: 24 }}>
+        <Text
+          style={[
+            typography.bodyMd,
+            {
+              fontSize: 15,
+              color: colors.onSurfaceVariant,
+              textAlign: "center",
+              lineHeight: 22,
+              marginBottom: spacing[6],
+            },
+          ]}
+        >
           Stripe has not activated card issuing on your account yet. Finish Connect verification in the Stripe-hosted
           flow, or wait until the platform completes Issuing onboarding.
         </Text>
         <TouchableOpacity
           onPress={() => router.replace(routes.tabs.home)}
-          style={{
-            backgroundColor: "#8B5CF6",
-            paddingVertical: 14,
-            paddingHorizontal: 24,
-            borderRadius: 14,
-          }}
+          activeOpacity={0.9}
+          style={{ borderRadius: radius.sm, overflow: "hidden" }}
         >
-          <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>Back to Home</Text>
+          <LinearGradient
+            {...primaryGradient}
+            style={{
+              paddingVertical: 14,
+              paddingHorizontal: spacing[6],
+              borderRadius: radius.sm,
+            }}
+          >
+            <Text style={[typography.bodyLg, { fontWeight: "800", color: colors.onPrimary }]}>Back to Home</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     );
@@ -84,11 +107,11 @@ export default function IssuingCardScreen() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#FFFFFF",
+          backgroundColor: colors.surfaceContainerLowest,
         }}
       >
-        <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={{ marginTop: 12, fontSize: 15, color: "#6B7280" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[typography.bodyMd, { fontSize: 15, marginTop: spacing[3], color: colors.onSurfaceVariant }]}>
           Checking card status...
         </Text>
       </View>
@@ -101,11 +124,11 @@ export default function IssuingCardScreen() {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: colors.surfaceContainerLowest,
       }}
     >
-      <ActivityIndicator size="large" color="#8B5CF6" />
-      <Text style={{ marginTop: 12, fontSize: 15, color: "#6B7280" }}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={[typography.bodyMd, { fontSize: 15, marginTop: spacing[3], color: colors.onSurfaceVariant }]}>
         Redirecting...
       </Text>
     </View>

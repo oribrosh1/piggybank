@@ -24,7 +24,7 @@ export default function ApplePaySetupScreen() {
 
   return (
     <View
-      style={{ flex: 1, backgroundColor: "#FFFFFF", paddingTop: insets.top }}
+      style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}
     >
       {/* Header */}
       <View

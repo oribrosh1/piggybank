@@ -12,6 +12,16 @@ import {
 
 export type EventType = "birthday" | "barMitzvah" | "batMitzvah" | "other";
 
+/** Create-flow picker: birthday vs bar/bat (no "other"). */
+export type CelebrationPickerType = Exclude<EventType, "other">;
+
+/** For bar/bat: is the event mainly the party or the ceremony? */
+export type MitzvahCelebrationFocus = "party" | "ceremony";
+
+/** Partner presets in the create-flow Kosher Catering card (`later` = skip for now, poster first). */
+export type KosherCateringPartnerId = "glatt-bistro" | "sky-high" | "heritage-kitchen";
+export type KosherCateringPartnerChoice = KosherCateringPartnerId | "later";
+
 /** Preset visual themes for AI poster generation (step 3) */
 export type PosterThemeId = "space_explorer" | "neon_disco" | "magical_forest";
 
@@ -35,6 +45,10 @@ export interface EventFormData {
     age: string;
     /** Honoree first name (shown on poster & invitations). */
     childName: string;
+    /** Step 2: what we’re celebrating (drives optional details & saved `eventType`). */
+    celebrationType?: CelebrationPickerType;
+    /** When `celebrationType` is bar/bat — party vs ceremony. */
+    mitzvahCelebrationFocus?: MitzvahCelebrationFocus;
     // Event category (party vs formal event)
     eventCategory?: EventCategory;
     // Optional event details (Party only)
@@ -46,7 +60,11 @@ export interface EventFormData {
     parking?: string;
     // Dietary selections
     kosherType?: string; // not-kosher, kosher-style, kosher, glatt-kosher
+    /** Partner from the Kosher Catering card, or `later` to create the poster first. */
+    kosherCateringPartnerId?: KosherCateringPartnerChoice;
     mealType?: string; // dairy, meat, pareve
+    /** When `mealType` is dairy — milk supervised under Jewish law (Chalav Yisrael). */
+    chalavYisrael?: boolean;
     vegetarianType?: string; // none, vegetarian, vegan, or by_request (when meal is meat: guests can request vegetarian)
     // Date/Time/Location
     date: string;
@@ -57,6 +75,8 @@ export interface EventFormData {
      * When true, user skipped party/theme/catering in step 2 — they get a standard (non–AI) invitation look until they add details.
      */
     optionalDetailsLater?: boolean;
+    /** Local `file://` image from picker; uploaded to Storage after the event is created. */
+    honoreePhotoUri?: string;
 }
 
 /**
@@ -106,6 +126,8 @@ export interface Guest {
     name: string;
     phone: string;
     status: GuestStatus;
+    /** Local device contact photo URI — UI only; not stored in Firestore. */
+    imageUri?: string;
     // Timestamps
     addedAt?: Date;
     invitedAt?: Date;
@@ -154,6 +176,8 @@ export interface Event {
     eventName: string;
     /** Honoree name as entered at creation (preferred for UI). */
     childName?: string;
+    /** Bar/bat: whether the celebration is centered on the party or the ceremony. */
+    mitzvahCelebrationFocus?: MitzvahCelebrationFocus;
     // Event category and attire (Party only)
     eventCategory?: EventCategory;
     partyType?: string; // Pool, Beach, Garden, Indoor, Other
@@ -166,7 +190,9 @@ export interface Event {
     parking?: string;
     // Dietary selections
     kosherType?: string; // not-kosher, kosher-style, kosher, glatt-kosher
+    kosherCateringPartnerId?: KosherCateringPartnerChoice;
     mealType?: string; // dairy, meat, pareve
+    chalavYisrael?: boolean;
     vegetarianType?: string; // none, vegetarian, vegan, or by_request (when meal is meat: guests can request vegetarian)
     age?: string; // For birthday events
 
@@ -181,6 +207,8 @@ export interface Event {
     // AI Generated Poster
     posterUrl?: string; // URL to AI-generated invitation poster
     posterPrompt?: string; // The prompt used to generate the poster
+    /** Parent-uploaded reference photo of the honoree for AI poster likeness (Storage public URL). */
+    honoreePhotoUrl?: string;
     /** Skipped optional details at creation — basic template until details added or AI run */
     optionalDetailsLater?: boolean;
     /** Last selected AI poster theme from create flow or regenerate */
@@ -306,14 +334,18 @@ export const eventConverter: FirestoreDataConverter<Event> = {
         if (event.customTheme) data.customTheme = event.customTheme;
         if (event.parking) data.parking = event.parking;
         if (event.kosherType) data.kosherType = event.kosherType;
+        if (event.kosherCateringPartnerId) data.kosherCateringPartnerId = event.kosherCateringPartnerId;
         if (event.mealType) data.mealType = event.mealType;
+        if (event.chalavYisrael === true) data.chalavYisrael = true;
         if (event.vegetarianType) data.vegetarianType = event.vegetarianType;
         if (event.age) data.age = event.age;
         if (event.childName) data.childName = event.childName;
+        if (event.mitzvahCelebrationFocus) data.mitzvahCelebrationFocus = event.mitzvahCelebrationFocus;
         if (event.childPhone) data.childPhone = event.childPhone;
         if (event.stripeAccountId) data.stripeAccountId = event.stripeAccountId;
         if (event.posterUrl) data.posterUrl = event.posterUrl;
         if (event.posterPrompt) data.posterPrompt = event.posterPrompt;
+        if (event.honoreePhotoUrl) data.honoreePhotoUrl = event.honoreePhotoUrl;
         if (event.optionalDetailsLater === true) data.optionalDetailsLater = true;
         if (event.posterThemeId) data.posterThemeId = event.posterThemeId;
         if (event.needsBankingSetup === true) data.needsBankingSetup = true;
@@ -339,6 +371,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             eventType: data.eventType,
             eventName: data.eventName,
             childName: data.childName,
+            mitzvahCelebrationFocus: data.mitzvahCelebrationFocus,
             eventCategory: data.eventCategory,
             partyType: data.partyType,
             otherPartyType: data.otherPartyType,
@@ -348,7 +381,9 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             customTheme: data.customTheme,
             parking: data.parking,
             kosherType: data.kosherType,
+            kosherCateringPartnerId: data.kosherCateringPartnerId,
             mealType: data.mealType,
+            chalavYisrael: data.chalavYisrael === true,
             vegetarianType: data.vegetarianType,
             age: data.age,
             date: data.date,
@@ -357,6 +392,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            honoreePhotoUrl: data.honoreePhotoUrl,
             optionalDetailsLater: data.optionalDetailsLater === true,
             posterThemeId: data.posterThemeId,
             childPhone: data.childPhone,
@@ -397,6 +433,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             eventType: data.eventType,
             eventName: data.eventName,
             childName: data.childName,
+            mitzvahCelebrationFocus: data.mitzvahCelebrationFocus,
             eventCategory: data.eventCategory,
             partyType: data.partyType,
             otherPartyType: data.otherPartyType,
@@ -406,7 +443,9 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             customTheme: data.customTheme,
             parking: data.parking,
             kosherType: data.kosherType,
+            kosherCateringPartnerId: data.kosherCateringPartnerId,
             mealType: data.mealType,
+            chalavYisrael: data.chalavYisrael === true,
             vegetarianType: data.vegetarianType,
             age: data.age,
             date: data.date,
@@ -415,6 +454,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
             address2: data.address2 ?? '',
             posterUrl: data.posterUrl,
             posterPrompt: data.posterPrompt,
+            honoreePhotoUrl: data.honoreePhotoUrl,
             optionalDetailsLater: data.optionalDetailsLater === true,
             posterThemeId: data.posterThemeId,
             childPhone: data.childPhone,

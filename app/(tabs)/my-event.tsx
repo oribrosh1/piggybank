@@ -1,15 +1,20 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { getUserEventsStats } from "@/src/lib/eventService";
 import { routes } from "@/types/routes";
 import { EventDashboardScreen } from "@/src/screens/EventDashboardScreen/EventDashboardScreen";
+import AppTabFooter from "@/src/components/AppTabFooter";
+import AppTabHeader from "@/src/components/AppTabHeader";
+import PartyPlannerEmptyContent from "@/src/components/home/PartyPlannerEmptyContent";
+import { colors, spacing, typography } from "@/src/theme";
 
-/**
- * Single-event tab: shows the full event dashboard (same UI as /event-dashboard/[id])
- * for the user's primary event, or an empty state to create one.
- */
 export default function MyEventTab() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -37,105 +42,47 @@ export default function MyEventTab() {
 
   if (loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#F0FFFE",
-          paddingTop: insets.top,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color="#6B3AA0" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: "#6B7280" }}>
-          Loading your event...
-        </Text>
+      <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[typography.bodyLg, { marginTop: 16, color: colors.onSurfaceVariant }]}>
+            Loading your event...
+          </Text>
+        </View>
+        <AppTabFooter style={{ paddingBottom: Math.max(insets.bottom, 12) }} />
       </View>
     );
   }
 
   if (!eventId) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#F0FFFE", paddingTop: insets.top }}>
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingVertical: 24,
-            backgroundColor: "#6B3AA0",
-            borderBottomLeftRadius: 30,
-            borderBottomRightRadius: 30,
+      <View style={{ flex: 1, backgroundColor: "transparent" }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: spacing[5],
+            paddingTop: insets.top + 12,
+            paddingBottom: Math.max(insets.bottom, 16) + 100,
           }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text
+          <AppTabHeader />
+          <PartyPlannerEmptyContent
+            onCreateEvent={() =>
+              router.push({
+                pathname: routes.createEvent.eventDetails,
+                params: { eventType: "birthday" },
+              })
+            }
+          />
+          <AppTabFooter
             style={{
-              fontSize: 32,
-              fontWeight: "900",
-              color: "#FFFFFF",
-              marginBottom: 4,
+              marginTop: spacing[6],
+              paddingBottom: Math.max(insets.bottom, 12),
             }}
-          >
-            MY EVENT 📅
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: "rgba(255,255,255,0.9)",
-              fontWeight: "600",
-            }}
-          >
-            Create your celebration — one event per family
-          </Text>
-        </View>
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: 20,
-            paddingTop: 48,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ fontSize: 64, marginBottom: 16 }}>🎪</Text>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "900",
-              color: "#6B3AA0",
-              marginBottom: 8,
-              textAlign: "center",
-            }}
-          >
-            No event yet
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#9CA3AF",
-              textAlign: "center",
-              marginBottom: 24,
-              lineHeight: 20,
-            }}
-          >
-            CreditKid supports one event — create yours to invite guests and collect gifts.
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push(routes.createEvent.eventType)}
-            style={{
-              backgroundColor: "#06D6A0",
-              borderRadius: 16,
-              paddingVertical: 14,
-              paddingHorizontal: 28,
-              shadowColor: "#06D6A0",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 4,
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>
-              CREATE YOUR EVENT 🚀
-            </Text>
-          </TouchableOpacity>
-        </View>
+          />
+        </ScrollView>
       </View>
     );
   }

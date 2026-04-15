@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Svg, { Circle } from "react-native-svg";
+import { colors, primaryGradient, radius, typography, fontFamily } from "@/src/theme";
 
 interface Props {
   eventName: string;
@@ -21,8 +22,8 @@ function RsvpRing({
   size?: number;
 }) {
   const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
+  const r = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * r;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
@@ -31,7 +32,7 @@ function RsvpRing({
         <Circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           stroke="rgba(255,255,255,0.25)"
           strokeWidth={strokeWidth}
           fill="none"
@@ -39,7 +40,7 @@ function RsvpRing({
         <Circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           stroke="#FFF"
           strokeWidth={strokeWidth}
           fill="none"
@@ -50,7 +51,13 @@ function RsvpRing({
           origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
-      <Text style={{ fontSize: 16, fontWeight: "900", color: "#FFF" }}>
+      <Text
+        style={{
+          fontSize: 16,
+          fontFamily: fontFamily.display,
+          color: colors.onPrimary,
+        }}
+      >
         {percentage}%
       </Text>
     </View>
@@ -72,10 +79,8 @@ export default function EventHeroCard({
 
   return (
     <LinearGradient
-      colors={["#7C3AED", "#6D28D9"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ borderRadius: 20, padding: 20, marginBottom: 16 }}
+      {...primaryGradient}
+      style={{ borderRadius: radius.md, padding: 20, marginBottom: 16 }}
     >
       <View
         style={{
@@ -85,21 +90,14 @@ export default function EventHeroCard({
           marginBottom: 12,
         }}
       >
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: "700",
-            color: "rgba(255,255,255,0.7)",
-            letterSpacing: 1,
-          }}
-        >
+        <Text style={[typography.labelMd, { color: "rgba(255,255,255,0.85)" }]}>
           UPCOMING EVENT
         </Text>
         <TouchableOpacity
           onPress={onViewEvent}
           style={{
             backgroundColor: "rgba(255,255,255,0.2)",
-            borderRadius: 12,
+            borderRadius: radius.sm,
             paddingHorizontal: 14,
             paddingVertical: 8,
             flexDirection: "row",
@@ -107,30 +105,29 @@ export default function EventHeroCard({
             gap: 4,
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: "600", color: "#FFF" }}>
+          <Text style={[typography.bodyMd, { color: colors.onPrimary, fontFamily: fontFamily.title }]}>
             View Event
           </Text>
-          <Ionicons name="arrow-forward" size={12} color="#FFF" />
+          <Ionicons name="arrow-forward" size={12} color={colors.onPrimary} />
         </TouchableOpacity>
       </View>
 
       <Text
         style={{
+          fontFamily: fontFamily.display,
           fontSize: 26,
-          fontWeight: "900",
-          color: "#FFF",
           lineHeight: 32,
+          color: colors.onPrimary,
           marginBottom: 6,
         }}
       >
         {eventName} in {daysUntil} {daysUntil === 1 ? "Day" : "Days"}
       </Text>
       <Text
-        style={{
-          fontSize: 13,
-          color: "rgba(255,255,255,0.75)",
-          marginBottom: 20,
-        }}
+        style={[
+          typography.bodyMd,
+          { color: "rgba(255,255,255,0.8)", marginBottom: 20 },
+        ]}
       >
         {subtitle}
       </Text>
@@ -138,12 +135,10 @@ export default function EventHeroCard({
       <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
         <RsvpRing percentage={rsvpPercentage} />
         <View>
-          <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFF" }}>
+          <Text style={[typography.titleLg, { color: colors.onPrimary, fontSize: 15 }]}>
             {confirmedGuests}/{totalGuests} Guests
           </Text>
-          <Text
-            style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}
-          >
+          <Text style={[typography.bodyMd, { color: "rgba(255,255,255,0.75)", fontSize: 12 }]}>
             Confirmed
           </Text>
         </View>

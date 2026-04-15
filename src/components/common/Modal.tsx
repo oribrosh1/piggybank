@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
+import { colors, radius, ambientShadow } from "@/src/theme";
 
 export interface ModalProps {
   visible: boolean;
@@ -46,19 +47,15 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(18, 28, 42, 0.45)",
   },
   content: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 32,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 20,
+    ...ambientShadow,
   },
 });

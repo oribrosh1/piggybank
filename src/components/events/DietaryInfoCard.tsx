@@ -12,7 +12,7 @@ interface DietaryInfoCardProps {
 
 export default function DietaryInfoCard({ event, delay = 500 }: DietaryInfoCardProps) {
     // Don't render if no dietary info
-    if (!event.kosherType && !event.vegetarianType) {
+    if (!event.kosherType && !event.vegetarianType && !event.mealType) {
         return null;
     }
 
@@ -47,10 +47,10 @@ export default function DietaryInfoCard({ event, delay = 500 }: DietaryInfoCardP
                         </Text>
                     </View>
                 )}
-                {getMealTypeLabel(event.mealType) && (
+                {getMealTypeLabel(event.mealType, event.chalavYisrael) && (
                     <View style={{ backgroundColor: "#D1FAE5", borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14 }}>
                         <Text style={{ fontSize: 14, fontWeight: "700", color: "#065F46" }}>
-                            {getMealTypeLabel(event.mealType)}
+                            {getMealTypeLabel(event.mealType, event.chalavYisrael)}
                         </Text>
                     </View>
                 )}

@@ -1,7 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity, Linking } from "react-native";
+import { useId, useLayoutEffect, useMemo } from "react";
+import { View, Text, ScrollView, useWindowDimensions } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
+import { colors, typography, spacing, fontFamily } from "@/src/theme";
+import PartyPlannerEmptyContent from "@/src/components/home/PartyPlannerEmptyContent";
 import { useHomeScreen } from "./useHomeScreen";
 import EventHeroCard from "@/src/components/home/EventHeroCard";
 import BirthdayWalletCard from "@/src/components/home/BirthdayWalletCard";
@@ -17,28 +22,46 @@ import ChildTransactionFeed from "@/src/components/home/ChildTransactionFeed";
 import ParentalControlsGrid from "@/src/components/home/ParentalControlsGrid";
 import PreEventBankingPendingState from "@/src/components/home/PreEventBankingPendingState";
 import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
+import { defaultTabBarStyle, hiddenTabBarStyle } from "@/src/navigation/defaultTabBarStyle";
+import AppTabFooter from "@/src/components/AppTabFooter";
+import AppTabHeader from "@/src/components/AppTabHeader";
+import { Sparkles } from "lucide-react-native";
 
-const TERMS_URL = "https://creditkid.vercel.app/terms";
-const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
-const HELP_URL = "https://creditkid.vercel.app";
+/** Second line only — black → violet gradient (first line stays solid body text). */
+function EmptyHomeCaptionGradientLine({ width }: { width: number }) {
+  const rawId = useId();
+  const gradId = useMemo(() => `home-empty-cap-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`, [rawId]);
+  const fs = 17;
+  const lh = 28;
+  const h = lh + 4;
 
-function TrustBadge({
-  icon,
-  label,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-}) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-      <Ionicons name={icon} size={15} color="#9CA3AF" />
-      <Text style={{ fontSize: 11, fontWeight: "600", color: "#9CA3AF" }}>{label}</Text>
-    </View>
+    <Svg width={width} height={h}>
+      <Defs>
+        <SvgLinearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#0a0610" />
+          <Stop offset="48%" stopColor="#5b21b6" />
+          <Stop offset="100%" stopColor={colors.primaryContainer} />
+        </SvgLinearGradient>
+      </Defs>
+      <SvgText
+        fill={`url(#${gradId})`}
+        fontFamily={fontFamily.body}
+        fontSize={fs}
+        fontWeight="400"
+        x={0}
+        y={fs * 0.88}
+      >
+        receiving gifts and blessings.
+      </SvgText>
+    </Svg>
   );
 }
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { width: windowW } = useWindowDimensions();
   const {
     loading,
     homeState,
@@ -58,109 +81,87 @@ export default function HomeScreen() {
     goToKids,
     goToMyEvents,
     goToBankingSetup,
-    goToProfile,
     getGreeting,
     getFormattedEventDate,
   } = useHomeScreen();
 
+  /** Full white loading: hide mesh (opaque root) + bottom tab bar; no Stripe footer strip */
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: loading ? hiddenTabBarStyle : defaultTabBarStyle,
+    });
+  }, [loading, navigation]);
+
+  /** Scroll padding + row: Sparkles (22) + gap (12) + inner paddingRight on row */
+  const emptyCaptionWidth = Math.max(160, windowW - spacing[8] - spacing[6] - 22 - 12 - spacing[2]);
+
   if (loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#FFFFFF",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <LoadingLogoLottie />
+      <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <LoadingLogoLottie />
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FAFAFA" }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <ScrollView
+        style={{ backgroundColor: "transparent" }}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
           paddingBottom: 100,
-          paddingHorizontal: 20,
+          paddingLeft: spacing[8],
+          paddingRight: spacing[6],
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header — parent dashboard */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 20,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "800",
-                color: "#7C3AED",
-                fontStyle: "italic",
-                letterSpacing: -0.3,
-              }}
-            >
-              CreditKid
-            </Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <TouchableOpacity
-              onPress={() => {}}
-              hitSlop={10}
-              accessibilityLabel="Notifications"
-            >
-              <Ionicons name="notifications-outline" size={24} color="#374151" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => void Linking.openURL(HELP_URL)}
-              hitSlop={10}
-              accessibilityLabel="Help"
-            >
-              <Ionicons name="help-circle-outline" size={24} color="#374151" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={goToProfile}
-              hitSlop={10}
-              accessibilityLabel="Profile"
-            >
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: "#E5E7EB",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
-                }}
-              >
-                <Ionicons name="person" size={20} color="#6B7280" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <AppTabHeader />
 
         {/* Conditional State Rendering */}
         {homeState === "empty" && (
-          <EmptyState
-            firstName={getFirstName()}
-            onCreateEvent={goToCreateEvent}
-          />
+          <View>
+            <Text style={[typography.headlineLg, { marginBottom: spacing[2] }]}>
+              Hey {getFirstName()}!
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 12,
+                marginBottom: spacing[6],
+                paddingRight: spacing[2],
+              }}
+            >
+              <Animated.View style={{ flex: 1 }} entering={FadeInDown.duration(520).delay(80).springify()}>
+                <Text
+                  style={[
+                    typography.bodyLg,
+                    {
+                      color: colors.onSurfaceVariant,
+                      lineHeight: 28,
+                      fontSize: 17,
+                      marginBottom: 2,
+                    },
+                  ]}
+                >
+                  Create your child&apos;s birthday event to start
+                </Text>
+                <EmptyHomeCaptionGradientLine width={emptyCaptionWidth} />
+              </Animated.View>
+              <Animated.View entering={FadeInDown.duration(520).delay(160).springify()}>
+                <Sparkles size={22} color={colors.primary} strokeWidth={2.4} style={{ marginTop: 4 }} />
+              </Animated.View>
+            </View>
+            <PartyPlannerEmptyContent onCreateEvent={goToCreateEvent} />
+          </View>
         )}
 
         {homeState === "pre-event-pending-banking" && event && (
           <PreEventBankingPendingState
-            greeting={getGreeting()}
-            firstName={getFirstName()}
+
+            
             event={event}
             formattedEventDate={getFormattedEventDate()}
             onCompleteBanking={goToBankingSetup}
@@ -204,136 +205,8 @@ export default function HomeScreen() {
           />
         )}
 
-        {/* Footer — trust + legal */}
-        <View style={{ marginTop: 24, paddingBottom: 8 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 6,
-              marginBottom: 16,
-            }}
-          >
-            <TrustBadge icon="shield-checkmark-outline" label="Bank-level Encryption" />
-            <TrustBadge icon="shield-checkmark-outline" label="Secured by Stripe" />
-            <TrustBadge icon="shield-checkmark-outline" label="GDPR Compliant" />
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: 20,
-            }}
-          >
-            <TouchableOpacity onPress={() => void Linking.openURL(TERMS_URL)}>
-              <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "500" }}>Terms of Service</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => void Linking.openURL(PRIVACY_URL)}>
-              <Text style={{ fontSize: 12, color: "#6B7280", fontWeight: "500" }}>Privacy Policy</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <AppTabFooter />
       </ScrollView>
-    </View>
-  );
-}
-
-function EmptyState({
-  firstName,
-  onCreateEvent,
-}: {
-  firstName: string;
-  onCreateEvent: () => void;
-}) {
-  return (
-    <View>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: "800",
-          color: "#1F2937",
-          marginBottom: 8,
-        }}
-      >
-        Hey {firstName}!
-      </Text>
-      <Text
-        style={{
-          fontSize: 15,
-          color: "#6B7280",
-          lineHeight: 22,
-          marginBottom: 32,
-        }}
-      >
-        Create your child's birthday event to start receiving gifts and
-        blessings.
-      </Text>
-
-      <View
-        style={{
-          backgroundColor: "#FFF",
-          borderRadius: 20,
-          padding: 32,
-          alignItems: "center",
-          marginBottom: 24,
-          borderWidth: 2,
-          borderStyle: "dashed",
-          borderColor: "#E5E7EB",
-        }}
-      >
-        <Ionicons
-          name="add-circle-outline"
-          size={48}
-          color="#7C3AED"
-          style={{ marginBottom: 16 }}
-        />
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "700",
-            color: "#1F2937",
-            marginBottom: 6,
-          }}
-        >
-          No Event Yet
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: "#9CA3AF",
-            textAlign: "center",
-            lineHeight: 20,
-            marginBottom: 20,
-          }}
-        >
-          Create your first birthday event and invite guests to send gifts
-          your child can spend anywhere.
-        </Text>
-        <TouchableOpacity
-          onPress={onCreateEvent}
-          activeOpacity={0.85}
-          style={{
-            backgroundColor: "#7C3AED",
-            borderRadius: 14,
-            paddingHorizontal: 32,
-            paddingVertical: 14,
-            shadowColor: "#7C3AED",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 4,
-          }}
-        >
-          <Text
-            style={{ fontSize: 15, fontWeight: "700", color: "#FFF" }}
-          >
-            Create Event
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }

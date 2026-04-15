@@ -38,7 +38,25 @@ async function downloadFile(storagePath) {
     };
 }
 
+/**
+ * Read parent-uploaded honoree reference at events/{eventId}/honoree_photo (if present).
+ * @returns {Promise<{ buffer: Buffer, mimeType: string } | null>}
+ */
+async function readHonoreePhotoIfExists(eventId) {
+    const bucket = getBucket();
+    const file = bucket.file(`events/${eventId}/honoree_photo`);
+    const [exists] = await file.exists();
+    if (!exists) return null;
+    const [buffer] = await file.download();
+    const [metadata] = await file.getMetadata();
+    return {
+        buffer,
+        mimeType: metadata?.contentType || "image/jpeg",
+    };
+}
+
 module.exports = {
     savePoster,
     downloadFile,
+    readHonoreePhotoIfExists,
 };

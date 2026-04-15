@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Modal,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -24,6 +25,13 @@ import {
 } from "@/src/components/kids";
 import ChildLinkCard from "@/src/components/events/ChildLinkCard";
 import { useKidsScreen } from "./useKidsScreen";
+import AppTabFooter from "@/src/components/AppTabFooter";
+import AppTabHeader from "@/src/components/AppTabHeader";
+import { colors, radius, spacing, typography, ambientShadow, fontFamily } from "@/src/theme";
+import Button from "@/src/components/common/Button";
+import LottieView from "lottie-react-native";
+
+const PARENT_CHILD_LOTTIE = require("../../../assets/lotties/parent-child-creditkid.json");
 
 export default function KidsScreen() {
   const insets = useSafeAreaInsets();
@@ -31,59 +39,67 @@ export default function KidsScreen() {
 
   if (hook.loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#F0FFFE",
-          justifyContent: "center",
-          alignItems: "center",
-          paddingTop: insets.top,
-        }}
-      >
-        <ActivityIndicator size="large" color="#6B3AA0" />
-        <Text
-          style={{
-            marginTop: 12,
-            fontSize: 14,
-            color: "#9CA3AF",
-            fontWeight: "600",
-          }}
-        >
-          Loading...
-        </Text>
+      <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text
+            style={[
+              typography.bodyMd,
+              { marginTop: spacing[3], color: colors.muted, fontFamily: fontFamily.title },
+            ]}
+          >
+            Loading...
+          </Text>
+        </View>
+        <AppTabFooter />
       </View>
     );
   }
 
   if (!hook.childAccountId || !hook.card) {
     const FEATURES = [
-      { icon: CreditCard, label: "Virtual Card", badge: "INSTANT SETUP", color: "#6B3AA0", bg: "#EDE9FE" },
-      { icon: SlidersHorizontal, label: "Spending Limits", badge: "FULL CONTROL", color: "#059669", bg: "#D1FAE5" },
+      { icon: CreditCard, label: "Virtual Card", badge: "INSTANT SETUP", color: colors.primary, bg: colors.surfaceContainerLow },
+      { icon: SlidersHorizontal, label: "Spending Limits", badge: "FULL CONTROL", color: colors.secondary, bg: colors.secondaryContainer },
       { icon: ShieldBan, label: "Category Blocks", badge: "SAFETY FIRST", color: "#EA580C", bg: "#FFEDD5" },
-      { icon: Bell, label: "Live Activity", badge: "REAL-TIME ALERTS", color: "#6B3AA0", bg: "#EDE9FE" },
+      { icon: Bell, label: "Live Activity", badge: "REAL-TIME ALERTS", color: colors.primary, bg: colors.surfaceContainerLow },
     ];
 
     return (
-      <View style={{ flex: 1, backgroundColor: "#F0FFFE", paddingTop: insets.top }}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}>
-          <Text style={{ fontSize: 28, fontWeight: "800", color: "#1F2937" }}>My Child</Text>
-        </View>
-
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}>
+      <View style={{ flex: 1, backgroundColor: "transparent" }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "transparent" }}
+          contentContainerStyle={{
+            paddingHorizontal: spacing[5],
+            paddingTop: insets.top + 12,
+            paddingBottom: insets.bottom + 24,
+          }}
+        >
+          <AppTabHeader />
+          <Text style={[typography.headlineLg, { fontSize: 28, marginBottom: spacing[4] }]}>My Child</Text>
           {/* Hero card */}
           <View style={{
-            backgroundColor: "#EDE9FE", borderRadius: 24, padding: 28, alignItems: "center", marginBottom: 24,
+              borderRadius: radius.lg, alignItems: "center", marginBottom: 12,
           }}>
-            <View style={{
-              width: 72, height: 72, borderRadius: 36, backgroundColor: "#DDD6FE",
-              alignItems: "center", justifyContent: "center", marginBottom: 16,
-            }}>
-              <Users size={32} color="#6B3AA0" strokeWidth={1.8} />
+            <View
+              style={{
+                backgroundColor: "white",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+              }}
+            >
+              <LottieView
+                source={PARENT_CHILD_LOTTIE}
+                style={{ width: "100%", height: 250 }}
+                autoPlay
+                loop
+                resizeMode="contain"
+              />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: "900", color: "#0F172A", textAlign: "center", marginBottom: 8 }}>
+            <Text style={[typography.titleLg, { textAlign: "center", marginBottom: spacing[2], paddingHorizontal: 16 }]}>
               Link your child to unlock
             </Text>
-            <Text style={{ fontSize: 14, color: "#64748B", textAlign: "center", lineHeight: 20 }}>
+            <Text style={[typography.bodyMd, { color: colors.onSurfaceVariant, textAlign: "center", lineHeight: 20 , paddingHorizontal: 16}]}>
               Manage their card, track spending, and build healthy habits together.
             </Text>
           </View>
@@ -91,9 +107,8 @@ export default function KidsScreen() {
           {/* Pending invite banner */}
           {hook.pendingInvite?.hasPending && (
             <View style={{
-              backgroundColor: "#FEF3C7", borderRadius: 16, padding: 16,
+              backgroundColor: "#FEF3C7", borderRadius: radius.md, padding: 16,
               flexDirection: "row", alignItems: "center", marginBottom: 16,
-              borderWidth: 1, borderColor: "#FDE68A",
             }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: "700", color: "#92400E", marginBottom: 2 }}>
@@ -118,40 +133,35 @@ export default function KidsScreen() {
           )}
 
           {/* Feature preview grid */}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28, paddingHorizontal: 16 }}>
             {FEATURES.map((f) => {
               const Icon = f.icon;
               return (
                 <View key={f.label} style={{
-                  width: "48%", backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16,
-                  shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+                  width: "48%", backgroundColor: colors.surfaceContainerLowest, borderRadius: radius.md, padding: 16,
+                  ...ambientShadow,
                 }}>
                   <View style={{
-                    width: 40, height: 40, borderRadius: 12, backgroundColor: f.bg,
+                    width: 40, height: 40, borderRadius: radius.sm, backgroundColor: f.bg,
                     alignItems: "center", justifyContent: "center", marginBottom: 10,
                   }}>
                     <Icon size={20} color={f.color} strokeWidth={2} />
                   </View>
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: "#0F172A", marginBottom: 4 }}>{f.label}</Text>
-                  <Text style={{ fontSize: 10, fontWeight: "700", color: f.color, letterSpacing: 0.5 }}>{f.badge}</Text>
+                  <Text style={[typography.titleLg, { fontSize: 15, marginBottom: 4 }]}>{f.label}</Text>
+                  <Text style={[typography.labelMd, { fontSize: 10, color: f.color, letterSpacing: 0.5 }]}>{f.badge}</Text>
                 </View>
               );
             })}
           </View>
 
           {/* Link CTA */}
-          <TouchableOpacity
-            onPress={() => hook.setLinkModalVisible(true)}
-            activeOpacity={0.85}
-            style={{
-              backgroundColor: "#6B3AA0", borderRadius: 16, paddingVertical: 16,
-              flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-              marginBottom: 12,
-            }}
-          >
-            <UserPlus size={18} color="#FFFFFF" strokeWidth={2.5} />
-            <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>Link Your Child</Text>
-          </TouchableOpacity>
+          <View style={{ marginBottom: 12 }}>
+            <Button
+              label="Link Your Child"
+              onPress={() => hook.setLinkModalVisible(true)}
+              leftIcon={<UserPlus size={18} color="#ffffff" strokeWidth={2.5} />}
+            />
+          </View>
 
           <TouchableOpacity onPress={() => hook.setLinkModalVisible(true)} style={{ alignItems: "center", marginBottom: 20 }}>
             <Text style={{ fontSize: 14, fontWeight: "600", color: "#0D9488" }}>How does it work?</Text>
@@ -164,15 +174,20 @@ export default function KidsScreen() {
               disabled={hook.testLinking}
               activeOpacity={0.82}
               style={{
-                backgroundColor: "#F3F4F6", borderRadius: 12, paddingVertical: 12,
-                flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-                borderWidth: 1, borderColor: "#E5E7EB", opacity: hook.testLinking ? 0.6 : 1,
+                backgroundColor: colors.surfaceContainerLow,
+                borderRadius: radius.sm,
+                paddingVertical: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                opacity: hook.testLinking ? 0.6 : 1,
               }}
             >
               {hook.testLinking ? (
-                <ActivityIndicator size="small" color="#6B7280" />
+                <ActivityIndicator size="small" color={colors.onSurfaceVariant} />
               ) : null}
-              <Text style={{ fontSize: 13, fontWeight: "600", color: "#6B7280" }}>
+              <Text style={[typography.bodyMd, { fontSize: 13, color: colors.onSurfaceVariant, fontFamily: fontFamily.title }]}>
                 {hook.testLinking ? "Provisioning..." : "Test Link Account"}
               </Text>
             </TouchableOpacity>
@@ -189,7 +204,7 @@ export default function KidsScreen() {
               backgroundColor: "#FFFFFF", borderRadius: 20, padding: 32,
               alignItems: "center", width: "100%",
             }}>
-              <ActivityIndicator size="large" color="#6B3AA0" />
+              <ActivityIndicator size="large" color={colors.primary} />
               <Text style={{ fontSize: 16, fontWeight: "700", color: "#0F172A", marginTop: 16 }}>
                 Setting up test account...
               </Text>
@@ -220,8 +235,7 @@ export default function KidsScreen() {
     <View
       style={{
         flex: 1,
-        backgroundColor: "#F0FFFE",
-        paddingTop: insets.top,
+        backgroundColor: "transparent",
       }}
     >
       <ScrollView
@@ -234,15 +248,18 @@ export default function KidsScreen() {
           <RefreshControl
             refreshing={hook.refreshing}
             onRefresh={hook.onRefresh}
-            tintColor="#6B3AA0"
-            colors={["#6B3AA0"]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
+        <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 12 }}>
+          <AppTabHeader />
+        </View>
         {/* Header */}
         <View
           style={{
-            backgroundColor: "#6B3AA0",
+            backgroundColor: colors.primary,
             paddingHorizontal: 20,
             paddingTop: 20,
             paddingBottom: 24,
@@ -301,12 +318,12 @@ export default function KidsScreen() {
               marginTop: 4,
             }}
           >
-            <ShieldCheck size={18} color="#6B3AA0" strokeWidth={2.5} />
+            <ShieldCheck size={18} color={colors.primary} strokeWidth={2.5} />
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: "700",
-                color: "#6B3AA0",
+                color: colors.primary,
                 letterSpacing: 1,
                 textTransform: "uppercase",
               }}
@@ -344,12 +361,12 @@ export default function KidsScreen() {
               marginTop: 8,
             }}
           >
-            <ActivityIcon size={18} color="#6B3AA0" strokeWidth={2.5} />
+            <ActivityIcon size={18} color={colors.primary} strokeWidth={2.5} />
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: "700",
-                color: "#6B3AA0",
+                color: colors.primary,
                 letterSpacing: 1,
                 textTransform: "uppercase",
               }}
@@ -374,6 +391,8 @@ export default function KidsScreen() {
           />
 
           <ChildSpendingSummary summary={hook.summary} />
+
+          <AppTabFooter />
         </View>
       </ScrollView>
 

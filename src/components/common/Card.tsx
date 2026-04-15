@@ -1,26 +1,40 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
+import { colors, radius, spacing } from "@/src/theme";
 
 export interface CardProps {
   children: React.ReactNode;
+  /** Use "low" when nesting on surface_container_low */
+  elevation?: "default" | "low";
   style?: ViewStyle;
 }
 
-export default function Card({ children, style }: CardProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+/**
+ * Tonal layering — no hard borders; depth via surface_container_lowest on parent section.
+ */
+export default function Card({ children, elevation = "default", style }: CardProps) {
+  return (
+    <View
+      style={[
+        styles.card,
+        elevation === "low" && styles.cardLow,
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radius.lg,
+    padding: spacing[5],
+  },
+  cardLow: {
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radius.md,
+    padding: spacing[4],
   },
 });

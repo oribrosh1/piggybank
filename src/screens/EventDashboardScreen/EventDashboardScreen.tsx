@@ -27,8 +27,8 @@ import {
     type AIPosterGeneratorRef,
     type InvitationPreviewRef,
 } from "@/src/components/events";
+import AppTabHeader from "@/src/components/AppTabHeader";
 import {
-    DashboardTopBar,
     EventPosterIntroLine,
     PosterHeroCard,
     LiveStatusBanner,
@@ -36,12 +36,15 @@ import {
     InvolveChildCard,
     DetailsStack,
     GuestListSection,
+    StartInvitingGuestsCard,
+    GuestManagementGuideModal,
     WhatsNextTip,
     PAGE_BG,
 } from "@/src/components/events/eventDashboard/EventDashboardLayout";
 import CelebrationToolsModal from "@/src/components/events/eventDashboard/CelebrationToolsModal";
 import GuestStatsModal from "@/src/components/events/eventDashboard/GuestStatsModal";
 import ReminderScheduleModal from "@/src/components/events/eventDashboard/ReminderScheduleModal";
+import AppTabFooter from "@/src/components/AppTabFooter";
 
 export function EventDashboardScreen({ eventId }: { eventId: string }) {
     const insets = useSafeAreaInsets();
@@ -56,6 +59,7 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
     const [showFeaturesModal, setShowFeaturesModal] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [showReminderScheduleModal, setShowReminderScheduleModal] = useState(false);
+    const [showGuestGuideModal, setShowGuestGuideModal] = useState(false);
     const [childLinkLoading, setChildLinkLoading] = useState(false);
     const [childLinkOpen, setChildLinkOpen] = useState(false);
     const posterRef = useRef<AIPosterGeneratorRef | null>(null);
@@ -176,32 +180,45 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: PAGE_BG, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator size="large" color="#6B4EFF" />
-                <Text style={{ marginTop: 16, fontSize: 16, color: "#6B7280" }}>Loading event...</Text>
+            <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                    <ActivityIndicator size="large" color="#6B4EFF" />
+                    <Text style={{ marginTop: 16, fontSize: 16, color: "#6B7280" }}>Loading event...</Text>
+                </View>
+                <AppTabFooter />
             </View>
         );
     }
 
     if (!event) {
         return (
-            <View style={{ flex: 1, backgroundColor: PAGE_BG, alignItems: "center", justifyContent: "center", padding: 24 }}>
-                <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
-                <Text style={{ fontSize: 20, fontWeight: "700", color: "#111827", marginBottom: 8 }}>Event Not Found</Text>
-                <Text style={{ fontSize: 15, color: "#6B7280", textAlign: "center", marginBottom: 24 }}>
-                    We couldn't find this event. It may have been deleted.
-                </Text>
-                <TouchableOpacity
-                    onPress={() => router.push(routes.tabs.myEvent)}
+            <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
+                <View
                     style={{
-                        backgroundColor: "#6B4EFF",
-                        borderRadius: 16,
-                        paddingVertical: 14,
-                        paddingHorizontal: 24,
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 24,
                     }}
                 >
-                    <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>Go to My Event</Text>
-                </TouchableOpacity>
+                    <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: "#111827", marginBottom: 8 }}>Event Not Found</Text>
+                    <Text style={{ fontSize: 15, color: "#6B7280", textAlign: "center", marginBottom: 24 }}>
+                        We couldn't find this event. It may have been deleted.
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => router.push(routes.tabs.myEvent)}
+                        style={{
+                            backgroundColor: "#6B4EFF",
+                            borderRadius: 16,
+                            paddingVertical: 14,
+                            paddingHorizontal: 24,
+                        }}
+                    >
+                        <Text style={{ fontSize: 16, fontWeight: "700", color: "#FFFFFF" }}>Go to My Event</Text>
+                    </TouchableOpacity>
+                </View>
+                <AppTabFooter />
             </View>
         );
     }
@@ -212,15 +229,18 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
         <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
             <ScrollView
                 style={{ flex: 1, marginBottom: 20 }}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+                contentContainerStyle={{
+                    paddingTop: insets.top + 12,
+                    paddingBottom: insets.bottom + 100,
+                }}
                 showsVerticalScrollIndicator={false}
             >
-                <DashboardTopBar
-                    topInset={insets.top}
-                    event={event}
-                    onBell={() => setShowNotificationsModal(true)}
-                    hasNotificationDot={notifications.length > 0}
-                />
+                <View style={{ paddingHorizontal: 20 }}>
+                    <AppTabHeader
+                        onPressNotifications={() => setShowNotificationsModal(true)}
+                        showNotificationDot={notifications.length > 0}
+                    />
+                </View>
 
                 <EventPosterIntroLine event={event} />
 
@@ -259,6 +279,10 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                 </View>
 
                 <View style={{ marginTop: 16 }}>
+                    <StartInvitingGuestsCard
+                        onInviteGuests={handleAddGuests}
+                        onLearnHowItWorks={() => setShowGuestGuideModal(true)}
+                    />
                     <GuestListSection event={event} onViewAll={handleManageGuests} />
                 </View>
 
@@ -272,6 +296,8 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                     onPosterGenerated={() => loadEvent()}
                 />
                 <InvitationPreview ref={previewRef} event={event} delay={0} hideTrigger />
+
+                <AppTabFooter />
             </ScrollView>
 
             <View
@@ -349,6 +375,13 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                         | undefined
                 }
                 onAddGuest={handleAddGuests}
+                onOpenGuestGuide={() => setShowGuestGuideModal(true)}
+            />
+
+            <GuestManagementGuideModal
+                visible={showGuestGuideModal}
+                onClose={() => setShowGuestGuideModal(false)}
+                bottomInset={insets.bottom}
             />
 
             <GuestStatsModal

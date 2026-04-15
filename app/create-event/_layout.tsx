@@ -5,6 +5,7 @@ export default function CreateEventLayout() {
         <Stack
             screenOptions={{
                 headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
             }}
         />
     );

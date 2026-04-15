@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Calendar } from "lucide-react-native";
-import { FOREST, INPUT_BG } from "./designInviteTheme";
+import { colors, spacing, radius, fontFamily } from "@/src/theme";
 
 function formatTimeTo24h(timeStr: string): string {
   const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -26,71 +26,121 @@ type EventDetailsDateTimeCardProps = {
   onTimePress: () => void;
 };
 
+const CARD_FILL = colors.surfaceContainerLowest;
+const ICON_HOLE = "rgba(107, 56, 212, 0.14)";
+
 export default function EventDetailsDateTimeCard(props: EventDetailsDateTimeCardProps) {
   const p = props;
   const hasError = !!(p.dateError || p.timeError);
-  const borderColor = p.dateFocused || p.timeFocused ? FOREST : hasError ? "#EF4444" : "#E5E7EB";
+  const bothEmpty = !p.dateValue && !p.timeValue;
+  const borderColor =
+    p.dateFocused || p.timeFocused ? "rgba(107, 56, 212, 0.35)" : hasError ? "#EF4444" : "transparent";
 
   return (
-    <View style={{ marginBottom: 20 }}>
-      <Text
-        style={{
-          fontSize: 11,
-          fontWeight: "800",
-          color: FOREST,
-          letterSpacing: 1.2,
-          marginBottom: 8,
-        }}
-      >
-        DATE & TIME
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          backgroundColor: INPUT_BG,
-          borderRadius: 16,
-          borderWidth: 2,
-          borderColor,
-          paddingHorizontal: 14,
-          paddingVertical: 4,
-          minHeight: 52,
-        }}
-      >
-        <TouchableOpacity style={{ flex: 1, paddingVertical: 12 }} onPress={p.onDatePress} activeOpacity={0.85}>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: "700",
-              color: p.dateValue ? "#111827" : "#9CA3AF",
-            }}
-            numberOfLines={1}
-          >
-            {p.dateValue ? p.formatDateDisplay(p.dateValue) : "Date"}
-          </Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 15, fontWeight: "700", color: "#9CA3AF", paddingHorizontal: 4 }}>•</Text>
-        <TouchableOpacity style={{ flex: 1, paddingVertical: 12 }} onPress={p.onTimePress} activeOpacity={0.85}>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: "700",
-              color: p.timeValue ? "#111827" : "#9CA3AF",
-            }}
-            numberOfLines={1}
-          >
-            {p.timeValue ? formatTimeTo24h(p.timeValue) : "Time"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={p.onDatePress} style={{ padding: 8 }}>
-          <Calendar size={22} color={FOREST} strokeWidth={2.2} />
-        </TouchableOpacity>
+    <View style={styles.wrap}>
+      <View style={[styles.card, { borderColor }]}>
+        <View style={styles.iconWrap}>
+          <Calendar size={22} color={colors.primary} strokeWidth={2.2} />
+        </View>
+        <View style={styles.body}>
+          <Text style={styles.label}>Date & time</Text>
+          {bothEmpty ? (
+            <TouchableOpacity onPress={p.onDatePress} activeOpacity={0.75}>
+              <Text style={styles.emptyPrompt}>Select date and start time</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.valueRow}>
+              <TouchableOpacity style={styles.valueTouch} onPress={p.onDatePress} activeOpacity={0.75}>
+                <Text style={[styles.valueText, !p.dateValue && styles.placeholder]} numberOfLines={1}>
+                  {p.dateValue ? p.formatDateDisplay(p.dateValue) : "Date"}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.dot}>·</Text>
+              <TouchableOpacity style={styles.valueTouch} onPress={p.onTimePress} activeOpacity={0.75}>
+                <Text style={[styles.valueText, !p.timeValue && styles.placeholder]} numberOfLines={1}>
+                  {p.timeValue ? formatTimeTo24h(p.timeValue) : "Time"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
       {(p.dateError || p.timeError) && (
-        <Text style={{ fontSize: 12, color: "#EF4444", marginTop: 6, fontWeight: "600" }}>
-          {p.dateError || p.timeError}
-        </Text>
+        <Text style={styles.err}>{p.dateError || p.timeError}</Text>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    marginBottom: spacing[5],
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: CARD_FILL,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[3],
+  },
+  iconWrap: {
+    width: 48,
+    marginRight: spacing[3],
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: ICON_HOLE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: {
+    flex: 1,
+    minWidth: 0,
+  },
+  label: {
+    fontFamily: fontFamily.label,
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
+    marginBottom: spacing[1],
+  },
+  emptyPrompt: {
+    fontFamily: fontFamily.body,
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    lineHeight: 22,
+  },
+  valueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  valueTouch: {
+    flex: 1,
+    minWidth: 0,
+  },
+  valueText: {
+    fontFamily: fontFamily.title,
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.onSurface,
+  },
+  placeholder: {
+    color: colors.onSurfaceVariant,
+  },
+  dot: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.muted,
+    paddingHorizontal: spacing[1],
+  },
+  err: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: spacing[2],
+    fontWeight: "600",
+  },
+});

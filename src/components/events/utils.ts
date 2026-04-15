@@ -36,10 +36,10 @@ export const getKosherLabel = (type?: string) => {
   }
 };
 
-export const getMealTypeLabel = (type?: string) => {
+export const getMealTypeLabel = (type?: string, chalavYisrael?: boolean) => {
   switch (type) {
     case "dairy":
-      return "🥛 Dairy";
+      return chalavYisrael ? "🥛 Dairy (Chalav Yisrael)" : "🥛 Dairy";
     case "meat":
       return "🥩 Meat";
     case "pareve":

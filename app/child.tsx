@@ -25,9 +25,11 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
+import { LinearGradient } from "expo-linear-gradient";
 import { CreditCard, Gift, DollarSign, MessageCircle, Lock, Shield } from "lucide-react-native";
 import { claimChildInvite } from "@/src/lib/api";
 import type { Event, Guest } from "@/types/events";
+import { colors, primaryGradient, radius, spacing, ambientShadow, fontFamily } from "@/src/theme";
 
 type Step = "pin" | "claiming" | "dashboard";
 
@@ -154,7 +156,7 @@ export default function ChildScreen() {
     if (loading) {
         return (
             <View style={s.centered}>
-                <ActivityIndicator size="large" color="#6B3AA0" />
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -162,7 +164,7 @@ export default function ChildScreen() {
     if (!token && step === "pin" && !user) {
         return (
             <View style={s.centered}>
-                <Gift size={48} color="#6B3AA0" strokeWidth={2} />
+                <Gift size={48} color={colors.primary} strokeWidth={2} />
                 <Text style={s.welcomeTitle}>Welcome to CreditKid</Text>
                 <Text style={s.welcomeSubtitle}>
                     Open the link from the SMS your parent sent you to see your balance and gifts.
@@ -177,7 +179,7 @@ export default function ChildScreen() {
             <KeyboardAvoidingView style={s.authRoot} behavior={Platform.OS === "ios" ? "padding" : "height"}>
                 <ScrollView contentContainerStyle={s.authContent} keyboardShouldPersistTaps="handled">
                     <View style={s.authIconWrap}>
-                        <Lock size={32} color="#6B3AA0" strokeWidth={2} />
+                        <Lock size={32} color={colors.primary} strokeWidth={2} />
                     </View>
                     <Text style={s.authTitle}>Enter your code</Text>
                     <Text style={s.authSubtitle}>
@@ -185,12 +187,12 @@ export default function ChildScreen() {
                     </Text>
 
                     <View style={s.inputRow}>
-                        <Lock size={18} color="#94A3B8" strokeWidth={2} />
+                        <Lock size={18} color={colors.muted} strokeWidth={2} />
                         <TextInput
                             ref={pinInputRef}
                             style={[s.input, { letterSpacing: 6, textAlign: "center" }]}
                             placeholder="000000"
-                            placeholderTextColor="#CBD5E1"
+                            placeholderTextColor={colors.muted}
                             keyboardType="number-pad"
                             maxLength={6}
                             secureTextEntry
@@ -202,16 +204,18 @@ export default function ChildScreen() {
                     {claimError && <Text style={s.errorText}>{claimError}</Text>}
 
                     <TouchableOpacity
-                        style={s.primaryBtn}
+                        style={s.primaryBtnWrap}
                         onPress={handleClaimWithPin}
                         activeOpacity={0.85}
                     >
-                        <Gift size={18} color="#FFF" strokeWidth={2.5} />
-                        <Text style={s.primaryBtnLabel}>Unlock My Gifts</Text>
+                        <LinearGradient {...primaryGradient} style={s.primaryBtnGradient}>
+                            <Gift size={18} color={colors.onPrimary} strokeWidth={2.5} />
+                            <Text style={s.primaryBtnLabel}>Unlock My Gifts</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
 
                     <View style={s.securityNote}>
-                        <Shield size={14} color="#6B3AA0" strokeWidth={2} />
+                        <Shield size={14} color={colors.primary} strokeWidth={2} />
                         <Text style={s.securityText}>
                             This code is single-use and was sent to your phone by your parent.
                         </Text>
@@ -224,7 +228,7 @@ export default function ChildScreen() {
     if (step === "claiming") {
         return (
             <View style={s.centered}>
-                <ActivityIndicator size="large" color="#6B3AA0" />
+                <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={s.claimingText}>Setting up your account...</Text>
             </View>
         );
@@ -233,7 +237,7 @@ export default function ChildScreen() {
     if (!eventId) {
         return (
             <View style={s.centered}>
-                <ActivityIndicator size="large" color="#6B3AA0" />
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -241,7 +245,7 @@ export default function ChildScreen() {
     if (!eventSnapshotReceived) {
         return (
             <View style={s.centered}>
-                <ActivityIndicator size="large" color="#6B3AA0" />
+                <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={s.claimingText}>Loading your event...</Text>
             </View>
         );
@@ -265,7 +269,7 @@ export default function ChildScreen() {
             style={s.container}
             contentContainerStyle={s.content}
             refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6B3AA0" />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
             }
         >
             <View style={s.header}>
@@ -289,14 +293,14 @@ export default function ChildScreen() {
                 </View>
                 {ephemeralKeySecret && (
                     <View style={s.secureBadge}>
-                        <Shield size={12} color="#10B981" strokeWidth={2.5} />
+                        <Shield size={12} color={colors.secondary} strokeWidth={2.5} />
                         <Text style={s.secureBadgeText}>Secured by Stripe</Text>
                     </View>
                 )}
             </View>
 
             <View style={s.balanceBlock}>
-                <DollarSign size={22} color="#6B3AA0" strokeWidth={2.5} />
+                <DollarSign size={22} color={colors.primary} strokeWidth={2.5} />
                 <View style={s.balanceTextBlock}>
                     <Text style={s.balanceLabel}>Your balance</Text>
                     <Text style={s.balanceAmount}>
@@ -308,12 +312,12 @@ export default function ChildScreen() {
 
             <View style={s.giftsSection}>
                 <View style={s.giftsHeader}>
-                    <Gift size={22} color="#6B3AA0" strokeWidth={2.5} />
+                    <Gift size={22} color={colors.primary} strokeWidth={2.5} />
                     <Text style={s.giftsTitle}>Gifts from guests</Text>
                 </View>
                 {paidGuests.length === 0 ? (
                     <View style={s.emptyGifts}>
-                        <MessageCircle size={40} color="#D1D5DB" strokeWidth={1.5} />
+                        <MessageCircle size={40} color={colors.outlineVariant} strokeWidth={1.5} />
                         <Text style={s.emptyGiftsText}>No gifts yet</Text>
                         <Text style={s.emptyGiftsSubtext}>When guests send you money, they'll appear here.</Text>
                     </View>
@@ -342,80 +346,180 @@ export default function ChildScreen() {
 }
 
 const s = StyleSheet.create({
-    authRoot: { flex: 1, backgroundColor: "#F9FAFB" },
+    authRoot: { flex: 1, backgroundColor: "transparent" },
     authContent: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingBottom: 40 },
     authIconWrap: {
-        width: 64, height: 64, borderRadius: 20, backgroundColor: "#F5F3FF",
-        alignItems: "center", justifyContent: "center", alignSelf: "center", marginBottom: 20,
+        width: 64,
+        height: 64,
+        borderRadius: radius.md,
+        backgroundColor: colors.surfaceContainerLow,
+        alignItems: "center",
+        justifyContent: "center",
+        alignSelf: "center",
+        marginBottom: 20,
     },
-    authTitle: { fontSize: 24, fontWeight: "900", color: "#0F172A", textAlign: "center", marginBottom: 10 },
-    authSubtitle: { fontSize: 15, color: "#64748B", textAlign: "center", lineHeight: 22, marginBottom: 28 },
+    authTitle: {
+        fontSize: 24,
+        fontWeight: "900",
+        color: colors.onSurface,
+        fontFamily: fontFamily.display,
+        textAlign: "center",
+        marginBottom: 10,
+    },
+    authSubtitle: {
+        fontSize: 15,
+        color: colors.onSurfaceVariant,
+        textAlign: "center",
+        lineHeight: 22,
+        marginBottom: 28,
+    },
     inputRow: {
-        flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF",
-        borderRadius: 14, borderWidth: 1, borderColor: "#E2E8F0", paddingHorizontal: 14, marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: "rgba(203, 195, 215, 0.15)",
+        paddingHorizontal: 14,
+        marginBottom: spacing[3],
     },
-    input: { flex: 1, fontSize: 17, fontWeight: "600", color: "#0F172A", paddingVertical: 16, marginLeft: 10 },
+    input: {
+        flex: 1,
+        fontSize: 17,
+        fontWeight: "600",
+        color: colors.onSurface,
+        paddingVertical: 16,
+        marginLeft: 10,
+    },
     errorText: { fontSize: 13, color: "#EF4444", fontWeight: "600", textAlign: "center", marginBottom: 12 },
-    primaryBtn: {
-        flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-        backgroundColor: "#6B3AA0", paddingVertical: 16, borderRadius: 16, marginTop: 8,
-        shadowColor: "#6B3AA0", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+    primaryBtnWrap: {
+        marginTop: spacing[2],
+        borderRadius: radius.md,
+        overflow: "hidden",
+        ...ambientShadow,
+        shadowColor: colors.primary,
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 4,
     },
-    primaryBtnLabel: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+    primaryBtnGradient: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: spacing[2],
+        paddingVertical: spacing[4],
+        borderRadius: radius.md,
+    },
+    primaryBtnLabel: { fontSize: 16, fontWeight: "700", color: colors.onPrimary, fontFamily: fontFamily.title },
     securityNote: {
-        flexDirection: "row", alignItems: "center", gap: 8, marginTop: 24,
-        paddingVertical: 10, paddingHorizontal: 14, backgroundColor: "#F5F3FF", borderRadius: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing[2],
+        marginTop: spacing[6],
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        backgroundColor: colors.surfaceContainerLow,
+        borderRadius: radius.sm,
     },
-    securityText: { flex: 1, fontSize: 12, color: "#6B3AA0", fontWeight: "500", lineHeight: 17 },
+    securityText: { flex: 1, fontSize: 12, color: colors.primary, fontWeight: "500", lineHeight: 17 },
 
-    container: { flex: 1, backgroundColor: "#F9FAFB" },
+    container: { flex: 1, backgroundColor: "transparent" },
     content: { padding: 20, paddingBottom: 40 },
-    centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24, backgroundColor: "#F9FAFB" },
-    claimingText: { marginTop: 16, fontSize: 16, color: "#6B7280", fontWeight: "600" },
-    errorSubtitle: { fontSize: 15, color: "#6B7280", textAlign: "center", marginBottom: 8 },
-    welcomeTitle: { fontSize: 20, fontWeight: "800", color: "#6B3AA0", marginBottom: 12, textAlign: "center" },
-    welcomeSubtitle: { fontSize: 15, color: "#6B7280", textAlign: "center", lineHeight: 22 },
+    centered: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: spacing[6],
+        backgroundColor: "transparent",
+    },
+    claimingText: {
+        marginTop: spacing[4],
+        fontSize: 16,
+        color: colors.onSurfaceVariant,
+        fontWeight: "600",
+    },
+    errorSubtitle: { fontSize: 15, color: colors.onSurfaceVariant, textAlign: "center", marginBottom: spacing[2] },
+    welcomeTitle: {
+        fontSize: 20,
+        fontWeight: "800",
+        color: colors.primary,
+        marginBottom: spacing[3],
+        textAlign: "center",
+        fontFamily: fontFamily.display,
+    },
+    welcomeSubtitle: { fontSize: 15, color: colors.onSurfaceVariant, textAlign: "center", lineHeight: 22 },
     header: { marginBottom: 20 },
-    eventName: { fontSize: 22, fontWeight: "800", color: "#111827" },
-    greeting: { fontSize: 14, color: "#6B7280", marginTop: 4, fontWeight: "600" },
+    eventName: { fontSize: 22, fontWeight: "800", color: colors.onSurface, fontFamily: fontFamily.display },
+    greeting: { fontSize: 14, color: colors.onSurfaceVariant, marginTop: 4, fontWeight: "600" },
     card: {
-        borderRadius: 20, padding: 24, marginBottom: 20, backgroundColor: "#6B3AA0",
-        shadowColor: "#6B3AA0", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 8,
+        borderRadius: radius.md,
+        padding: spacing[6],
+        marginBottom: 20,
+        backgroundColor: colors.primary,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 8,
     },
     cardInner: {},
     cardRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
     cardLabel: { fontSize: 18, fontWeight: "800", color: "rgba(255,255,255,0.95)" },
     cardNumber: { fontSize: 16, fontWeight: "700", color: "rgba(255,255,255,0.7)", letterSpacing: 2, marginBottom: 16 },
     cardBalanceLabel: { fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: "700", marginBottom: 4 },
-    cardBalance: { fontSize: 28, fontWeight: "800", color: "#FFFFFF" },
+    cardBalance: { fontSize: 28, fontWeight: "800", color: colors.onPrimary },
     secureBadge: {
-        flexDirection: "row", alignItems: "center", gap: 6, marginTop: 16,
-        paddingVertical: 6, paddingHorizontal: 10, backgroundColor: "rgba(255,255,255,0.15)",
-        borderRadius: 8, alignSelf: "flex-start",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 16,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: "rgba(255,255,255,0.15)",
+        borderRadius: radius.sm,
+        alignSelf: "flex-start",
     },
     secureBadgeText: { fontSize: 11, color: "rgba(255,255,255,0.85)", fontWeight: "700" },
     balanceBlock: {
-        flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF",
-        borderRadius: 16, padding: 20, marginBottom: 24,
-        shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius.md,
+        padding: 20,
+        marginBottom: spacing[6],
+        shadowColor: colors.onSurface,
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 3,
     },
     balanceTextBlock: { marginLeft: 14, flex: 1 },
-    balanceLabel: { fontSize: 12, color: "#6B7280", fontWeight: "700" },
-    balanceAmount: { fontSize: 24, fontWeight: "800", color: "#10B981" },
-    balanceHint: { fontSize: 11, color: "#9CA3AF", marginTop: 4, fontWeight: "500" },
-    giftsSection: { marginBottom: 24 },
+    balanceLabel: { fontSize: 12, color: colors.onSurfaceVariant, fontWeight: "700" },
+    balanceAmount: { fontSize: 24, fontWeight: "800", color: colors.secondary },
+    balanceHint: { fontSize: 11, color: colors.muted, marginTop: 4, fontWeight: "500" },
+    giftsSection: { marginBottom: spacing[6] },
     giftsHeader: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-    giftsTitle: { fontSize: 16, fontWeight: "800", color: "#6B3AA0", marginLeft: 10 },
-    emptyGifts: { alignItems: "center", paddingVertical: 32, backgroundColor: "#FFFFFF", borderRadius: 16, padding: 24 },
-    emptyGiftsText: { fontSize: 15, fontWeight: "700", color: "#9CA3AF", marginTop: 12 },
-    emptyGiftsSubtext: { fontSize: 12, color: "#D1D5DB", marginTop: 4 },
+    giftsTitle: { fontSize: 16, fontWeight: "800", color: colors.primary, marginLeft: 10, fontFamily: fontFamily.display },
+    emptyGifts: {
+        alignItems: "center",
+        paddingVertical: 32,
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius.md,
+        padding: spacing[6],
+    },
+    emptyGiftsText: { fontSize: 15, fontWeight: "700", color: colors.muted, marginTop: 12 },
+    emptyGiftsSubtext: { fontSize: 12, color: colors.outlineVariant, marginTop: 4 },
     giftList: { gap: 12 },
     giftCard: {
-        backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16,
-        shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius.md,
+        padding: spacing[4],
+        shadowColor: colors.onSurface,
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
     },
     giftCardRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
-    guestName: { fontSize: 15, fontWeight: "700", color: "#111827" },
-    guestAmount: { fontSize: 16, fontWeight: "800", color: "#10B981" },
-    guestBlessing: { fontSize: 13, color: "#6B7280", fontStyle: "italic", lineHeight: 20 },
+    guestName: { fontSize: 15, fontWeight: "700", color: colors.onSurface },
+    guestAmount: { fontSize: 16, fontWeight: "800", color: colors.secondary },
+    guestBlessing: { fontSize: 13, color: colors.onSurfaceVariant, fontStyle: "italic", lineHeight: 20 },
 });

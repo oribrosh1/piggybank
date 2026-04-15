@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNotFoundScreen } from "./useNotFoundScreen";
+import { colors, radius, ambientShadow, fontFamily } from "@/src/theme";
 
 export default function NotFoundScreen() {
   const {
@@ -30,7 +31,7 @@ export default function NotFoundScreen() {
         >
           <View style={styles.header}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#6B3AA0" />
+              <Ionicons name="arrow-back" size={24} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -70,7 +71,7 @@ export default function NotFoundScreen() {
                   style={styles.createButton}
                 >
                   <Text style={styles.createButtonText}>Create</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} />
                 </TouchableOpacity>
               </View>
             )}
@@ -93,13 +94,13 @@ export default function NotFoundScreen() {
                       <Ionicons
                         name="document-text-outline"
                         size={20}
-                        color="#6B3AA0"
+                        color={colors.primary}
                       />
                     </View>
                     <Text style={styles.routeTitle} numberOfLines={1}>
                       {route.name}
                     </Text>
-                    <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                    <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -114,11 +115,11 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F0FFFE",
+    backgroundColor: "transparent",
   },
   container: {
     flex: 1,
-    backgroundColor: "#F0FFFE",
+    backgroundColor: "transparent",
   },
   contentContainer: {
     flexGrow: 1,
@@ -137,11 +138,8 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    backgroundColor: colors.surfaceContainerLowest,
+    ...ambientShadow,
     elevation: 3,
   },
   mainContent: {
@@ -164,43 +162,43 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: -10,
-    backgroundColor: "#6B3AA0",
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: "#6B3AA0",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
   },
   notFoundText: {
     fontSize: 20,
-    fontWeight: "900",
-    color: "#FFFFFF",
+    fontFamily: fontFamily.display,
+    color: colors.onPrimary,
     letterSpacing: 1,
   },
   title: {
     fontSize: 28,
-    fontWeight: "900",
-    color: "#111827",
+    fontFamily: fontFamily.display,
+    color: colors.onSurface,
     marginBottom: 12,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
+    color: colors.onSurfaceVariant,
     textAlign: "center",
     marginBottom: 8,
-    fontWeight: "600",
+    fontFamily: fontFamily.title,
   },
   pathHighlight: {
-    color: "#6B3AA0",
-    fontWeight: "800",
+    color: colors.primary,
+    fontFamily: fontFamily.title,
   },
   description: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: colors.muted,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 32,
@@ -208,26 +206,21 @@ const styles = StyleSheet.create({
   },
   createPageCard: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: radius.md,
     padding: 20,
     marginBottom: 32,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    ...ambientShadow,
     elevation: 4,
-    borderWidth: 2,
-    borderColor: "#F3E8FF",
   },
   createIconContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#F3E8FF",
+    backgroundColor: colors.surfaceContainerHigh,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -239,28 +232,28 @@ const styles = StyleSheet.create({
   },
   createTitle: {
     fontSize: 15,
-    fontWeight: "800",
-    color: "#111827",
+    fontFamily: fontFamily.title,
+    color: colors.onSurface,
     marginBottom: 4,
   },
   createDescription: {
     fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    fontFamily: fontFamily.body,
   },
   createButton: {
-    backgroundColor: "#6B3AA0",
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
   createButtonText: {
-    color: "#FFFFFF",
+    color: colors.onPrimary,
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: fontFamily.title,
   },
   routesSection: {
     width: "100%",
@@ -272,14 +265,14 @@ const styles = StyleSheet.create({
   },
   routesTitle: {
     fontSize: 20,
-    fontWeight: "900",
-    color: "#111827",
+    fontFamily: fontFamily.display,
+    color: colors.onSurface,
     marginBottom: 6,
   },
   routesSubtitle: {
     fontSize: 13,
-    color: "#9CA3AF",
-    fontWeight: "600",
+    color: colors.muted,
+    fontFamily: fontFamily.title,
   },
   routesList: {
     width: "100%",
@@ -288,31 +281,26 @@ const styles = StyleSheet.create({
   routeCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radius.md,
     padding: 16,
     gap: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    ...ambientShadow,
     elevation: 2,
   },
   routeIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F3E8FF",
+    backgroundColor: colors.surfaceContainerHigh,
     alignItems: "center",
     justifyContent: "center",
   },
   routeTitle: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "700",
-    color: "#111827",
+    fontFamily: fontFamily.title,
+    color: colors.onSurface,
     textTransform: "capitalize",
   },
 });

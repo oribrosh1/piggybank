@@ -226,8 +226,8 @@ export default function EditEventScreen() {
     }
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-            <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: "transparent" }}>
+            <View style={{ flex: 1, backgroundColor: "transparent" }}>
                 <Animated.ScrollView
                     style={{ flex: 1, opacity: fadeAnim }}
                     contentContainerStyle={{ paddingBottom: 140 }}

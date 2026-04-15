@@ -1,12 +1,28 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import Animated, { Easing, FadeInUp } from "react-native-reanimated";
 import type { EventSummary } from "@/types/events";
+import {
+  colors,
+  spacing,
+  fontFamily,
+  cardsHtmlSlideUpMs,
+  cardsHtmlSlideUpBezier,
+  cardsHtmlStagger1Ms,
+  cardsHtmlStagger2Ms,
+  cardsHtmlStagger3Ms,
+} from "@/src/theme";
 import BankingSetupRequiredCard from "./BankingSetupRequiredCard";
 import UpcomingEventPosterRow from "./UpcomingEventPosterRow";
 import LockedNextStepsSection from "./LockedNextStepsSection";
 
+const slideUpEasing = Easing.bezier(
+  cardsHtmlSlideUpBezier[0],
+  cardsHtmlSlideUpBezier[1],
+  cardsHtmlSlideUpBezier[2],
+  cardsHtmlSlideUpBezier[3]
+);
+
 interface Props {
-  greeting: string;
-  firstName: string;
   event: EventSummary;
   formattedEventDate: string;
   onCompleteBanking: () => void;
@@ -14,9 +30,11 @@ interface Props {
   onViewAllEvents: () => void;
 }
 
+/**
+ * Pre–banking dashboard — HTML `main` uses `space-y-8`; column `gap` tightened slightly vs full 32px
+ * (`animate-slide-up stagger-1`); greeting lives in app header, not duplicated here.
+ */
 export default function PreEventBankingPendingState({
-  greeting,
-  firstName,
   event,
   formattedEventDate,
   onCompleteBanking,
@@ -24,41 +42,61 @@ export default function PreEventBankingPendingState({
   onViewAllEvents,
 }: Props) {
   return (
-    <View>
-      <Text
-        style={{
-          fontSize: 11,
-          fontWeight: "800",
-          color: "#7C3AED",
-          letterSpacing: 1.2,
-          marginBottom: 6,
-        }}
+    <View style={styles.column}>
+      <Animated.View
+        entering={FadeInUp.duration(cardsHtmlSlideUpMs).delay(cardsHtmlStagger1Ms).easing(slideUpEasing)}
       >
-        DASHBOARD
-      </Text>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: "800",
-          color: "#1F2937",
-          marginBottom: 18,
-        }}
+        <BankingSetupRequiredCard onCompleteSetup={onCompleteBanking} />
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInUp.duration(cardsHtmlSlideUpMs).delay(cardsHtmlStagger2Ms).easing(slideUpEasing)}
+        style={styles.sectionBlock}
       >
-        {greeting}, {firstName}
-      </Text>
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Upcoming Event</Text>
+          <TouchableOpacity onPress={onViewAllEvents} hitSlop={8}>
+            <Text style={styles.viewAll}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        <UpcomingEventPosterRow event={event} formattedDate={formattedEventDate} onPress={onViewEvent} />
+      </Animated.View>
 
-      <BankingSetupRequiredCard onCompleteSetup={onCompleteBanking} />
-
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <Text style={{ fontSize: 18, fontWeight: "900", color: "#111827" }}>Upcoming Events</Text>
-        <TouchableOpacity onPress={onViewAllEvents} hitSlop={8}>
-          <Text style={{ fontSize: 14, fontWeight: "800", color: "#7C3AED" }}>View All</Text>
-        </TouchableOpacity>
-      </View>
-
-      <UpcomingEventPosterRow event={event} formattedDate={formattedEventDate} onPress={onViewEvent} />
-
-      <LockedNextStepsSection />
+      <Animated.View
+        entering={FadeInUp.duration(cardsHtmlSlideUpMs).delay(cardsHtmlStagger3Ms).easing(slideUpEasing)}
+        style={styles.sectionBlock}
+      >
+        <LockedNextStepsSection />
+      </Animated.View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  column: {
+    gap: spacing[2],
+  },
+  sectionBlock: {
+    marginBottom: 0,
+  },
+  sectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing[3],
+    paddingHorizontal: spacing[2],
+  },
+  sectionTitle: {
+    fontFamily: fontFamily.headline,
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  viewAll: {
+    fontFamily: fontFamily.title,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+});

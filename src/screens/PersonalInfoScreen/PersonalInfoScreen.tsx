@@ -82,10 +82,10 @@ export default function PersonalInfoScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: "#FFFFFF" }}
+      style={{ flex: 1, backgroundColor: "transparent" }}
     >
       <View
-        style={{ flex: 1, backgroundColor: "#FFFFFF", paddingTop: insets.top }}
+        style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}
       >
         {/* Header with gradient background */}
         <View

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Modal, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, Modal, ScrollView, TouchableOpacity, Image } from "react-native";
 import { X, Sparkles, Users, Send, Clock } from "lucide-react-native";
 
 const PAGE_BG = "#FAFAFA";
@@ -247,6 +247,29 @@ export default function CelebrationToolsModal({
               );
             })}
           </View>
+
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "800",
+              letterSpacing: 0.4,
+              color: "#6B7280",
+              marginTop: 8,
+              marginBottom: 12,
+            }}
+          >
+            SMS Theme Preview
+          </Text>
+          <Image
+            source={require("../../../../assets/images/creditkid-demo-message.png")}
+            resizeMode="contain"
+            style={{
+              width: "100%",
+              height: 420,
+              borderRadius: CARD_RADIUS,
+              backgroundColor: "#F3F4F6",
+            }}
+          />
         </ScrollView>
 
         <View

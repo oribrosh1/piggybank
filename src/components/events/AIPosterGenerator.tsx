@@ -33,7 +33,8 @@ function eventHasOptionalDetailsForAi(e: Event): boolean {
     e.partyType ||
     e.kosherType ||
     e.mealType ||
-    e.eventCategory
+    e.eventCategory ||
+    e.honoreePhotoUrl
   );
 }
 

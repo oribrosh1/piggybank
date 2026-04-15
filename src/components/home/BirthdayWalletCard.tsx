@@ -1,5 +1,6 @@
 import { View, Text } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { colors, typography, radius, spacing, ambientShadow, fontFamily } from "@/src/theme";
 
 interface Props {
   unlockDate: string;
@@ -8,31 +9,29 @@ interface Props {
 export default function BirthdayWalletCard({ unlockDate }: Props) {
   return (
     <View
-      style={{
-        backgroundColor: "#FFF",
-        borderRadius: 20,
-        padding: 20,
-        alignItems: "center",
-        marginBottom: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-      }}
+      style={[
+        {
+          backgroundColor: colors.surfaceContainerLowest,
+          borderRadius: radius.md,
+          padding: spacing[5],
+          alignItems: "center",
+          marginBottom: spacing[4],
+        },
+        ambientShadow,
+      ]}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 12 }}>
         <View
           style={{
             width: 40,
             height: 40,
-            borderRadius: 12,
-            backgroundColor: "#F3F4F6",
+            borderRadius: radius.sm,
+            backgroundColor: colors.surfaceContainerLow,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="lock-closed" size={20} color="#9CA3AF" />
+          <Ionicons name="lock-closed" size={20} color={colors.muted} />
         </View>
         <View
           style={{
@@ -48,39 +47,29 @@ export default function BirthdayWalletCard({ unlockDate }: Props) {
                 width: 24,
                 height: 16,
                 borderRadius: 4,
-                backgroundColor: "#E5E7EB",
+                backgroundColor: colors.surfaceContainerHigh,
               }}
             />
           ))}
         </View>
       </View>
 
+      <Text style={[typography.titleLg, { marginBottom: spacing[2] }]}>Birthday Wallet</Text>
       <Text
-        style={{
-          fontSize: 17,
-          fontWeight: "800",
-          color: "#1F2937",
-          marginBottom: 6,
-        }}
-      >
-        Birthday Wallet
-      </Text>
-      <Text
-        style={{
-          fontSize: 13,
-          color: "#9CA3AF",
-          textAlign: "center",
-          lineHeight: 18,
-          marginBottom: 8,
-        }}
+        style={[
+          typography.bodyMd,
+          {
+            color: colors.muted,
+            textAlign: "center",
+            marginBottom: spacing[2],
+          },
+        ]}
       >
         Your child's total gifts will be{"\n"}available here on the big day!
       </Text>
-      <Text style={{ fontSize: 14, fontWeight: "600", color: "#1F2937" }}>
+      <Text style={[typography.bodyLg, { fontFamily: fontFamily.title }]}>
         Unlocks on{" "}
-        <Text style={{ color: "#10B981", fontWeight: "700" }}>
-          {unlockDate}
-        </Text>
+        <Text style={{ color: colors.primary }}>{unlockDate}</Text>
       </Text>
     </View>
   );

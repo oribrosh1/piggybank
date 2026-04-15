@@ -24,11 +24,11 @@ export default function IdentityVerificationScreen() {
   } = useIdentityVerificationScreen();
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}>
       <IdentityVerificationHeader progressWidth={progressWidth} onBack={goBack} />
 
       <Animated.ScrollView
-        style={{ flex: 1, opacity: fadeAnim }}
+        style={{ flex: 1, opacity: fadeAnim, backgroundColor: "transparent" }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 140 }}
         showsVerticalScrollIndicator={false}
       >

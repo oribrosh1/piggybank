@@ -19,7 +19,7 @@ module.exports = {
         splash: {
             image: "./assets/images/splash.png",
             resizeMode: "contain",
-            backgroundColor: "#ffffff"
+            backgroundColor: "#f8f9ff"
         },
         ios: {
             config: {

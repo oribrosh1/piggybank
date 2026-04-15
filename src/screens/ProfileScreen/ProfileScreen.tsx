@@ -13,9 +13,12 @@ import Constants from "expo-constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useProfileScreen } from "./useProfileScreen";
+import AppTabFooter from "@/src/components/AppTabFooter";
+import AppTabHeader from "@/src/components/AppTabHeader";
+import { colors } from "@/src/theme";
 
-const PURPLE = "#7C3AED";
-const BG = "#F3F4F6";
+const PURPLE = colors.primary;
+const BG = "transparent";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -55,16 +58,11 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: BG,
-          paddingTop: insets.top,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color={PURPLE} />
+      <View style={{ flex: 1, backgroundColor: BG, paddingTop: insets.top }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={PURPLE} />
+        </View>
+        <AppTabFooter />
       </View>
     );
   }
@@ -72,7 +70,10 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
       <ScrollView
+        style={{ backgroundColor: "transparent" }}
         contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: insets.top + 12,
           paddingBottom: insets.bottom + 32,
         }}
         showsVerticalScrollIndicator={false}
@@ -84,53 +85,7 @@ export default function ProfileScreen() {
           />
         }
       >
-        {/* Top header row */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 20,
-            paddingTop: insets.top + 8,
-            paddingBottom: 16,
-          }}
-        >
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: "#E5E7EB",
-              overflow: "hidden",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {photoUrl ? (
-              <Image
-                source={{ uri: photoUrl }}
-                style={{ width: 40, height: 40 }}
-              />
-            ) : (
-              <Text style={{ fontSize: 16, fontWeight: "700", color: "#6B7280" }}>
-                {initial}
-              </Text>
-            )}
-          </View>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "700",
-              color: PURPLE,
-              fontStyle: "italic",
-            }}
-          >
-            CreditKid
-          </Text>
-          <TouchableOpacity hitSlop={12}>
-            <Ionicons name="notifications-outline" size={24} color={PURPLE} />
-          </TouchableOpacity>
-        </View>
+        <AppTabHeader />
 
         {/* Hero avatar + name */}
         <View style={{ alignItems: "center", paddingHorizontal: 20, marginBottom: 24 }}>
@@ -453,6 +408,8 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <AppTabFooter style={{ marginTop: 8 }} />
 
         <Text
           style={{

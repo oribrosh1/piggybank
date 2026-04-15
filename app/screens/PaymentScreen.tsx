@@ -224,7 +224,7 @@ export default function PaymentScreen({ route, navigation }: { route: any, navig
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,

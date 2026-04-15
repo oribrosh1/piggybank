@@ -7,19 +7,33 @@ import {
   RefreshControl,
   useWindowDimensions,
   TextInput,
-  TouchableOpacity,
   Platform,
   StyleSheet,
+  Pressable,
+  type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { Lock, Wallet, Sparkles, Calendar } from "lucide-react-native";
 import { getEvent, getUserEventsStats } from "@/src/lib/eventService";
 import { PayoutSetupBanner } from "@/src/components/events";
 import { getGiftTemplate } from "@/src/lib/giftCardTemplates";
 import type { Event, Guest } from "@/types/events";
 import { routes } from "@/types/routes";
+import AppTabFooter from "@/src/components/AppTabFooter";
+import AppTabHeader from "@/src/components/AppTabHeader";
+import {
+  colors,
+  typography,
+  radius,
+  spacing,
+  primaryGradient,
+  fontFamily,
+  ambientShadow,
+} from "@/src/theme";
 
 function centsToUsd(cents: number): number {
   return (cents || 0) / 100;
@@ -92,131 +106,67 @@ export default function GiftsTabScreen() {
 
   if (loading) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#F5F0FF",
-          paddingTop: insets.top,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color="#7C3AED" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: "#6B7280" }}>
-          Loading gifts…
-        </Text>
+      <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[typography.bodyLg, { marginTop: 16, color: colors.onSurfaceVariant }]}>
+            Loading gifts…
+          </Text>
+        </View>
+        <AppTabFooter />
       </View>
     );
   }
 
   if (!event) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#F5F0FF", paddingTop: insets.top }}>
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <HomeStyleHeader />
-          <Text
-            style={{
-              fontSize: 24,
-              fontWeight: "900",
-              color: "#111827",
-              marginBottom: 4,
-            }}
-          >
-            Gifts Received (0)
-          </Text>
-          <Text style={{ fontSize: 15, fontWeight: "600", color: "#7C3AED", marginBottom: 24 }}>
-            No event yet
-          </Text>
-          <View style={{ alignItems: "center", paddingVertical: 40 }}>
-            <Text style={{ fontSize: 52, marginBottom: 12 }}>🎁</Text>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "800",
-                color: "#374151",
-                textAlign: "center",
-                marginBottom: 8,
-              }}
-            >
-              Create an event first
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#9CA3AF",
-                textAlign: "center",
-                lineHeight: 20,
-                marginBottom: 20,
-              }}
-            >
-              When guests send gifts with a blessing, their gift cards appear here.
-            </Text>
-            <TouchableOpacity onPress={() => router.push(routes.createEvent.eventType)}>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#7C3AED" }}>
-                Create event →
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
+      <GiftsTabNoEventView
+        insetsTop={insets.top}
+        insetsBottom={insets.bottom}
+        screenW={screenW}
+        router={router}
+      />
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F5F0FF", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing[5],
+          paddingTop: insets.top + 12,
           paddingBottom: insets.bottom + 28,
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C3AED" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <HomeStyleHeader />
+        <AppTabHeader />
 
         <PayoutSetupBanner event={event} />
 
-        <Text
-          style={{
-            fontSize: 24,
-            fontWeight: "900",
-            color: "#111827",
-            marginBottom: 4,
-          }}
-        >
+        <Text style={[typography.headlineLg, { fontSize: 24, marginBottom: 4 }]}>
           Gifts Received ({paidGuests.length})
         </Text>
         <Text
-          style={{
-            fontSize: 15,
-            fontWeight: "600",
-            color: "#7C3AED",
-            marginBottom: 20,
-          }}
+          style={[
+            typography.bodyLg,
+            { fontFamily: fontFamily.title, color: colors.primary, marginBottom: 20 },
+          ]}
         >
           {event.eventName}
         </Text>
 
-        {/* Total — vault-style gradient (purple → indigo) */}
+        {/* Total — primary gradient */}
         <LinearGradient
-          colors={["#6366F1", "#7C3AED", "#5B21B6"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          {...primaryGradient}
           style={{
-            borderRadius: 22,
+            borderRadius: radius.md,
             padding: 22,
             marginBottom: 22,
-            shadowColor: "#5B21B6",
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.35,
-            shadowRadius: 14,
-            elevation: 6,
+            ...ambientShadow,
           }}
         >
           <Text
@@ -230,7 +180,7 @@ export default function GiftsTabScreen() {
           >
             VAULT BALANCE ELEVATION
           </Text>
-          <Text style={{ fontSize: 38, fontWeight: "900", color: "#FFFFFF", letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 38, fontFamily: fontFamily.display, color: colors.onPrimary, letterSpacing: -0.5 }}>
             {totalUsd.toLocaleString("en-US", {
               style: "currency",
               currency: "USD",
@@ -246,7 +196,7 @@ export default function GiftsTabScreen() {
                 borderRadius: 999,
               }}
             >
-              <Text style={{ fontSize: 12, fontWeight: "800", color: "#FFFFFF", letterSpacing: 0.4 }}>
+              <Text style={{ fontSize: 12, fontFamily: fontFamily.title, color: colors.onPrimary, letterSpacing: 0.4 }}>
                 Total Gifts Collected
               </Text>
             </View>
@@ -262,7 +212,7 @@ export default function GiftsTabScreen() {
             marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "900", color: "#111827" }}>Birthday Cards</Text>
+          <Text style={[typography.titleLg, { fontSize: 18 }]}>Birthday Cards</Text>
           <View style={{ flexDirection: "row", gap: 5 }}>
             {[0, 1, 2].map((i) => (
               <View
@@ -271,7 +221,7 @@ export default function GiftsTabScreen() {
                   width: 6,
                   height: 6,
                   borderRadius: 3,
-                  backgroundColor: i === 0 ? "#7C3AED" : "#E5E7EB",
+                  backgroundColor: i === 0 ? colors.primary : colors.surfaceContainerHigh,
                 }}
               />
             ))}
@@ -282,27 +232,25 @@ export default function GiftsTabScreen() {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "#FFFFFF",
-            borderRadius: 14,
+            backgroundColor: colors.surfaceContainerLowest,
+            borderRadius: radius.sm,
             paddingHorizontal: 14,
             paddingVertical: 12,
             marginBottom: 18,
-            borderWidth: 1,
-            borderColor: "#E5E7EB",
           }}
         >
-          <Ionicons name="search" size={20} color="#9CA3AF" />
+          <Ionicons name="search" size={20} color={colors.muted} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Search senders..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             style={{
               flex: 1,
               marginLeft: 10,
               fontSize: 15,
-              fontWeight: "500",
-              color: "#111827",
+              fontFamily: fontFamily.body,
+              color: colors.onSurface,
               paddingVertical: 0,
             }}
             autoCorrect={false}
@@ -316,28 +264,30 @@ export default function GiftsTabScreen() {
               alignItems: "center",
               paddingVertical: 28,
               paddingHorizontal: 16,
-              backgroundColor: "#FFFFFF",
-              borderRadius: 20,
+              backgroundColor: colors.surfaceContainerLow,
+              borderRadius: radius.md,
             }}
           >
             <Text style={{ fontSize: 40, marginBottom: 12 }}>💌</Text>
-            <Text style={{ fontSize: 16, fontWeight: "800", color: "#6B7280", textAlign: "center" }}>
+            <Text style={[typography.bodyLg, { fontFamily: fontFamily.title, color: colors.onSurfaceVariant, textAlign: "center" }]}>
               No gifts yet
             </Text>
             <Text
-              style={{
-                marginTop: 8,
-                fontSize: 14,
-                color: "#9CA3AF",
-                textAlign: "center",
-                lineHeight: 20,
-              }}
+              style={[
+                typography.bodyMd,
+                {
+                  marginTop: 8,
+                  color: colors.muted,
+                  textAlign: "center",
+                  lineHeight: 20,
+                },
+              ]}
             >
               Share your invite link — guest gift cards with blessings will appear here.
             </Text>
           </View>
         ) : filteredGuests.length === 0 ? (
-          <Text style={{ fontSize: 14, color: "#9CA3AF", textAlign: "center", paddingVertical: 24 }}>
+          <Text style={[typography.bodyMd, { color: colors.muted, textAlign: "center", paddingVertical: 24 }]}>
             No senders match “{query.trim()}”.
           </Text>
         ) : (
@@ -362,48 +312,388 @@ export default function GiftsTabScreen() {
             ))}
           </ScrollView>
         )}
+
+        <AppTabFooter />
       </ScrollView>
     </View>
   );
 }
 
-function HomeStyleHeader() {
+function GiftsTabNoEventView({
+  insetsTop,
+  insetsBottom,
+  screenW,
+  router,
+}: {
+  insetsTop: number;
+  insetsBottom: number;
+  screenW: number;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const cardWidth = Math.min(screenW * 0.72, 300);
+  const cardGap = 14;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: spacing[5],
+          paddingTop: insetsTop + 12,
+          paddingBottom: insetsBottom + 100,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppTabHeader />
+
+        <Text
+          style={{
+            fontFamily: fontFamily.display,
+            fontSize: 24,
+            lineHeight: 30,
+            letterSpacing: -0.4,
+            color: colors.onSurface,
+            marginBottom: spacing[5],
+          }}
+        >
+          Your gift vault unlocks here
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: spacing[3],
+          }}
+        >
+          <Text style={[typography.titleLg, { fontSize: 17 }]}>Digital Gift Cards</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "800",
+                letterSpacing: 0.8,
+                color: colors.primary,
+                fontFamily: fontFamily.title,
+              }}
+            >
+              LOCKED
+            </Text>
+            <Lock size={14} color={colors.primary} strokeWidth={2.5} />
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: colors.surfaceContainerLow,
+            borderRadius: radius.sm,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            marginBottom: spacing[5],
+            ...borderGhostMuted,
+          }}
+        >
+          <Ionicons name="search" size={20} color={colors.muted} />
+          <TextInput
+            editable={false}
+            placeholder="Search for senders..."
+            placeholderTextColor={colors.muted}
+            style={{
+              flex: 1,
+              marginLeft: 10,
+              fontSize: 15,
+              fontFamily: fontFamily.body,
+              color: colors.onSurface,
+              paddingVertical: 0,
+            }}
+          />
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={cardWidth + cardGap}
+          snapToAlignment="start"
+          contentContainerStyle={{ paddingRight: spacing[5], paddingBottom: spacing[2] }}
+        >
+          <View style={{ marginRight: cardGap }}>
+            <LockedDigitalGiftCard
+              cardWidth={cardWidth}
+              onCreateEvent={() =>
+                router.push({
+                  pathname: routes.createEvent.eventDetails,
+                  params: { eventType: "birthday" },
+                })
+              }
+            />
+          </View>
+           <View style={{ marginRight: cardGap }}>
+            <LockedDigitalGiftCard
+              cardWidth={cardWidth}
+              onCreateEvent={() =>
+                router.push({
+                  pathname: routes.createEvent.eventDetails,
+                  params: { eventType: "birthday" },
+                })
+              }
+            />
+          </View>
+          <View style={{ marginRight: cardGap }}>
+            <LockedDigitalGiftCard
+              cardWidth={cardWidth}
+              onCreateEvent={() =>
+                router.push({
+                  pathname: routes.createEvent.eventDetails,
+                  params: { eventType: "birthday" },
+                })
+              }
+            />
+          </View>
+        </ScrollView>
+
+        <HowDigitalGiftsWork />
+
+        <AppTabFooter style={{ marginTop: spacing[3] }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const borderGhostMuted: ViewStyle = {
+  borderWidth: 1,
+  borderColor: "rgba(203, 195, 215, 0.12)",
+};
+
+function LockedDigitalGiftCard({
+  cardWidth,
+  onCreateEvent,
+}: {
+  cardWidth: number;
+  onCreateEvent: () => void;
+}) {
+  return (
+    <View style={{ width: cardWidth }}>
+      <View
+        style={{
+          width: cardWidth,
+          aspectRatio: 210 / 260,
+          borderRadius: radius.sm,
+          overflow: "hidden",
+          backgroundColor: "#1a0f18",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.08)",
+        }}
+      >
+        <LinearGradient
+          colors={["#0f0608", "#2a1a0f", "#1a1210"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <View
+            style={{
+              position: "absolute",
+              top: 40,
+              left: -20,
+              width: 140,
+              height: 140,
+              borderRadius: 70,
+              backgroundColor: "rgba(255, 200, 120, 0.12)",
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              bottom: 80,
+              right: -30,
+              width: 100,
+              height: 100,
+              borderRadius: 50,
+              backgroundColor: "rgba(255, 220, 160, 0.1)",
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              top: 120,
+              right: 20,
+              width: 28,
+              height: 28,
+              borderRadius: 14,
+              backgroundColor: "rgba(255, 200, 100, 0.15)",
+            }}
+          />
+        </View>
+
+        <View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: spacing[3],
+          }}
+        >
+          <BlurView
+            intensity={Platform.OS === "ios" ? 55 : 40}
+            tint="light"
+            style={{
+              width: "88%",
+              borderRadius: radius.md,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.35)",
+            }}
+          >
+            <View
+              style={{
+                paddingVertical: spacing[5],
+                paddingHorizontal: spacing[4],
+                alignItems: "center",
+                backgroundColor: Platform.OS === "android" ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.65)",
+              }}
+            >
+              <LinearGradient
+                {...primaryGradient}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: spacing[3],
+                }}
+              >
+                <Lock size={24} color={colors.onPrimary} strokeWidth={2.5} />
+              </LinearGradient>
+              <Text
+                style={[
+                  typography.titleLg,
+                  { fontSize: 17, textAlign: "center", marginBottom: spacing[2] },
+                ]}
+              >
+                Unlock on the big day!
+              </Text>
+              <Text
+                style={[
+                  typography.bodyMd,
+                  {
+                    fontSize: 13,
+                    color: colors.onSurfaceVariant,
+                    textAlign: "center",
+                    lineHeight: 19,
+                    marginBottom: spacing[4],
+                  },
+                ]}
+              >
+                Create the birthday event to reveal unique AI blessing cards from your child's friends.
+              </Text>
+              <Pressable
+                onPress={onCreateEvent}
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.9 : 1,
+                  borderRadius: radius.full,
+                  overflow: "hidden",
+                  alignSelf: "stretch",
+                })}
+              >
+                <LinearGradient
+                  {...primaryGradient}
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: spacing[5],
+                    alignItems: "center",
+                    borderRadius: radius.full,
+                  }}
+                >
+                  <Text style={[typography.bodyMd, { fontWeight: "800", color: colors.onPrimary }]}>Create Event</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </BlurView>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function HowDigitalGiftsWork() {
+  const rows = [
+    {
+      key: "direct",
+      Icon: Wallet,
+      title: "Direct Gifting",
+      body: "Money goes straight to your child's vault card, earning interest instantly while locked.",
+      circleBg: "rgba(59, 130, 246, 0.15)",
+      iconColor: "#1D4ED8",
+    },
+    {
+      key: "ai",
+      Icon: Sparkles,
+      title: "AI Blessing Cards",
+      body: "Every gift comes with a unique AI-generated keepsake based on the sender's personalized message.",
+      circleBg: "rgba(16, 185, 129, 0.15)",
+      iconColor: "#047857",
+    },
+    {
+      key: "locked",
+      Icon: Calendar,
+      title: "Locked for Excitement",
+      body: "Visuals and messages unlock on the event date to maximize the birthday morning surprise.",
+      circleBg: "rgba(249, 115, 22, 0.18)",
+      iconColor: "#C2410C",
+    },
+  ];
+
   return (
     <View
       style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 20,
+        marginTop: spacing[6],
+        padding: spacing[5],
+        borderRadius: radius.md,
+        backgroundColor: colors.surfaceContainerLow,
+        ...borderGhostMuted,
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: "#FED7AA",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Ionicons name="gift" size={18} color="#C2410C" />
-        </View>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "700",
-            color: "#7C3AED",
-            fontStyle: "italic",
-          }}
-        >
-          CreditKid
-        </Text>
-      </View>
-      <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Ionicons name="notifications-outline" size={22} color="#374151" />
-      </TouchableOpacity>
+      <Text style={[typography.titleLg, { fontSize: 18, marginBottom: spacing[5], fontFamily: fontFamily.display }]}>
+        How Digital Gifts Work
+      </Text>
+      {rows.map((row) => {
+        const Icon = row.Icon;
+        return (
+          <View
+            key={row.key}
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: spacing[4],
+              marginBottom: spacing[5],
+            }}
+          >
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: row.circleBg,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Icon size={22} color={row.iconColor} strokeWidth={2.2} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[typography.bodyMd, { fontWeight: "800", marginBottom: 4 }]}>{row.title}</Text>
+              <Text style={[typography.bodyMd, { fontSize: 13, color: colors.onSurfaceVariant, lineHeight: 19 }]}>
+                {row.body}
+              </Text>
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -429,12 +719,12 @@ function BlessingGiftCard({ guest, cardWidth }: { guest: Guest; cardWidth: numbe
         style={{
           width: cardWidth,
           aspectRatio: 210 / 297,
-          borderRadius: 16,
+          borderRadius: radius.sm,
           overflow: "hidden",
-          shadowColor: "#000",
+          shadowColor: colors.onSurface,
           shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.18,
-          shadowRadius: 14,
+          shadowOpacity: 0.08,
+          shadowRadius: 24,
           elevation: 8,
         }}
       >

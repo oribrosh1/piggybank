@@ -178,7 +178,7 @@ export default function EventDetailScreen() {
 
   return (
     <View
-      style={{ flex: 1, backgroundColor: "#F0FFTE", paddingTop: insets.top }}
+      style={{ flex: 1, backgroundColor: "transparent", paddingTop: insets.top }}
     >
       {/* Header */}
       <View
@@ -205,7 +205,7 @@ export default function EventDetailScreen() {
         </Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: "transparent" }}>
         {/* Event Info Card */}
         <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
           <View

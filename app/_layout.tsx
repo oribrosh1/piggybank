@@ -11,6 +11,18 @@ import { FirstLaunchLottieOverlay } from "@/src/components/FirstLaunchLottieOver
 import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
 import { BRANDED_LOTTIE_DISPLAY_MS } from "@/src/constants/loading";
 import { View, StyleSheet } from "react-native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useAppFonts } from "@/src/theme";
+import { AppMeshBackground } from "@/src/components/AppMeshBackground";
+
+/** Makes native stack / tab scenes default to transparent so `AppMeshBackground` is visible app-wide */
+const NAV_THEME = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "transparent",
+  },
+};
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,6 +52,7 @@ export default function RootLayout() {
   const router = useRouter();
   const prevAuth = useRef<any>(null);
   const [minBootstrapLottieDone, setMinBootstrapLottieDone] = useState(false);
+  const [fontsLoaded] = useAppFonts();
 
   useEffect(() => {
     const t = setTimeout(() => setMinBootstrapLottieDone(true), BRANDED_LOTTIE_DISPLAY_MS);
@@ -114,17 +127,27 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* Expo Router auto-discovers routes from file system */}
-        </Stack>
-        {(!isReady || !minBootstrapLottieDone) && (
-          <View style={styles.authLoadingOverlay} pointerEvents="auto">
-            <LoadingLogoLottie />
+      <ThemeProvider value={NAV_THEME}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: "transparent" }}>
+          <View style={{ flex: 1, backgroundColor: "transparent" }}>
+            <AppMeshBackground />
+            <View style={{ flex: 1, zIndex: 1 }} pointerEvents="box-none">
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: "transparent" },
+                }}
+              />
+            </View>
           </View>
-        )}
-        <FirstLaunchLottieOverlay />
-      </GestureHandlerRootView>
+          {(!isReady || !minBootstrapLottieDone || !fontsLoaded) && (
+            <View style={styles.authLoadingOverlay} pointerEvents="auto">
+              <LoadingLogoLottie />
+            </View>
+          )}
+          <FirstLaunchLottieOverlay />
+        </GestureHandlerRootView>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
@@ -132,7 +155,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   authLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "white",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 99998,

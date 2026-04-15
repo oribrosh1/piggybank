@@ -7,6 +7,7 @@ import {
   TextInputProps,
   ViewStyle,
 } from "react-native";
+import { colors, typography, radius, fontFamily } from "@/src/theme";
 
 export interface InputProps extends Omit<TextInputProps, "style"> {
   label?: string;
@@ -27,7 +28,7 @@ export default function Input({
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[styles.input, error ? styles.inputError : null, inputStyle]}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={colors.muted}
         {...rest}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -40,26 +41,28 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
+    ...typography.bodyMd,
+    fontFamily: fontFamily.title,
+    color: colors.onSurface,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: "#F9FAFB",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: radius.sm,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: "#111827",
+    fontFamily: fontFamily.body,
+    color: colors.onSurface,
+    borderWidth: 0,
   },
   inputError: {
-    borderColor: "#EF4444",
+    borderWidth: 2,
+    borderColor: "rgba(239, 68, 68, 0.45)",
   },
   errorText: {
     fontSize: 12,
+    fontFamily: fontFamily.body,
     color: "#EF4444",
     marginTop: 4,
   },

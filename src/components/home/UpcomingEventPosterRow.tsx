@@ -1,6 +1,11 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { Calendar, Image as ImageIcon, Wallet, Users } from "lucide-react-native";
 import type { EventSummary } from "@/types/events";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { colors, spacing, fontFamily, radius } from "@/src/theme";
+
+/** Mini teal sphere — HTML `bg-[#10B981]/5` */
+const EVENT_CARD_FLOAT_SPHERE = "rgba(16, 185, 129, 0.05)";
 
 interface Props {
   event: EventSummary;
@@ -11,144 +16,195 @@ interface Props {
 function eventStatusLabel(status: EventSummary["status"]): string {
   switch (status) {
     case "draft":
-      return "DRAFT";
+      return "Draft";
     case "active":
-      return "ACTIVE";
+      return "Active";
     case "completed":
-      return "COMPLETED";
+      return "Completed";
     case "cancelled":
-      return "CANCELLED";
+      return "Cancelled";
     default:
-      return "ACTIVE";
+      return "Active";
   }
 }
 
-/**
- * Horizontal event row with poster thumbnail (matches parent dashboard mock).
- */
 export default function UpcomingEventPosterRow({ event, formattedDate, onPress }: Props) {
   const guests = event.guestStats?.total ?? event.totalGuests ?? 0;
-  const giftsUsd = (event.guestStats?.totalPaid ?? 0) / 100;
-  const statusUpper = eventStatusLabel(event.status);
+  const raisedUsd = (event.guestStats?.totalPaid ?? 0) / 100;
+  const statusLabel = eventStatusLabel(event.status);
+
+  const cardInner = (
+    <View style={styles.cardInnerRoot}>
+      <View style={styles.eventCardFloatSphere} pointerEvents="none" />
+      <View style={styles.cardContentAboveSphere}>
+        <View style={styles.thumb}>
+          {event.posterUrl ? (
+            <Image source={{ uri: event.posterUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          ) : (
+            <View style={styles.thumbPlaceholder}>
+              <ImageIcon size={30} color={colors.muted} strokeWidth={1.8} />
+            </View>
+          )}
+        </View>
+
+        <View style={styles.centerCol}>
+          <Text style={styles.eventName} numberOfLines={2}>
+            {event.eventName}
+          </Text>
+          <View style={styles.dateRow}>
+            <Calendar size={14} color={colors.onSurfaceVariant} strokeWidth={2} />
+            <Text style={styles.dateText}>{formattedDate}</Text>
+          </View>
+          <View style={styles.raisedRow}>
+            <Wallet size={16} color={colors.primary} strokeWidth={2.2} />
+            <Text style={styles.raisedText}>
+              ${raisedUsd.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} Raised
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.rightCol}>
+          <View style={[styles.statusPill, event.status === "draft" && styles.statusPillDraft]}>
+            <Text style={[styles.statusText, event.status === "draft" && styles.statusTextDraft]}>{statusLabel}</Text>
+          </View>
+          <View style={styles.guestsRow}>
+            <Users size={15} color={colors.onSurfaceVariant} strokeWidth={2.2} />
+            <Text style={styles.guestsText}>
+              {guests} Guest{guests === 1 ? "" : "s"}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.92}
-      style={{
-        backgroundColor: "#FFF",
-        borderRadius: 18,
-        padding: 14,
-        flexDirection: "row",
-        gap: 14,
-        marginBottom: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 2,
-      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${event.eventName}, ${formattedDate}`}
     >
-      <View
-        style={{
-          width: 100,
-          borderRadius: 12,
-          overflow: "hidden",
-          backgroundColor: "#F3F4F6",
-          aspectRatio: 210 / 297,
-        }}
-      >
-        {event.posterUrl ? (
-          <Image source={{ uri: event.posterUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
-        ) : (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 8 }}>
-            <Ionicons name="image-outline" size={28} color="#9CA3AF" />
-          </View>
-        )}
-      </View>
-
-      <View style={{ flex: 1, justifyContent: "space-between", minHeight: 130 }}>
-        <View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 17,
-                fontWeight: "900",
-                color: "#111827",
-              }}
-              numberOfLines={2}
-            >
-              {event.eventName}
-            </Text>
-            <View
-              style={{
-                backgroundColor: "#E0F2FE",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 8,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: "800",
-                  color: "#0369A1",
-                  letterSpacing: 0.3,
-                }}
-              >
-                STATUS: {statusUpper}
-              </Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-            <Text style={{ fontSize: 14, fontWeight: "600", color: "#4B5563" }}>{formattedDate}</Text>
-          </View>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "#FFFFFF",
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: "#F3F4F6",
-                paddingVertical: 8,
-                paddingHorizontal: 10,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>{guests}</Text>
-              <Text style={{ fontSize: 10, fontWeight: "800", color: "#9CA3AF", letterSpacing: 0.4 }}>GUESTS</Text>
-            </View>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "#FFFFFF",
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: "#F3F4F6",
-                paddingVertical: 8,
-                paddingHorizontal: 10,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: "900", color: "#111827" }}>
-                ${giftsUsd.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </Text>
-              <Text style={{ fontSize: 10, fontWeight: "800", color: "#9CA3AF", letterSpacing: 0.4 }}>GIFTS</Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <GlassCardDark style={styles.cardGlassOuter}>{cardInner}</GlassCardDark>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  cardGlassOuter: {
+    marginBottom: spacing[2],
+  },
+  cardInnerRoot: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: spacing[4],
+  },
+  cardContentAboveSphere: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: spacing[4],
+    zIndex: 1,
+  },
+  /** HTML: `-top-2 right-12 w-6 h-6 bg-[#10B981]/5` — behind copy; `top` inset so `overflow:hidden` on wrap doesn’t clip */
+  eventCardFloatSphere: {
+    position: "absolute",
+    top: spacing[2],
+    right: 48,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: EVENT_CARD_FLOAT_SPHERE,
+    zIndex: 0,
+  },
+  thumb: {
+    width: 88,
+    height: 88,
+    borderRadius: radius.sm + 4,
+    overflow: "hidden",
+    backgroundColor: colors.surfaceContainerHigh,
+  },
+  thumbPlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing[2],
+  },
+  centerCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: "center",
+    gap: 6,
+  },
+  eventName: {
+    fontFamily: fontFamily.headline,
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.2,
+    lineHeight: 21,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  dateText: {
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.onSurfaceVariant,
+  },
+  raisedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  raisedText: {
+    fontFamily: fontFamily.title,
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  rightCol: {
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    minHeight: 96,
+    paddingLeft: spacing[1],
+  },
+  statusPill: {
+    backgroundColor: "rgba(107, 56, 212, 0.12)",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.2)",
+  },
+  statusPillDraft: {
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    borderColor: "rgba(16, 185, 129, 0.35)",
+  },
+  statusText: {
+    fontFamily: fontFamily.label,
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.primary,
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
+  statusTextDraft: {
+    color: "#047857",
+  },
+  guestsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  guestsText: {
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.onSurfaceVariant,
+  },
+});

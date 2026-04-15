@@ -56,7 +56,7 @@ export function useEventPosterScreen() {
     }
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(progressAnim, { toValue: 1, duration: 800, useNativeDriver: false }),
+      Animated.timing(progressAnim, { toValue: 2 / 3, duration: 800, useNativeDriver: false }),
     ]).start();
   }, [eventId, fadeAnim, progressAnim, router]);
 
@@ -159,6 +159,12 @@ export function useEventPosterScreen() {
 
   const goBack = () => router.back();
 
+  /** Skip AI poster — event already exists; go to My event tab without generating. */
+  const skipPosterAndGoToMyEvent = () => {
+    if (!eventId || generatingTheme) return;
+    router.replace(routes.tabs.myEvent);
+  };
+
   const isGenerating = Boolean(generatingTheme);
 
   return {
@@ -169,6 +175,7 @@ export function useEventPosterScreen() {
     isGenerating,
     selectTheme,
     goBack,
+    skipPosterAndGoToMyEvent,
     fadeAnim,
     progressWidth,
     displayPosterUrl,

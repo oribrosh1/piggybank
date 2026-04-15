@@ -87,6 +87,7 @@ export const routes = {
         profile: route("/(tabs)/profile"),
     },
     createEvent: {
+        /** @deprecated Legacy route — redirects to event-details. Use `eventDetails` with `eventType`. */
         eventType: route("/create-event/event-type"),
         eventDetails: route("/create-event/event-details"),
         selectGuests: route("/create-event/select-guests"),

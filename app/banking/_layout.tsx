@@ -5,6 +5,7 @@ export default function BankingLayout() {
         <Stack
             screenOptions={{
                 headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
             }}
         />
     );

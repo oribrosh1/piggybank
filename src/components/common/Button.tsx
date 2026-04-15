@@ -1,13 +1,22 @@
 import React from "react";
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   ViewStyle,
   TextStyle,
+  View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  colors,
+  primaryGradient,
+  radius,
+  typography,
+  ambientShadow,
+} from "@/src/theme";
 
-export type ButtonVariant = "primary" | "outline" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "tertiary" | "ghost";
 
 export interface ButtonProps {
   onPress: () => void;
@@ -20,39 +29,6 @@ export interface ButtonProps {
   rightIcon?: React.ReactNode;
 }
 
-const variantStyles: Record<
-  ButtonVariant,
-  { container: ViewStyle; text: TextStyle }
-> = {
-  primary: {
-    container: {
-      backgroundColor: "#8B5CF6",
-      borderWidth: 0,
-      shadowColor: "#8B5CF6",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    text: { color: "#FFFFFF", fontWeight: "800" },
-  },
-  outline: {
-    container: {
-      backgroundColor: "transparent",
-      borderWidth: 2,
-      borderColor: "#8B5CF6",
-    },
-    text: { color: "#8B5CF6", fontWeight: "700" },
-  },
-  ghost: {
-    container: {
-      backgroundColor: "#F3F4F6",
-      borderWidth: 0,
-    },
-    text: { color: "#6B7280", fontWeight: "700" },
-  },
-};
-
 export default function Button({
   onPress,
   label,
@@ -63,40 +39,153 @@ export default function Button({
   leftIcon,
   rightIcon,
 }: ButtonProps) {
-  const v = variantStyles[variant];
+  if (variant === "primary") {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          styles.primaryWrap,
+          disabled && styles.disabled,
+          pressed && styles.pressedOpacity,
+          style,
+        ]}
+      >
+        <LinearGradient {...primaryGradient} style={[styles.gradientFill, ambientShadow]}>
+          <View style={styles.innerRow}>
+            {leftIcon}
+            <Text style={[typography.headlineSm, styles.primaryText, textStyle]}>{label}</Text>
+            {rightIcon}
+          </View>
+        </LinearGradient>
+      </Pressable>
+    );
+  }
+
+  if (variant === "secondary") {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          styles.base,
+          styles.secondaryContainer,
+          pressed && styles.pressedOpacity,
+          disabled && styles.disabled,
+          style,
+        ]}
+      >
+        <View style={styles.innerRow}>
+          {leftIcon}
+          <Text
+            style={[
+              typography.headlineSm,
+              { color: colors.onPrimaryFixedVariant },
+              textStyle,
+            ]}
+          >
+            {label}
+          </Text>
+          {rightIcon}
+        </View>
+      </Pressable>
+    );
+  }
+
+  if (variant === "tertiary") {
+    return (
+      <Pressable onPress={onPress} disabled={disabled} style={[styles.base, styles.tertiaryPad, disabled && styles.disabled, style]}>
+        {({ pressed }) => (
+          <View style={styles.innerRow}>
+            {leftIcon}
+            <Text
+              style={[
+                typography.bodyLg,
+                {
+                  color: colors.primary,
+                  textDecorationLine: pressed ? "underline" : "none",
+                  opacity: pressed ? 0.88 : 1,
+                },
+                textStyle,
+              ]}
+            >
+              {label}
+            </Text>
+            {rightIcon}
+          </View>
+        )}
+      </Pressable>
+    );
+  }
+
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.85}
-      style={[
+      style={({ pressed }) => [
         styles.base,
-        v.container,
+        styles.ghostContainer,
+        pressed && styles.pressedOpacity,
         disabled && styles.disabled,
         style,
       ]}
     >
-      {leftIcon}
-      <Text style={[styles.text, v.text, textStyle]}>{label}</Text>
-      {rightIcon}
-    </TouchableOpacity>
+      <View style={styles.innerRow}>
+        {leftIcon}
+        <Text
+          style={[typography.bodyLg, { color: colors.onSurfaceVariant }, textStyle]}
+        >
+          {label}
+        </Text>
+        {rightIcon}
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  primaryWrap: {
+    borderRadius: radius.full,
+    overflow: "hidden",
+  },
   base: {
-    borderRadius: 16,
+    borderRadius: radius.full,
+    minHeight: 52,
+    justifyContent: "center",
+  },
+  gradientFill: {
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    borderRadius: radius.full,
+  },
+  innerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  text: {
-    fontSize: 16,
+  primaryText: {
+    color: colors.onPrimary,
+  },
+  secondaryContainer: {
+    backgroundColor: colors.surfaceContainerHigh,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  tertiaryPad: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: "transparent",
+  },
+  ghostContainer: {
+    backgroundColor: colors.surfaceContainerLow,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  pressedOpacity: {
+    opacity: 0.88,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 });

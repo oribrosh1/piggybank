@@ -78,7 +78,7 @@ export default function BankAccountSuccessScreen({ route, navigation }: { route:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,

@@ -206,11 +206,16 @@ export function useHomeScreen() {
   };
 
   const goToEventDashboard = () => {
-    if (event) router.push(routes.eventDashboard(event.id));
+    // go to "my event" tab
+    router.push(routes.tabs.myEvent);
+     if (event) router.push(routes.tabs.myEvent);
   };
 
   const goToCreateEvent = () => {
-    router.push(routes.createEvent.eventType);
+    router.push({
+      pathname: routes.createEvent.eventDetails,
+      params: { eventType: "birthday" },
+    });
   };
 
   const goToKids = () => {
