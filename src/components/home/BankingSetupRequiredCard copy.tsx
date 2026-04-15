@@ -1,20 +1,10 @@
 import { useEffect, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import LottieView from "lottie-react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { AlertTriangle, Check, CreditCard } from "lucide-react-native";
-
-const VERIFY_CREDITKID_LOTTIE = require("../../../assets/lotties/verify-creditkid.json");
-
-function canUseNativeLottie(): boolean {
-  if (Platform.OS === "web") return false;
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    return false;
-  }
-  return true;
-}
 import Animated, {
   Easing,
   interpolate,
@@ -38,6 +28,16 @@ import {
   cardsHtmlCardGlowPulseMs,
   cardsHtmlRevealCheckDelayMs,
 } from "@/src/theme";
+
+const VERIFY_CREDITKID_LOTTIE = require("../../../assets/lotties/verify-creditkid.json");
+
+function canUseNativeLottie(): boolean {
+  if (Platform.OS === "web") return false;
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return false;
+  }
+  return true;
+}
 
 const HALO_GRADIENT: [string, string, string] = [
   "rgba(107, 56, 212, 0.35)",
@@ -119,48 +119,53 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
     <>
       <Animated.View style={[styles.goldSphere, goldMotion]} pointerEvents="none" />
 
-      <View style={styles.graphicCluster} pointerEvents="none">
-        <View style={styles.graphicCircle}>
-          <View style={styles.graphicCardTilt}>
-            <LinearGradient
-              colors={[colors.primary, colors.primaryContainer]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.graphicCardFace}
-            >
-              <View style={styles.graphicLottieWrap} pointerEvents="none">
-                {useNativeLottie ? (
-                  <LottieView
-                    source={VERIFY_CREDITKID_LOTTIE}
-                    autoPlay
-                    loop
-                    style={styles.graphicLottie}
-                  />
-                ) : (
-                  <View style={styles.graphicIconFallback}>
-                    <CreditCard size={60} color={colors.onPrimary} strokeWidth={2} />
+      <View style={styles.heroRow}>
+        <View style={styles.heroCopyCol}>
+          <View style={styles.actionBadge}>
+            <AlertTriangle size={14} color={colors.primary} strokeWidth={2.4} />
+            <Text style={styles.actionBadgeText}>Action Required</Text>
+          </View>
+          <Text style={styles.title}>Verify & Get A CreditKid Card</Text>
+        </View>
+
+        <View style={styles.heroGraphicCol} pointerEvents="none">
+          <View style={styles.graphicCluster}>
+            <View style={styles.graphicCircle}>
+              <View style={styles.graphicCardTilt}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryContainer]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.graphicCardFace}
+                >
+                  <View style={styles.graphicLottieWrap} pointerEvents="none">
+                    {useNativeLottie ? (
+                      <LottieView
+                        source={VERIFY_CREDITKID_LOTTIE}
+                        autoPlay
+                        loop
+                        style={styles.graphicLottie}
+                      />
+                    ) : (
+                      <View style={styles.graphicIconFallback}>
+                        <CreditCard size={60} color={colors.onPrimary} strokeWidth={2} />
+                      </View>
+                    )}
                   </View>
-                )}
+                </LinearGradient>
+                <Animated.View style={[styles.verifyBubble, checkBubbleStyle]}>
+                  <Check size={22} color="#006c49" strokeWidth={3} />
+                </Animated.View>
               </View>
-            </LinearGradient>
-            <Animated.View style={[styles.verifyBubble, checkBubbleStyle]}>
-              <Check size={22} color="#006c49" strokeWidth={3} />
-            </Animated.View>
+            </View>
           </View>
         </View>
       </View>
 
-      <View style={styles.copyBlock}>
-        <View style={styles.actionBadge}>
-          <AlertTriangle size={14} color={colors.primary} strokeWidth={2.4} />
-          <Text style={styles.actionBadgeText}>Action Required</Text>
-        </View>
-        <Text style={styles.title}>Verify & Get A CreditKid Card</Text>
-      </View>
-        <Text style={{...styles.body, marginTop: 10}}>
-          To send SMS invitations and start collecting digital gifts, you need to verify your identity and link a bank
-          account.
-        </Text>
+      <Text style={styles.body}>
+        To send SMS invitations and start collecting digital gifts, you need to verify your identity and link a bank
+        account.
+      </Text>
 
       <View style={styles.ctaBlock}>
         <TouchableOpacity onPress={onCompleteSetup} activeOpacity={0.92} style={styles.ctaTouch}>
@@ -176,8 +181,9 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
 
         <View style={styles.trustRow}>
           <Text style={styles.trustMuted}>Verified by</Text>
-          {/* image of stripe icon */}
-          <Image source={require("../../../assets/images/stripe-icon.png")} style={{width: 50, height: 25}} resizeMode="contain" />
+          <View style={styles.stripeChip}>
+            <Text style={styles.stripeText}>Stripe</Text>
+          </View>
         </View>
       </View>
     </>
@@ -262,15 +268,34 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: "rgba(251, 191, 36, 0.1)",
   },
+  heroRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing[4],
+    zIndex: 3,
+  },
+  heroCopyCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing[3],
+    paddingRight: spacing[2],
+  },
+  heroGraphicCol: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
+    zIndex: 2,
+  },
+  /** Tucked top-right (matches pre–split-row absolute placement: -48 / -48) */
   graphicCluster: {
-    position: "absolute",
-    top: -48,
-    right: -48,
+    marginTop: -48,
+    marginRight: -48,
     width: 192,
     height: 192,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2,
   },
   graphicCircle: {
     width: 192,
@@ -308,7 +333,7 @@ const styles = StyleSheet.create({
   graphicLottie: {
     width: "100%",
     height: "80%",
-    marginTop:10,
+    marginTop: 10
   },
   graphicIconFallback: {
     flex: 1,
@@ -332,11 +357,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 8,
-  },
-  copyBlock: {
-    width: "70%",
-    zIndex: 3,
-    gap: spacing[3],
   },
   actionBadge: {
     flexDirection: "row",
@@ -365,6 +385,9 @@ const styles = StyleSheet.create({
     lineHeight: 30,
   },
   body: {
+    width: "100%",
+    alignSelf: "stretch",
+    marginTop: spacing[4],
     fontFamily: fontFamily.body,
     fontSize: 14,
     fontWeight: "400",
@@ -372,8 +395,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   ctaBlock: {
-    marginTop: spacing[2],
-    gap: spacing[2],
+    marginTop: spacing[8],
+    gap: spacing[4],
     zIndex: 3,
   },
   ctaTouch: {
@@ -399,7 +422,6 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
   },
   trustRow: {
-    marginBottom: -spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -407,9 +429,9 @@ const styles = StyleSheet.create({
   },
   trustMuted: {
     fontFamily: fontFamily.label,
-    fontSize: 12,
-    fontWeight: "bold",
-    color: colors.onSurfaceVariant,
+    fontSize: 10,
+    fontWeight: "600",
+    color: "rgba(18, 28, 42, 0.4)",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
