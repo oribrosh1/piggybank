@@ -48,11 +48,11 @@ export default function AppTabFooter({ style }: Props) {
         >
           Secured by
         </Text>
-        <View style={{ marginLeft: 8, marginTop: 1 }}>
+        <View style={{ marginLeft: 2, marginTop: 1 }}>
           <Image
             source={STRIPE_WORDMARK}
             accessibilityLabel="Stripe"
-            style={{ height: 24, width: 60 }}
+            style={{ height: 30, width: 60 }}
             resizeMode="contain"
           />
         </View>

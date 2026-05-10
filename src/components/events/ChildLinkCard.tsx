@@ -18,6 +18,8 @@ import {
     Phone, Search, User, Check, Lock, UserPlus, HelpCircle,
 } from "lucide-react-native";
 import * as Contacts from "expo-contacts";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { radius } from "@/src/theme";
 
 interface Contact {
     id: string;
@@ -35,6 +37,10 @@ interface ChildLinkCardProps {
 
 type Screen = "explainer" | "contacts" | "confirm" | "success";
 
+const LINK_GLASS_BORDER = "rgba(107, 56, 212, 0.12)";
+const LINK_GLASS_BLUR = 24;
+const STEP_CARD_MIN_H = 112;
+
 const STEPS = [
     {
         number: "1",
@@ -42,7 +48,6 @@ const STEPS = [
         title: "We send them an SMS",
         desc: "A secure invitation link will be sent to their phone.",
         color: "#0D9488",
-        bg: "#F0FDFA",
     },
     {
         number: "2",
@@ -50,7 +55,6 @@ const STEPS = [
         title: "Your child downloads the app",
         desc: "They'll get a kid-friendly version of CreditKid.",
         color: "#2563EB",
-        bg: "#EFF6FF",
     },
     {
         number: "3",
@@ -58,7 +62,6 @@ const STEPS = [
         title: "They enter their PIN",
         desc: "Secure authentication ensures only they can access.",
         color: "#7C3AED",
-        bg: "#F5F3FF",
     },
 ];
 
@@ -178,26 +181,60 @@ export default function ChildLinkCard({
                 </View>
 
                 <View style={s.stepsContainer}>
+                    <Text style={s.stepsSectionLabel}>How it works</Text>
                     {STEPS.map((step, idx) => {
                         const Icon = step.icon;
                         const isLast = idx === STEPS.length - 1;
                         return (
                             <View key={step.number} style={s.stepRow}>
                                 <View style={s.timeline}>
-                                    <View style={[s.stepDot, { backgroundColor: step.color }]}>
+                                    <View
+                                        style={[
+                                            s.stepDot,
+                                            {
+                                                backgroundColor: step.color,
+                                                shadowColor: step.color,
+                                            },
+                                        ]}
+                                    >
                                         <Text style={s.stepDotText}>{step.number}</Text>
                                     </View>
-                                    {!isLast && <View style={[s.stepLine, { backgroundColor: step.color + "30" }]} />}
+                                    {!isLast && (
+                                        <View
+                                            style={[
+                                                s.stepLine,
+                                                { backgroundColor: `${step.color}33` },
+                                            ]}
+                                        />
+                                    )}
                                 </View>
-                                <View style={[s.stepCard, { backgroundColor: step.bg, borderColor: step.color + "18" }]}>
-                                    <View style={[s.stepIconWrap, { backgroundColor: "#FFFFFF" }]}>
-                                        <Icon size={18} color={step.color} strokeWidth={2} />
+                                <GlassCardDark
+                                    style={{
+                                        flex: 1,
+                                        marginLeft: 10,
+                                        marginBottom: 12,
+                                        minHeight: STEP_CARD_MIN_H,
+                                    }}
+                                    padding={14}
+                                    borderRadius={radius.md}
+                                    borderColor={LINK_GLASS_BORDER}
+                                    blurIntensity={LINK_GLASS_BLUR}
+                                >
+                                    <View style={s.stepCardInner}>
+                                        <View
+                                            style={[
+                                                s.stepIconWrap,
+                                                { backgroundColor: `${step.color}22` },
+                                            ]}
+                                        >
+                                            <Icon size={18} color={step.color} strokeWidth={2} />
+                                        </View>
+                                        <View style={s.stepTextWrap}>
+                                            <Text style={s.stepTitle}>{step.title}</Text>
+                                            <Text style={s.stepDesc}>{step.desc}</Text>
+                                        </View>
                                     </View>
-                                    <View style={s.stepTextWrap}>
-                                        <Text style={s.stepTitle}>{step.title}</Text>
-                                        <Text style={s.stepDesc}>{step.desc}</Text>
-                                    </View>
-                                </View>
+                                </GlassCardDark>
                             </View>
                         );
                     })}
@@ -510,27 +547,50 @@ const s = StyleSheet.create({
     },
     heroSubtitle: { fontSize: 15, color: "#64748B", lineHeight: 22, textAlign: "center", paddingHorizontal: 8 },
 
-    // Steps
-    sectionLabel: { fontSize: 11, fontWeight: "800", color: "#94A3B8", letterSpacing: 1, marginLeft: 4 },
     stepsContainer: { marginBottom: 20 },
+    stepsSectionLabel: {
+        fontSize: 11,
+        fontWeight: "800",
+        color: "#94A3B8",
+        letterSpacing: 1.2,
+        marginBottom: 14,
+        textTransform: "uppercase",
+    },
     stepRow: { flexDirection: "row", alignItems: "stretch" },
     timeline: { width: 32, alignItems: "center" },
-    stepDot: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 14 },
+    stepDot: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 20,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
+    },
     stepDotText: { fontSize: 13, fontWeight: "800", color: "#FFFFFF" },
-    stepLine: { width: 2, flex: 1, marginTop: 4, marginBottom: 4, borderRadius: 1 },
-    stepCard: {
-        flex: 1, flexDirection: "row", alignItems: "flex-start", borderRadius: 16,
-        padding: 14, marginLeft: 10, marginBottom: 10, borderWidth: 1,
+    stepLine: { width: 2, flex: 1, marginTop: 6, marginBottom: 2, borderRadius: 1, minHeight: 20 },
+    stepCardInner: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "center",
     },
     stepIconWrap: {
-        width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center",
-        shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
     },
-    stepTextWrap: { flex: 1, marginLeft: 12 },
-    stepTitle: { fontSize: 15, fontWeight: "800", color: "#0F172A", marginBottom: 3 },
-    stepDesc: { fontSize: 13, color: "#64748B", lineHeight: 19 },
+    stepTextWrap: { flex: 1, marginLeft: 12, paddingTop: 1 },
+    stepTitle: { fontSize: 15, fontWeight: "800", color: "#0F172A", marginBottom: 4, letterSpacing: -0.2 },
+    stepDesc: { fontSize: 13, color: "#64748B", lineHeight: 20 },
 
-    // Actions
+    // Confirmation / shared labels
+    sectionLabel: { fontSize: 11, fontWeight: "800", color: "#94A3B8", letterSpacing: 1, marginLeft: 4 },
     actions: {
         paddingTop: 16, paddingHorizontal: 20, alignItems: "center",
         backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#E5E7EB",

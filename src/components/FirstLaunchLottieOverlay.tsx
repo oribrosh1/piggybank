@@ -8,7 +8,7 @@ import { BRANDED_LOTTIE_DISPLAY_MS } from "@/src/constants/loading";
 const STORAGE_KEY = "@creditkid/first_launch_lottie_shown";
 
 /**
- * On the very first app open (after auth is ready), shows a white full-screen overlay with the
+ * On the very first app open (after auth is ready), shows a transparent full-screen overlay with the
  * CreditKid logo Lottie for {@link BRANDED_LOTTIE_DISPLAY_MS} before revealing the app. No-op on subsequent launches.
  */
 export function FirstLaunchLottieOverlay() {
@@ -60,7 +60,7 @@ export function FirstLaunchLottieOverlay() {
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "transparent",
     zIndex: 99999,
     elevation: 99999,
     alignItems: "center",

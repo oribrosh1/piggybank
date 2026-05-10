@@ -32,6 +32,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 
 // Import the API functions
 import {
@@ -170,6 +171,17 @@ interface GooglePlacesTextInputProps
   suggestionPanelLayout?: { offsetLeft: number; width?: number };
   /** Fires when the suggestion list is shown or hidden (before paint when possible). */
   onSuggestionsOpenChange?: (open: boolean) => void;
+  /**
+   * When true, iOS wraps the suggestion panel in `BlurView` + the same light tint as glass cards so it
+   * matches a frosted parent; Android keeps `suggestionsContainer.backgroundColor`. Use transparent outer
+   * fill on iOS when enabling this.
+   */
+  suggestionsGlassBlur?: boolean;
+  /**
+   * When true, suggestions render in document flow below the input (full width) instead of absolutely
+   * positioned — use inside rounded parents so `overflow: 'hidden'` can keep corner radius.
+   */
+  suggestionsInline?: boolean;
 }
 
 interface GooglePlacesTextInputRef {
@@ -224,6 +236,8 @@ const GooglePlacesTextInput = forwardRef<
       suggestionTextProps = {},
       suggestionPanelLayout,
       onSuggestionsOpenChange,
+      suggestionsGlassBlur = false,
+      suggestionsInline = false,
       ...restTextInputProps
     },
     ref
@@ -549,7 +563,9 @@ const GooglePlacesTextInput = forwardRef<
         style.suggestionsContainer
       );
       const backgroundColor =
-        suggestionsContainerStyle?.backgroundColor || '#efeff1';
+        suggestionsGlassBlur || suggestionsInline
+          ? 'transparent'
+          : suggestionsContainerStyle?.backgroundColor || '#efeff1';
 
       const defaultAccessibilityLabel = `${mainText.text}${
         secondaryText ? `, ${secondaryText.text}` : ''
@@ -794,38 +810,118 @@ const GooglePlacesTextInput = forwardRef<
           )}
         </View>
 
-        {/* Suggestions */}
-        {showSuggestions && predictions.length > 0 && (
-          <View
-            style={[
-              styles.suggestionsContainer,
-              style.suggestionsContainer,
-              {
-                position: 'absolute',
-                top: rowHeight + suggestionGap,
-                marginTop: 0,
-                ...suggestionHorizontalStyle,
-              },
-            ]}
-          >
-            {/* ScrollView (not FlatList) avoids VirtualizedList-inside-ScrollView warnings on parent screens */}
-            <ScrollView
-              keyboardShouldPersistTaps="always"
-              nestedScrollEnabled={nestedScrollEnabled}
-              scrollEnabled={scrollEnabled}
-              bounces={false}
-              style={style.suggestionsList}
-              accessibilityRole="list"
-              accessibilityLabel={`${predictions.length} place suggestion resuts`}
+        {/* Suggestions — `suggestionsInline`: in-flow under input so parent cards keep rounded clipping */}
+        {showSuggestions && predictions.length > 0 &&
+          (suggestionsInline ? (
+            <View
+              style={[
+                styles.suggestionsContainer,
+                style.suggestionsContainer,
+                {
+                  width: '100%',
+                  alignSelf: 'stretch',
+                  marginTop: suggestionGap,
+                },
+              ]}
             >
-              {predictions.map((item, index) => (
-                <Fragment key={item.placePrediction.placeId}>
-                  {renderSuggestion({ item, index })}
-                </Fragment>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+              {suggestionsGlassBlur && Platform.OS === 'ios' ? (
+                <View style={{ backgroundColor: 'transparent' }}>
+                  <ScrollView
+                    keyboardShouldPersistTaps="always"
+                    nestedScrollEnabled={nestedScrollEnabled}
+                    scrollEnabled={scrollEnabled}
+                    bounces={false}
+                    style={[style.suggestionsList, { backgroundColor: 'transparent' }]}
+                    accessibilityRole="list"
+                    accessibilityLabel={`${predictions.length} place suggestion resuts`}
+                  >
+                    {predictions.map((item, index) => (
+                      <Fragment key={item.placePrediction.placeId}>
+                        {renderSuggestion({ item, index })}
+                      </Fragment>
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : (
+                <ScrollView
+                  keyboardShouldPersistTaps="always"
+                  nestedScrollEnabled={nestedScrollEnabled}
+                  scrollEnabled={scrollEnabled}
+                  bounces={false}
+                  style={style.suggestionsList}
+                  accessibilityRole="list"
+                  accessibilityLabel={`${predictions.length} place suggestion resuts`}
+                >
+                  {predictions.map((item, index) => (
+                    <Fragment key={item.placePrediction.placeId}>
+                      {renderSuggestion({ item, index })}
+                    </Fragment>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          ) : suggestionsGlassBlur && Platform.OS === 'ios' ? (
+            <BlurView
+              intensity={16}
+              tint="light"
+              style={[
+                styles.suggestionsContainer,
+                style.suggestionsContainer,
+                {
+                  position: 'absolute',
+                  top: rowHeight + suggestionGap,
+                  marginTop: 0,
+                  ...suggestionHorizontalStyle,
+                  backgroundColor: 'rgba(239, 244, 255, 0.6)',
+                },
+              ]}
+            >
+              <ScrollView
+                keyboardShouldPersistTaps="always"
+                nestedScrollEnabled={nestedScrollEnabled}
+                scrollEnabled={scrollEnabled}
+                bounces={false}
+                style={[style.suggestionsList, { backgroundColor: 'transparent' }]}
+                accessibilityRole="list"
+                accessibilityLabel={`${predictions.length} place suggestion resuts`}
+              >
+                {predictions.map((item, index) => (
+                  <Fragment key={item.placePrediction.placeId}>
+                    {renderSuggestion({ item, index })}
+                  </Fragment>
+                ))}
+              </ScrollView>
+            </BlurView>
+          ) : (
+            <View
+              style={[
+                styles.suggestionsContainer,
+                style.suggestionsContainer,
+                {
+                  position: 'absolute',
+                  top: rowHeight + suggestionGap,
+                  marginTop: 0,
+                  ...suggestionHorizontalStyle,
+                },
+              ]}
+            >
+              <ScrollView
+                keyboardShouldPersistTaps="always"
+                nestedScrollEnabled={nestedScrollEnabled}
+                scrollEnabled={scrollEnabled}
+                bounces={false}
+                style={style.suggestionsList}
+                accessibilityRole="list"
+                accessibilityLabel={`${predictions.length} place suggestion resuts`}
+              >
+                {predictions.map((item, index) => (
+                  <Fragment key={item.placePrediction.placeId}>
+                    {renderSuggestion({ item, index })}
+                  </Fragment>
+                ))}
+              </ScrollView>
+            </View>
+          ))}
       </View>
     );
   }

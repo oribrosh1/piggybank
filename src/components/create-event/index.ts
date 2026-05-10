@@ -12,3 +12,4 @@ export { default as EventDetailsCelebrationTypeCard } from "./EventDetailsCelebr
 export { default as EventDetailsDateTimeCard } from "./EventDetailsDateTimeCard";
 export { default as EventDetailsLocationCard } from "./EventDetailsLocationCard";
 export { default as EventDetailsKosherCateringCard } from "./EventDetailsKosherCateringCard";
+export { default as InvitationExamplesModal } from "./InvitationExamplesModal";

@@ -5,7 +5,6 @@ import {
     Calendar,
     Clock,
     MapPin,
-    Shirt,
     Car,
     Check,
     Loader2
@@ -25,11 +24,15 @@ async function getEvent(id: string): Promise<EventData | null> {
             return null;
         }
 
-        const data = eventDoc.data();
+        const raw = eventDoc.data()!;
+        const { attireType: legacyAttire, footwearType: _legacyFootwear, ...data } = raw;
+        const dressCode =
+            raw.dressCode ?? (raw.eventCategory === "formal" ? legacyAttire : undefined);
         return {
             id: eventDoc.id,
             ...data,
-            createdAt: data?.createdAt?.toDate() || new Date(),
+            dressCode,
+            createdAt: raw.createdAt?.toDate() || new Date(),
         } as EventData;
     } catch (error) {
         console.error('Error fetching event:', error);
@@ -209,17 +212,27 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                                 {event.address2 && (
                                     <p className="text-sm text-gray-500 mt-0.5">{event.address2}</p>
                                 )}
-                                {event.parking && (
-                                    <div className="flex items-center gap-1.5 text-gray-400 text-xs mt-2">
+                                {event.locationNotes?.trim() && (
+                                    <div className="mt-2">
+                                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                                            Venue notes
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 mt-1 whitespace-pre-wrap">
+                                            {event.locationNotes.trim()}
+                                        </p>
+                                    </div>
+                                )}
+                                {event.parking?.trim() && (
+                                    <div className="flex items-center gap-1.5 text-gray-500 text-xs mt-2">
                                         <Car size={12} />
-                                        <span>{event.parking}</span>
+                                        <span>{event.parking.trim()}</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Theme & Attire Badges */}
-                        {(event.theme || event.attireType) && (
+                        {/* Theme & dress code */}
+                        {(event.theme || event.dressCode?.trim()) && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex flex-wrap gap-2">
                                     {event.theme && (
@@ -227,15 +240,9 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                                             🎭 {event.theme}
                                         </span>
                                     )}
-                                    {event.attireType && (
+                                    {event.dressCode?.trim() && (
                                         <span className="bg-[#DBEAFE] text-[#2563EB] px-3.5 py-1.5 rounded-full text-xs font-bold">
-                                            <Shirt size={12} className="inline mr-1" />
-                                            {event.attireType}
-                                        </span>
-                                    )}
-                                    {event.footwearType && (
-                                        <span className="bg-[#FCE7F3] text-[#DB2777] px-3.5 py-1.5 rounded-full text-xs font-bold">
-                                            👟 {event.footwearType}
+                                            👔 {event.dressCode}
                                         </span>
                                     )}
                                 </div>

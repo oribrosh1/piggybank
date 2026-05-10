@@ -6,7 +6,7 @@ import type { PosterThemeId, EventPosterVersionRow } from "@/types/events";
 import {
   generateEventPoster,
   subscribeEventPosterVersions,
-  subscribeEventPosterFromEventDoc,
+  subscribeEventPosterGenerationProgress,
 } from "@/src/lib/eventService";
 
 const MAX_POSTER_RETRIES = 3;
@@ -34,6 +34,9 @@ export function useEventPosterScreen() {
 
   const [versions, setVersions] = useState<EventPosterVersionRow[]>([]);
   const [eventPosterUrl, setEventPosterUrl] = useState<string | null>(null);
+  const [skeletonPosterUrl, setSkeletonPosterUrl] = useState<string | null>(null);
+  const [posterStreamingPreviewUrl, setPosterStreamingPreviewUrl] =
+    useState<string | null>(null);
   const [generatingTheme, setGeneratingTheme] = useState<PosterThemeId | null>(null);
   const [optimisticPosterUrl, setOptimisticPosterUrl] = useState<string | null>(null);
   const [posterReady, setPosterReady] = useState(false);
@@ -46,6 +49,9 @@ export function useEventPosterScreen() {
   const latestVersion = versions[0];
   const displayPosterUrl =
     optimisticPosterUrl || eventPosterUrl || latestVersion?.posterUrl || null;
+
+  const posterPreviewWhileGenerating =
+    posterStreamingPreviewUrl || skeletonPosterUrl;
 
   useEffect(() => {
     if (!eventId) {
@@ -70,8 +76,10 @@ export function useEventPosterScreen() {
 
   useEffect(() => {
     if (!eventId) return;
-    const unsub = subscribeEventPosterFromEventDoc(eventId, (url) => {
-      setEventPosterUrl(url);
+    const unsub = subscribeEventPosterGenerationProgress(eventId, (snap) => {
+      setEventPosterUrl(snap.posterUrl);
+      setSkeletonPosterUrl(snap.skeletonPosterUrl);
+      setPosterStreamingPreviewUrl(snap.posterStreamingPreviewUrl);
     });
     return () => unsub();
   }, [eventId]);
@@ -113,7 +121,7 @@ export function useEventPosterScreen() {
     setGeneratingTheme(posterThemeId);
 
     const attempt = (retriesLeft: number) => {
-      generateEventPoster(eventId, posterThemeId)
+      generateEventPoster(eventId)
         .then((res) => {
           if (res.success && res.posterUrl) {
             setOptimisticPosterUrl(res.posterUrl);
@@ -179,6 +187,8 @@ export function useEventPosterScreen() {
     fadeAnim,
     progressWidth,
     displayPosterUrl,
+    posterStreamingPreviewUrl,
+    posterPreviewWhileGenerating,
     posterReady,
     continueToGuests,
     latestVersionNumber: latestVersion?.versionNumber,

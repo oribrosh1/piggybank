@@ -1,9 +1,14 @@
 import React from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Pencil, X, Sparkles, Camera } from "lucide-react-native";
-import { colors, spacing, radius, fontFamily, borderGhostOutline } from "@/src/theme";
-
+import { Pencil, X, Sparkles, Camera, PartyPopperIcon } from "lucide-react-native";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import OptionalSectionBadge from "@/src/components/common/OptionalSectionBadge";
+import { colors, spacing, radius, fontFamily } from "@/src/theme";
+import { MaterialIcons} from "@expo/vector-icons";
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import type { HonoreeGender } from "@/types/events";
 /** Inner circle diameter (px); gradient ring adds padding outside this. */
 const HONOREE_PHOTO_AVATAR_SIZE = 100;
 const AVATAR_RING_PAD = 3;
@@ -64,6 +69,10 @@ type EventDetailsCelebrationCardProps = {
   onAgeBlur: () => void;
   onPickHonoreePhoto: () => void;
   onClearHonoreePhoto: () => void;
+  /** For AI poster & copy — explicit boy / girl selection. */
+  honoreeGender?: HonoreeGender;
+  honoreeGenderError?: string;
+  onHonoreeGenderChange: (gender: "boy" | "girl") => void;
 };
 
 export default function EventDetailsCelebrationCard({
@@ -83,40 +92,66 @@ export default function EventDetailsCelebrationCard({
   onAgeBlur,
   onPickHonoreePhoto,
   onClearHonoreePhoto,
+  honoreeGender,
+  honoreeGenderError,
+  onHonoreeGenderChange,
 }: EventDetailsCelebrationCardProps) {
   const nameUnderline = nameError ? "#EF4444" : nameFocused ? colors.primary : "transparent";
   const ageUnderline = ageError ? "#EF4444" : ageFocused ? colors.primary : "transparent";
   const hasPhoto = Boolean(honoreePhotoUri);
+  const genderBoy = honoreeGender === "boy";
+  const genderGirl = honoreeGender === "girl";
 
   return (
     <View style={styles.wrap}>
       {/* Section 1 — name & age on one line */}
-      <Text style={styles.sectionLabel}>Who are we celebrating?</Text>
-      <View style={styles.card}>
+
+      <View style={{...styles.photoSectionHeader, marginTop: 85}}>
+        <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "10deg" }] }}>
+          <PartyPopperIcon size={26} color={colors.primary} strokeWidth={2.4} />
+        </View>
+        <Text style={{
+    fontFamily: fontFamily.headline,
+    fontSize: 13,
+    marginLeft: spacing[2],
+    textTransform: "uppercase",
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: 1.1,
+  }}>Who are we celebrating?</Text>    
+    </View>
+
+
+      <GlassCardDark blurIntensity={30} padding={spacing[4]} borderRadius={radius.md} borderColor="rgba(107, 56, 212, 0.1)">
         <View style={styles.nameAgeRow}>
-          <View
-            style={[
-              styles.nameCell,
-              (nameFocused || nameError) && {
-                borderBottomWidth: 2,
-                borderBottomColor: nameUnderline,
-              },
-            ]}
-          >
-            <TextInput
-              style={styles.nameInput}
-              placeholder={namePlaceholder}
-              placeholderTextColor={colors.muted}
-              value={childName}
-              onChangeText={onNameChange}
-              onFocus={onNameFocus}
-              onBlur={onNameBlur}
-              autoCapitalize="words"
-              autoCorrect={false}
-            />
+          <View style={styles.nameColumn}>
+            <Text style={styles.fieldLabelAbove}>Child's Name</Text>
+            <View
+              style={[
+                styles.nameCell,
+                (nameFocused || nameError) && {
+                  borderBottomWidth: 2,
+                  borderBottomColor: nameUnderline,
+                },
+              ]}
+            >
+              <TextInput
+                style={styles.nameInput}
+                placeholder={namePlaceholder}
+                placeholderTextColor={colors.muted}
+                value={childName}
+                onChangeText={onNameChange}
+                onFocus={onNameFocus}
+                onBlur={onNameBlur}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
           </View>
           <View style={styles.ageColumn}>
-            <Text style={styles.ageLabelAbove}>Turning age</Text>
+            <Text style={[styles.fieldLabelAbove, styles.ageFieldLabelAbove]}>
+              Turning age
+            </Text>
             <View
               style={[
                 styles.ageCell,
@@ -140,15 +175,75 @@ export default function EventDetailsCelebrationCard({
             </View>
           </View>
         </View>
-      </View>
+        <View style={styles.genderBlock}>
+          <Text style={styles.genderLabel}>Boy or girl</Text>
+          <View style={styles.genderChipsRow}>
+            <TouchableOpacity
+              onPress={() => onHonoreeGenderChange("boy")}
+              activeOpacity={0.85}
+              style={[
+                styles.genderChip,
+                genderBoy && styles.genderChipSelected,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: genderBoy }}
+              accessibilityLabel="Boy"
+            >
+              <MaterialIcons name="male" size={22} color={genderBoy ? "#FFFFFF" : colors.primary} />
+              <Text style={[styles.genderChipLabel, genderBoy && styles.genderChipLabelSelected]}>
+                Boy
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onHonoreeGenderChange("girl")}
+              activeOpacity={0.85}
+              style={[
+                styles.genderChip,
+                genderGirl && styles.genderChipSelected,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: genderGirl }}
+              accessibilityLabel="Girl"
+            >
+              <MaterialIcons name="female" size={22} color={genderGirl ? "#FFFFFF" : colors.primary} />
+              <Text style={[styles.genderChipLabel, genderGirl && styles.genderChipLabelSelected]}>
+                Girl
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {honoreeGenderError ? (
+            <Text style={styles.genderErr}>{honoreeGenderError}</Text>
+          ) : (
+            <Text style={styles.genderHint}>Used so your poster wording and character feel right.</Text>
+          )}
+        </View>
+      </GlassCardDark>
       <Text style={styles.hint}>
         This name and age appear on your poster and invitations.
       </Text>
 
       {/* Section 2 — photo hero + AI poster copy */}
       <View style={styles.photoSectionHeader}>
-        <Sparkles size={18} color={colors.primary} strokeWidth={2.2} />
-        <Text style={styles.sectionLabelPhoto}>Add Your child's photo</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "15deg" }] }}>
+        <FontAwesome name="camera-retro" size={24} color={colors.primary}/>
+        </View>
+        <View style={{ flex: 1, marginLeft: spacing[2] }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+            <Text
+              style={{
+                fontFamily: fontFamily.headline,
+                fontSize: 13,
+                textTransform: "uppercase",
+                fontWeight: "800",
+                color: colors.onSurface,
+                letterSpacing: 1.1,
+              }}
+            >
+              Add your child&apos;s photo
+            </Text>
+            <OptionalSectionBadge />
+          </View>
+        </View>
       </View>
       <LinearGradient
         colors={["rgba(107, 56, 212, 0.1)", colors.surfaceContainerLowest]}
@@ -201,16 +296,25 @@ export default function EventDetailsCelebrationCard({
               accessibilityLabel="Add honoree photo for AI poster"
               style={styles.photoEmptyColumn}
             >
-              <HonoreeAvatarRing size={HONOREE_PHOTO_AVATAR_SIZE}>
-                <View style={styles.emojiFill}>
-                  <Text
-                    style={[styles.photoPlaceholderEmoji, { fontSize: PLACEHOLDER_EMOJI_FONT, lineHeight: PLACEHOLDER_EMOJI_FONT }]}
-                    accessible={false}
-                  >
-                    🧒
-                  </Text>
-                </View>
-              </HonoreeAvatarRing>
+              <View style={styles.photoAvatarWrap}>
+                <HonoreeAvatarRing size={HONOREE_PHOTO_AVATAR_SIZE}>
+                  <View style={styles.emojiFill}>
+                    <Image
+                      source={require("../../../assets/images/profile-pic.png")}
+                      style={styles.photoImage}
+                    />
+                  </View>
+                </HonoreeAvatarRing>
+                <TouchableOpacity
+                  onPress={onPickHonoreePhoto}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  style={styles.photoEditBadge}
+                  accessibilityRole="button"
+                  accessibilityLabel="Edit photo"
+                >
+                  <Pencil size={14} color={colors.onPrimary} strokeWidth={2.4} />
+                </TouchableOpacity>
+              </View>
               <View style={styles.addPhotoChip}>
                 <Camera size={14} color={colors.primary} strokeWidth={2.4} />
                 <Text style={styles.addPhotoChipText}>Add photo</Text>
@@ -220,10 +324,14 @@ export default function EventDetailsCelebrationCard({
           <View style={styles.photoCopyBlock}>
             <View style={styles.aiTag}>
               <Text style={styles.aiTagText}>AI match</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] , transform: [{ rotate: "15deg" }] }}>
+                <Sparkles size={18} color={colors.primary} strokeWidth={2.2} />
+              </View>
+
             </View>
             <Text style={styles.photoCopyTitle}>Make the poster feel like them</Text>
             <Text style={styles.photoCopyBody}>
-              Add a clear, front-facing photo.{"\n"}
+              Add a clear, front-facing photo. {"\n"}
               We use it so the poster matches your child.
             </Text>
           </View>
@@ -239,7 +347,7 @@ export default function EventDetailsCelebrationCard({
 const styles = StyleSheet.create({
   wrap: {
     width: "100%",
-    marginBottom: spacing[5],
+    marginBottom: 20,
   },
   sectionLabel: {
     fontFamily: fontFamily.label,
@@ -249,37 +357,41 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     textTransform: "uppercase",
     marginBottom: spacing[2],
+    
   },
   photoSectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing[2],
+    // gap: spacing[2],
     marginTop: spacing[5],
     marginBottom: spacing[2],
+    marginLeft: spacing[2],
+
   },
   sectionLabelPhoto: {
     fontFamily: fontFamily.headline,
     fontSize: 13,
+    marginLeft: spacing[2],
+    textTransform: "uppercase",
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: 0.4,
   },
-  card: {
-    backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: radius.md,
-    paddingVertical: spacing[4],
-    paddingHorizontal: spacing[4],
-    ...borderGhostOutline,
-  },
   nameAgeRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing[3],
   },
-  nameCell: {
+  nameColumn: {
     flex: 1,
     minWidth: 0,
+    flexDirection: "column",
+    alignItems: "stretch",
     paddingBottom: spacing[1],
+  },
+  nameCell: {
+    width: "100%",
+    minWidth: 0,
   },
   nameInput: {
     fontFamily: fontFamily.headline,
@@ -292,11 +404,11 @@ const styles = StyleSheet.create({
   ageColumn: {
     width: 88,
     flexDirection: "column",
-    alignItems: "center",
+    alignItems: "stretch",
     flexShrink: 0,
     paddingBottom: spacing[1],
   },
-  ageLabelAbove: {
+  fieldLabelAbove: {
     fontFamily: fontFamily.label,
     fontSize: 10,
     fontWeight: "700",
@@ -304,8 +416,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: "uppercase",
     marginBottom: spacing[1],
+    minHeight: 14,
+  },
+  ageFieldLabelAbove: {
     textAlign: "center",
-    alignSelf: "stretch",
   },
   ageCell: {
     minWidth: 44,
@@ -320,6 +434,67 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     textAlign: "center",
     minWidth: 40,
+  },
+  genderBlock: {
+    // marginTop: spacing[4],
+    paddingTop: spacing[4],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(107, 56, 212, 0.12)",
+  },
+  genderLabel: {
+    fontFamily: fontFamily.headline,
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    marginBottom: spacing[2],
+  },
+  genderChipsRow: {
+    flexDirection: "row",
+    gap: spacing[3],
+    alignItems: "stretch",
+  },
+  genderChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[2],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: "rgba(107, 56, 212, 0.28)",
+    backgroundColor: "rgba(107, 56, 212, 0.06)",
+  },
+  genderChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  genderChipLabel: {
+    fontFamily: fontFamily.title,
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.primary,
+    letterSpacing: -0.2,
+  },
+  genderChipLabelSelected: {
+    color: "#FFFFFF",
+  },
+  genderHint: {
+    fontFamily: fontFamily.body,
+    fontSize: 11,
+    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    marginTop: spacing[2],
+    lineHeight: 16,
+  },
+  genderErr: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#EF4444",
+    marginTop: spacing[2],
   },
   photoHeroCard: {
     width: "100%",
@@ -397,17 +572,20 @@ const styles = StyleSheet.create({
   },
   aiTag: {
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: radius.sm,
     backgroundColor: "rgba(107, 56, 212, 0.12)",
   },
   aiTagText: {
-    fontFamily: fontFamily.label,
-    fontSize: 9,
-    fontWeight: "800",
+    fontFamily: fontFamily.title,
+    fontSize: 12,
+    fontWeight: "bold",
     color: colors.primary,
-    letterSpacing: 0.9,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   photoCopyTitle: {
@@ -416,15 +594,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.onSurface,
     lineHeight: 22,
-    letterSpacing: -0.2,
     flexShrink: 1,
   },
   photoCopyBody: {
-    fontFamily: fontFamily.body,
+    fontFamily: fontFamily.title,
     fontSize: 13,
-    fontWeight: "400",
+    fontWeight: "700",
     color: colors.onSurfaceVariant,
     lineHeight: 20,
+    letterSpacing: -0.5,
     flexShrink: 1,
     width: "100%",
   },
@@ -434,11 +612,11 @@ const styles = StyleSheet.create({
   },
   photoEditBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    top: -2,
+    right: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 18,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -463,7 +641,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     color: colors.onSurfaceVariant,
-    marginTop: spacing[2],
+    marginTop: spacing[1],
+    marginLeft: spacing[2],
     lineHeight: 18,
   },
   err: {

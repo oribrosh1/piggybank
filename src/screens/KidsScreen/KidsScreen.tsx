@@ -27,10 +27,13 @@ import ChildLinkCard from "@/src/components/events/ChildLinkCard";
 import { useKidsScreen } from "./useKidsScreen";
 import AppTabFooter from "@/src/components/AppTabFooter";
 import AppTabHeader from "@/src/components/AppTabHeader";
-import { colors, radius, spacing, typography, ambientShadow, fontFamily } from "@/src/theme";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { colors, radius, spacing, typography, fontFamily } from "@/src/theme";
 import Button from "@/src/components/common/Button";
 import LottieView from "lottie-react-native";
 
+const KIDS_GLASS_BORDER = "rgba(107, 56, 212, 0.12)";
+const KIDS_GLASS_BLUR = 24;
 const PARENT_CHILD_LOTTIE = require("../../../assets/lotties/parent-child-creditkid.json");
 
 export default function KidsScreen() {
@@ -75,14 +78,14 @@ export default function KidsScreen() {
           }}
         >
           <AppTabHeader />
-          <Text style={[typography.headlineLg, { fontSize: 28, marginBottom: spacing[4] }]}>My Child</Text>
+          <Text style={[typography.headlineLg, { fontSize: 28, marginBottom: 0 }]}>My Child</Text>
           {/* Hero card */}
           <View style={{
-              borderRadius: radius.lg, alignItems: "center", marginBottom: 12,
+              borderRadius: radius.lg, alignItems: "center", marginBottom: 0,
           }}>
             <View
               style={{
-                backgroundColor: "white",
+                backgroundColor: "transparent",
                 alignItems: "center",
                 justifyContent: "center",
                 width: "100%",
@@ -90,7 +93,7 @@ export default function KidsScreen() {
             >
               <LottieView
                 source={PARENT_CHILD_LOTTIE}
-                style={{ width: "100%", height: 250 }}
+                style={{ width: "100%", height: 200 }}
                 autoPlay
                 loop
                 resizeMode="contain"
@@ -99,7 +102,7 @@ export default function KidsScreen() {
             <Text style={[typography.titleLg, { textAlign: "center", marginBottom: spacing[2], paddingHorizontal: 16 }]}>
               Link your child to unlock
             </Text>
-            <Text style={[typography.bodyMd, { color: colors.onSurfaceVariant, textAlign: "center", lineHeight: 20 , paddingHorizontal: 16}]}>
+            <Text style={[typography.bodyMd, { color: colors.onSurfaceVariant, textAlign: "center", lineHeight: 20 , paddingHorizontal: 16, paddingBottom: 14 }]}>
               Manage their card, track spending, and build healthy habits together.
             </Text>
           </View>
@@ -133,23 +136,54 @@ export default function KidsScreen() {
           )}
 
           {/* Feature preview grid */}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28, paddingHorizontal: 16 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 28,
+              alignItems: "stretch",
+            }}
+          >
             {FEATURES.map((f) => {
               const Icon = f.icon;
               return (
-                <View key={f.label} style={{
-                  width: "48%", backgroundColor: colors.surfaceContainerLowest, borderRadius: radius.md, padding: 16,
-                  ...ambientShadow,
-                }}>
-                  <View style={{
-                    width: 40, height: 40, borderRadius: radius.sm, backgroundColor: f.bg,
-                    alignItems: "center", justifyContent: "center", marginBottom: 10,
-                  }}>
+                <GlassCardDark
+                  key={f.label}
+                  style={{
+                    width: "48%",
+                    alignSelf: "stretch",
+                  }}
+                  padding={16}
+                  borderRadius={radius.md}
+                  borderColor={KIDS_GLASS_BORDER}
+                  blurIntensity={KIDS_GLASS_BLUR}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: radius.sm,
+                      backgroundColor: f.bg,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 10,
+                    }}
+                  >
                     <Icon size={20} color={f.color} strokeWidth={2} />
                   </View>
-                  <Text style={[typography.titleLg, { fontSize: 15, marginBottom: 4 }]}>{f.label}</Text>
-                  <Text style={[typography.labelMd, { fontSize: 10, color: f.color, letterSpacing: 0.5 }]}>{f.badge}</Text>
-                </View>
+                  <Text style={[typography.titleLg, { fontSize: 15, marginBottom: 4 }]}>
+                    {f.label}
+                  </Text>
+                  <Text
+                    style={[
+                      typography.labelMd,
+                      { fontSize: 10, color: f.color, letterSpacing: 0.5 },
+                    ]}
+                  >
+                    {f.badge}
+                  </Text>
+                </GlassCardDark>
               );
             })}
           </View>

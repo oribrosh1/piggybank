@@ -15,10 +15,16 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useProfileScreen } from "./useProfileScreen";
 import AppTabFooter from "@/src/components/AppTabFooter";
 import AppTabHeader from "@/src/components/AppTabHeader";
-import { colors } from "@/src/theme";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { colors, radius } from "@/src/theme";
 
 const PURPLE = colors.primary;
 const BG = "transparent";
+
+const PROFILE_GLASS_BORDER = "rgba(107, 56, 212, 0.12)";
+const PROFILE_GLASS_BLUR = 24;
+/** Support tiles + sign-out — slightly tighter radius than main stat/preferences cards */
+const PROFILE_GLASS_TILE_RADIUS = 16;
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -148,98 +154,99 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        {/* Stats grid */}
+        {/* Stats grid — stretch so both glass shells share top edge & height */}
         <View
           style={{
             flexDirection: "row",
+            alignItems: "stretch",
             paddingHorizontal: 20,
             gap: 12,
             marginBottom: 28,
           }}
         >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "#FFF",
-              borderRadius: 20,
-              padding: 16,
-              borderLeftWidth: 4,
-              borderLeftColor: PURPLE,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 2,
-            }}
+          <GlassCardDark
+            style={{ flex: 1, alignSelf: "stretch" }}
+            padding={0}
+            borderRadius={radius.md}
+            borderColor={PROFILE_GLASS_BORDER}
+            blurIntensity={PROFILE_GLASS_BLUR}
           >
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "700",
-                color: "#9CA3AF",
-                letterSpacing: 0.8,
-                marginBottom: 8,
-              }}
-            >
-              GUESTS INVITED
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ fontSize: 28, fontWeight: "900", color: PURPLE }}>
-                {guestsInvited}
-              </Text>
-              {guestsWithGiftsBadge > 0 && (
-                <View
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "stretch" }}>
+              <View
+                style={{
+                  width: 4,
+                  backgroundColor: PURPLE,
+                }}
+              />
+              <View style={{ flex: 1, padding: 16, justifyContent: "flex-start" }}>
+                <Text
                   style={{
-                    backgroundColor: "#D1FAE5",
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    borderRadius: 10,
+                    fontSize: 10,
+                    fontWeight: "700",
+                    color: "#9CA3AF",
+                    letterSpacing: 0.8,
+                    marginBottom: 8,
                   }}
                 >
-                  <Text
-                    style={{ fontSize: 12, fontWeight: "800", color: "#059669" }}
-                  >
-                    +{guestsWithGiftsBadge}
+                  GUESTS INVITED
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 28, fontWeight: "900", color: PURPLE }}>
+                    {guestsInvited}
                   </Text>
+                  {guestsWithGiftsBadge > 0 && (
+                    <View
+                      style={{
+                        backgroundColor: "#D1FAE5",
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 10,
+                      }}
+                    >
+                      <Text
+                        style={{ fontSize: 12, fontWeight: "800", color: "#059669" }}
+                      >
+                        +{guestsWithGiftsBadge}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
+                <Text style={{ fontSize: 12, color: "#9CA3AF", marginTop: 8 }}>
+                  Current Event
+                </Text>
+              </View>
             </View>
-            <Text style={{ fontSize: 12, color: "#9CA3AF", marginTop: 8 }}>
-              Current Event
-            </Text>
-          </View>
+          </GlassCardDark>
 
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "#F5F3FF",
-              borderRadius: 20,
-              padding: 16,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 2,
-            }}
+          <GlassCardDark
+            style={{ flex: 1, alignSelf: "stretch" }}
+            padding={0}
+            borderRadius={radius.md}
+            borderColor={PROFILE_GLASS_BORDER}
+            blurIntensity={PROFILE_GLASS_BLUR}
           >
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "700",
-                color: "#9CA3AF",
-                letterSpacing: 0.8,
-                marginBottom: 8,
-              }}
-            >
-              TOTAL GIFTS
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={{ fontSize: 28, fontWeight: "900", color: "#111827" }}>
-                {guestsWithGiftsBadge}
+            <View style={{ flex: 1, padding: 16, justifyContent: "flex-start" }}>
+              <Text
+                style={{
+                  fontSize: 10,
+                  fontWeight: "700",
+                  color: "#9CA3AF",
+                  letterSpacing: 0.8,
+                  marginBottom: 8,
+                }}
+              >
+                TOTAL GIFTS
               </Text>
-              <Ionicons name="gift" size={22} color={PURPLE} />
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 28, fontWeight: "900", color: "#111827" }}>
+                  {guestsWithGiftsBadge}
+                </Text>
+                <Ionicons name="gift" size={22} color={PURPLE} />
+              </View>
+              {/* Reserve same bottom band as “Current Event” on the left card */}
+              <View style={{ marginTop: 8, height: 16 }} />
             </View>
-          </View>
+          </GlassCardDark>
         </View>
 
         {/* Preferences */}
@@ -260,16 +267,11 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
-          <View
-            style={{
-              backgroundColor: "#FFF",
-              borderRadius: 20,
-              overflow: "hidden",
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
+          <GlassCardDark
+            padding={0}
+            borderRadius={radius.md}
+            borderColor={PROFILE_GLASS_BORDER}
+            blurIntensity={PROFILE_GLASS_BLUR}
           >
             <PrefRow
               icon={<Ionicons name="notifications" size={20} color={PURPLE} />}
@@ -326,7 +328,7 @@ export default function ProfileScreen() {
               onPress={goToKids}
               last
             />
-          </View>
+          </GlassCardDark>
         </View>
 
         {/* Support */}
@@ -342,71 +344,77 @@ export default function ProfileScreen() {
             Support
           </Text>
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-            <TouchableOpacity
-              onPress={openFaq}
-              style={{
-                flex: 1,
-                backgroundColor: "#FFF",
-                borderRadius: 16,
-                paddingVertical: 20,
-                alignItems: "center",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 6,
-                elevation: 2,
-              }}
+            <GlassCardDark
+              style={{ flex: 1 }}
+              padding={0}
+              borderRadius={PROFILE_GLASS_TILE_RADIUS}
+              borderColor={PROFILE_GLASS_BORDER}
+              blurIntensity={PROFILE_GLASS_BLUR}
             >
-              <Ionicons name="help-circle" size={28} color={PURPLE} />
-              <Text
-                style={{ marginTop: 8, fontSize: 14, fontWeight: "700", color: "#374151" }}
+              <TouchableOpacity
+                onPress={openFaq}
+                activeOpacity={0.75}
+                style={{
+                  paddingVertical: 20,
+                  alignItems: "center",
+                }}
               >
-                FAQ
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={openTerms}
-              style={{
-                flex: 1,
-                backgroundColor: "#FFF",
-                borderRadius: 16,
-                paddingVertical: 20,
-                alignItems: "center",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 6,
-                elevation: 2,
-              }}
+                <Ionicons name="help-circle" size={28} color={PURPLE} />
+                <Text
+                  style={{ marginTop: 8, fontSize: 14, fontWeight: "700", color: "#374151" }}
+                >
+                  FAQ
+                </Text>
+              </TouchableOpacity>
+            </GlassCardDark>
+            <GlassCardDark
+              style={{ flex: 1 }}
+              padding={0}
+              borderRadius={PROFILE_GLASS_TILE_RADIUS}
+              borderColor={PROFILE_GLASS_BORDER}
+              blurIntensity={PROFILE_GLASS_BLUR}
             >
-              <Ionicons name="document-text" size={28} color={PURPLE} />
-              <Text
-                style={{ marginTop: 8, fontSize: 14, fontWeight: "700", color: "#374151" }}
+              <TouchableOpacity
+                onPress={openTerms}
+                activeOpacity={0.75}
+                style={{
+                  paddingVertical: 20,
+                  alignItems: "center",
+                }}
               >
-                Terms
-              </Text>
-            </TouchableOpacity>
+                <Ionicons name="document-text" size={28} color={PURPLE} />
+                <Text
+                  style={{ marginTop: 8, fontSize: 14, fontWeight: "700", color: "#374151" }}
+                >
+                  Terms
+                </Text>
+              </TouchableOpacity>
+            </GlassCardDark>
           </View>
 
-          <TouchableOpacity
-            onPress={handleSignOut}
-            style={{
-              backgroundColor: "#FFF",
-              borderRadius: 16,
-              paddingVertical: 16,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 6,
-              elevation: 2,
-            }}
+          <GlassCardDark
+            padding={0}
+            borderRadius={PROFILE_GLASS_TILE_RADIUS}
+            borderColor={PROFILE_GLASS_BORDER}
+            blurIntensity={PROFILE_GLASS_BLUR}
           >
-            <Ionicons name="log-out-outline" size={22} color="#DC2626" />
-            <Text style={{ fontSize: 16, fontWeight: "800", color: "#DC2626" }}>
-              Sign Out
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSignOut}
+              activeOpacity={0.75}
+              style={{
+                paddingVertical: 16,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+              }}
+            >
+              <Ionicons name="log-out-outline" size={22} color="#DC2626" />
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#DC2626" }}>
+                Sign Out
+              </Text>
+            </TouchableOpacity>
+          </GlassCardDark>
         </View>
 
         <AppTabFooter style={{ marginTop: 8 }} />

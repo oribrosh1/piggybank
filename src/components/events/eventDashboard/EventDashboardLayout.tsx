@@ -1,4 +1,10 @@
-import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   View,
@@ -37,8 +43,14 @@ import {
 } from "lucide-react-native";
 import type { Event } from "@/types/events";
 import { honoreeNameFromEvent } from "@/src/lib/eventTitle";
-import { formatDate, getKosherLabel, getMealTypeLabel, getVegetarianLabel } from "../utils";
+import {
+  formatDate,
+  getKosherLabel,
+  getMealTypeLabel,
+  getVegetarianLabel,
+} from "../utils";
 import { colors, fontFamily } from "@/src/theme";
+import { getPartyTypeDisplayLabel } from "@/src/constants/partyTypeOptions";
 
 const VIOLET = colors.primary;
 /** Page canvas — transparent so root `AppMeshBackground` shows through */
@@ -103,22 +115,19 @@ function formatDateOrdinal(dateStr: string): string {
   const day = d.getDate();
   const y = d.getFullYear();
   const suf =
-    day % 10 === 1 && day !== 11 ? "st" : day % 10 === 2 && day !== 12 ? "nd" : day % 10 === 3 && day !== 13 ? "rd" : "th";
+    day % 10 === 1 && day !== 11
+      ? "st"
+      : day % 10 === 2 && day !== 12
+        ? "nd"
+        : day % 10 === 3 && day !== 13
+          ? "rd"
+          : "th";
   return `${month} ${day}${suf}, ${y}`;
 }
 
-function formatPartyTypeLabel(type?: string, other?: string): string {
-  if (!type) return "—";
-  if (type === "other" && other?.trim()) return other.trim();
-  return type
-    .split(/[-_]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
-function formatAttireLabel(v?: string): string {
-  if (!v) return "—";
-  return v.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+function formatDressCodeLabel(v?: string): string {
+  if (!v?.trim()) return "—";
+  return v.trim();
 }
 
 function buildCateringSummary(event: Event): string {
@@ -129,7 +138,8 @@ function buildCateringSummary(event: Event): string {
   if (m) parts.push(m.replace(/^.\s*/, "").trim());
   const v = getVegetarianLabel(event.vegetarianType);
   if (v) parts.push(v.replace(/^.\s*/, "").trim());
-  if (parts.length === 0) return "Add dietary preferences when editing your event.";
+  if (parts.length === 0)
+    return "Add dietary preferences when editing your event.";
   return parts.join(" · ");
 }
 
@@ -140,7 +150,12 @@ type DashboardTopBarProps = {
   hasNotificationDot?: boolean;
 };
 
-export function DashboardTopBar({ topInset, event, onBell, hasNotificationDot }: DashboardTopBarProps) {
+export function DashboardTopBar({
+  topInset,
+  event,
+  onBell,
+  hasNotificationDot,
+}: DashboardTopBarProps) {
   const initial = honoreeNameFromEvent(event).charAt(0).toUpperCase() || "?";
   return (
     <View style={[styles.topBar, { paddingTop: topInset + 8 }]}>
@@ -161,8 +176,12 @@ type PosterHeroCardProps = {
   onGeneratePoster: () => void;
 };
 
-export function PosterHeroCard({ event, onGeneratePoster }: PosterHeroCardProps) {
-  const basicTemplateOnly = event.optionalDetailsLater === true && !event.posterUrl;
+export function PosterHeroCard({
+  event,
+  onGeneratePoster,
+}: PosterHeroCardProps) {
+  const basicTemplateOnly =
+    event.optionalDetailsLater === true && !event.posterUrl;
   const themeLabel = basicTemplateOnly
     ? "Standard invitation"
     : event.theme?.trim() || "Custom design";
@@ -170,9 +189,16 @@ export function PosterHeroCard({ event, onGeneratePoster }: PosterHeroCardProps)
 
   return (
     <View style={styles.posterCard}>
-      <View style={styles.posterA4} accessibilityLabel="Event poster, A4 size preview">
+      <View
+        style={styles.posterA4}
+        accessibilityLabel="Event poster, A4 size preview"
+      >
         {event.posterUrl ? (
-          <Image source={{ uri: event.posterUrl }} style={styles.posterImageFill} resizeMode="cover" />
+          <Image
+            source={{ uri: event.posterUrl }}
+            style={styles.posterImageFill}
+            resizeMode="cover"
+          />
         ) : basicTemplateOnly ? (
           <LinearGradient
             colors={["#F9A8D4", "#C084FC", "#6366F1"]}
@@ -185,7 +211,9 @@ export function PosterHeroCard({ event, onGeneratePoster }: PosterHeroCardProps)
               <Text style={styles.basicInviteTitle} numberOfLines={2}>
                 {event.eventName}
               </Text>
-              <Text style={styles.basicInviteName}>{honoreeNameFromEvent(event)}</Text>
+              <Text style={styles.basicInviteName}>
+                {honoreeNameFromEvent(event)}
+              </Text>
               <Text style={styles.basicInviteMeta}>
                 {formatDate(event.date)} · {event.time}
               </Text>
@@ -199,7 +227,9 @@ export function PosterHeroCard({ event, onGeneratePoster }: PosterHeroCardProps)
         ) : (
           <View style={styles.posterPlaceholder}>
             <Text style={styles.placeholderGlow}>YOUR EVENT</Text>
-            <Text style={styles.placeholderSub}>Tap Generate to create your poster</Text>
+            <Text style={styles.placeholderSub}>
+              Tap Generate to create your poster
+            </Text>
             <Text style={styles.a4Hint}>A4 (210 × 250 mm)</Text>
           </View>
         )}
@@ -212,13 +242,19 @@ export function PosterHeroCard({ event, onGeneratePoster }: PosterHeroCardProps)
           </Text>
         </View>
         {!basicTemplateOnly ? (
-          <TouchableOpacity style={styles.fabGenerate} onPress={onGeneratePoster} activeOpacity={0.9}>
+          <TouchableOpacity
+            style={styles.fabGenerate}
+            onPress={onGeneratePoster}
+            activeOpacity={0.9}
+          >
             <Sparkles size={16} color={colors.onPrimary} strokeWidth={2.2} />
             <Text style={styles.fabGenerateText}>Generate Poster</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.fabMuted}>
-            <Text style={styles.fabMutedText}>AI poster after you add details</Text>
+            <Text style={styles.fabMutedText}>
+              AI poster after you add details
+            </Text>
           </View>
         )}
       </View>
@@ -242,12 +278,16 @@ export function EventSummaryHeader({ event }: EventSummaryHeaderProps) {
   return (
     <View style={styles.summaryBlock}>
       <View style={styles.pillRow}>
-        <View style={[styles.pill, { backgroundColor: colors.surfaceContainerLow }]}>
+        <View
+          style={[styles.pill, { backgroundColor: colors.surfaceContainerLow }]}
+        >
           <Text style={[styles.pillText, { color: VIOLET }]}>{typePill}</Text>
         </View>
         {event.age ? (
           <View style={[styles.pill, { backgroundColor: "#CCFBF1" }]}>
-            <Text style={[styles.pillText, { color: "#0F766E" }]}>TURNING {event.age}</Text>
+            <Text style={[styles.pillText, { color: "#0F766E" }]}>
+              TURNING {event.age}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -294,18 +334,34 @@ export function QuickActionsGrid({
     onPress: () => void;
     dot?: boolean;
   }> = [
-    { key: "rem", label: "REMINDERS", Icon: Bell, onPress: onSetReminderSchedule },
+    {
+      key: "rem",
+      label: "REMINDERS",
+      Icon: Bell,
+      onPress: onSetReminderSchedule,
+    },
     { key: "add", label: "ADD GUESTS", Icon: UserPlus, onPress: onAddGuests },
     { key: "share", label: "SHARE LINK", Icon: Share2, onPress: onShare },
     { key: "stats", label: "STATS", Icon: BarChart3, onPress: onStats },
     { key: "feat", label: "FEATURES", Icon: Puzzle, onPress: onFeatures },
-    { key: "alert", label: "ALERTS", Icon: Bell, onPress: onAlerts, dot: showAlertDot },
+    {
+      key: "alert",
+      label: "ALERTS",
+      Icon: Bell,
+      onPress: onAlerts,
+      dot: showAlertDot,
+    },
   ];
   return (
-    <View style={styles.gridWrap} >
+    <View style={styles.gridWrap}>
       <View style={styles.grid}>
         {cells.map(({ key, label, Icon, onPress, dot }) => (
-          <TouchableOpacity key={key} style={styles.gridCell} onPress={onPress} activeOpacity={0.85}>
+          <TouchableOpacity
+            key={key}
+            style={styles.gridCell}
+            onPress={onPress}
+            activeOpacity={0.85}
+          >
             <View style={styles.gridIconWrap}>
               <Icon size={22} color={VIOLET} strokeWidth={2} />
               {dot ? <View style={styles.gridNotifDot} /> : null}
@@ -324,14 +380,22 @@ type InvolveChildCardProps = {
   loading?: boolean;
 };
 
-export function InvolveChildCard({ name, onLinkAccount, loading }: InvolveChildCardProps) {
+export function InvolveChildCard({
+  name,
+  onLinkAccount,
+  loading,
+}: InvolveChildCardProps) {
   return (
     <View style={styles.involveCard}>
       <View style={{ flex: 1 }}>
         <Text style={styles.involveTitle}>Involve {name}</Text>
         <Text style={styles.involveSub}>Let {name} track gifts & RSVPs</Text>
       </View>
-      <TouchableOpacity style={styles.linkAccountBtn} onPress={onLinkAccount} disabled={loading}>
+      <TouchableOpacity
+        style={styles.linkAccountBtn}
+        onPress={onLinkAccount}
+        disabled={loading}
+      >
         <Text style={styles.linkAccountText}>LINK ACCOUNT</Text>
       </TouchableOpacity>
     </View>
@@ -345,15 +409,23 @@ type DetailsStackProps = {
 
 export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
   const address = [event.address1, event.address2].filter(Boolean).join(", ");
-  const mapsUrl = address ? `https://maps.google.com/?q=${encodeURIComponent(address)}` : "";
+  const mapsUrl = address
+    ? `https://maps.google.com/?q=${encodeURIComponent(address)}`
+    : "";
 
-  const partyType = formatPartyTypeLabel(event.partyType, event.otherPartyType);
-  const attire = formatAttireLabel(event.attireType);
-  const footwear = formatAttireLabel(event.footwearType);
+  const partyType = getPartyTypeDisplayLabel(
+    event.partyType,
+    event.otherPartyType,
+    event.theme,
+  );
+  const dressCode = formatDressCodeLabel(event.dressCode);
   const theme = event.theme?.trim() || "—";
 
-  const hasPartyGrid =
-    event.partyType || event.attireType || event.footwearType || event.theme;
+  const hasPartyGrid = !!(
+    event.partyType ||
+    event.theme?.trim() ||
+    event.dressCode?.trim()
+  );
 
   return (
     <View style={{ gap: 12 }}>
@@ -364,7 +436,9 @@ export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.detailLabel}>Date & time</Text>
-            <Text style={styles.detailValue}>{formatDateOrdinal(event.date)}</Text>
+            <Text style={styles.detailValue}>
+              {formatDateOrdinal(event.date)}
+            </Text>
             <Text style={styles.detailTime}>{event.time}</Text>
           </View>
         </View>
@@ -378,7 +452,9 @@ export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
           <View style={{ flex: 1 }}>
             <Text style={styles.detailLabel}>Location</Text>
             <Text style={styles.detailValue}>{event.address1 || "—"}</Text>
-            {event.address2 ? <Text style={styles.detailSub}>{event.address2}</Text> : null}
+            {event.address2 ? (
+              <Text style={styles.detailSub}>{event.address2}</Text>
+            ) : null}
             {mapsUrl ? (
               <TouchableOpacity onPress={() => Linking.openURL(mapsUrl)}>
                 <Text style={styles.directionsLink}>Get Directions</Text>
@@ -396,7 +472,11 @@ export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
           <View style={styles.partyHeader}>
             <Text style={styles.sectionTitle}>Party Details</Text>
             <TouchableOpacity onPress={onEditEvent} style={styles.editPill}>
-              <Pencil size={14} color={colors.onSurfaceVariant} strokeWidth={2} />
+              <Pencil
+                size={14}
+                color={colors.onSurfaceVariant}
+                strokeWidth={2}
+              />
             </TouchableOpacity>
           </View>
           <View style={styles.grid2x2}>
@@ -405,22 +485,24 @@ export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
               <Text style={styles.miniValue}>{partyType}</Text>
             </View>
             <View style={styles.gridCellDetail}>
-              <Text style={styles.miniLabel}>ATTIRE</Text>
-              <Text style={styles.miniValue}>{attire}</Text>
-            </View>
-            <View style={styles.gridCellDetail}>
-              <Text style={styles.miniLabel}>FOOTWEAR</Text>
-              <Text style={styles.miniValue}>{footwear}</Text>
-            </View>
-            <View style={styles.gridCellDetail}>
               <Text style={styles.miniLabel}>THEME</Text>
               <Text style={styles.miniValue}>✨ {theme}</Text>
             </View>
+            {event.dressCode?.trim() ? (
+              <View style={[styles.gridCellDetail, { width: "100%" }]}>
+                <Text style={styles.miniLabel}>DRESS CODE</Text>
+                <Text style={styles.miniValue}>{dressCode}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
       ) : null}
 
-      <TouchableOpacity style={styles.whiteCard} onPress={onEditEvent} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={styles.whiteCard}
+        onPress={onEditEvent}
+        activeOpacity={0.9}
+      >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={[styles.iconCircle, { backgroundColor: "#FEF3C7" }]}>
             <Utensils size={20} color="#D97706" strokeWidth={2} />
@@ -429,14 +511,20 @@ export function DetailsStack({ event, onEditEvent }: DetailsStackProps) {
             <Text style={styles.detailLabel}>Catering & Menu</Text>
             <Text style={styles.detailSub}>{buildCateringSummary(event)}</Text>
           </View>
-          <Text style={{ color: VIOLET, fontSize: 18, fontWeight: "700" }}>›</Text>
+          <Text style={{ color: VIOLET, fontSize: 18, fontWeight: "700" }}>
+            ›
+          </Text>
         </View>
       </TouchableOpacity>
     </View>
   );
 }
 
-type GuideIcon = React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
+type GuideIcon = React.ComponentType<{
+  size: number;
+  color: string;
+  strokeWidth?: number;
+}>;
 
 const GUEST_MANAGEMENT_GUIDE_POINTS: {
   title: string;
@@ -538,7 +626,11 @@ const GUIDE_STEP_GRADIENTS: readonly (readonly [string, string])[] = [
   ["#115E59", "#5EEAD4"],
 ];
 
-export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }: GuestManagementGuideModalProps) {
+export function GuestManagementGuideModal({
+  visible,
+  onClose,
+  bottomInset = 0,
+}: GuestManagementGuideModalProps) {
   const insets = useSafeAreaInsets();
   const safeBottom = Math.max(insets.bottom, bottomInset);
   const { width: slideW, height: winH } = useWindowDimensions();
@@ -559,17 +651,27 @@ export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }:
       const next = Math.round(x / slideW);
       setActiveIndex(Math.min(Math.max(next, 0), slides.length - 1));
     },
-    [slideW, slides.length]
+    [slideW, slides.length],
   );
 
   const renderSlide = useCallback(
     ({ item }: { item: GuideSlide }) => {
-      const slideFrame = [styles.guideImmersiveSlide, { width: slideW, height: winH }];
+      const slideFrame = [
+        styles.guideImmersiveSlide,
+        { width: slideW, height: winH },
+      ];
       if (item.kind === "intro") {
         return (
           <View style={slideFrame}>
-            <LinearGradient colors={[...GUIDE_INTRO_GRADIENT]} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFillObject} />
-            <View style={[styles.guideSlideInner, { paddingTop: insets.top + 72 }]}>
+            <LinearGradient
+              colors={[...GUIDE_INTRO_GRADIENT]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0.9, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View
+              style={[styles.guideSlideInner, { paddingTop: insets.top + 72 }]}
+            >
               <View style={styles.guideIntroSparkleWrap}>
                 <Sparkles size={38} color="#E9D5FF" strokeWidth={2} />
               </View>
@@ -578,22 +680,34 @@ export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }:
               <Text style={styles.guideImmersiveBody}>{item.body}</Text>
               <View style={styles.guideSwipeHint}>
                 <Text style={styles.guideSwipeHintText}>Swipe</Text>
-                <ChevronRight size={18} color="rgba(255,255,255,0.75)" strokeWidth={2.5} />
+                <ChevronRight
+                  size={18}
+                  color="rgba(255,255,255,0.75)"
+                  strokeWidth={2.5}
+                />
               </View>
             </View>
           </View>
         );
       }
       const StepIcon = item.Icon;
-      const g = GUIDE_STEP_GRADIENTS[item.stepIndex - 1] ?? GUIDE_STEP_GRADIENTS[0];
+      const g =
+        GUIDE_STEP_GRADIENTS[item.stepIndex - 1] ?? GUIDE_STEP_GRADIENTS[0];
       const num = String(item.stepIndex).padStart(2, "0");
       return (
         <View style={slideFrame}>
-          <LinearGradient colors={[g[0], g[1]]} start={{ x: 0.1, y: 0 }} end={{ x: 0.85, y: 1 }} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient
+            colors={[g[0], g[1]]}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.85, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
           <Text style={styles.guideWatermarkNum} accessibilityElementsHidden>
             {num}
           </Text>
-          <View style={[styles.guideSlideInner, { paddingTop: insets.top + 72 }]}>
+          <View
+            style={[styles.guideSlideInner, { paddingTop: insets.top + 72 }]}
+          >
             <View style={styles.guideIconGlass}>
               <StepIcon size={34} color="#FFFFFF" strokeWidth={2.2} />
             </View>
@@ -603,13 +717,18 @@ export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }:
         </View>
       );
     },
-    [insets.top, slideW, winH]
+    [insets.top, slideW, winH],
   );
 
   const progress = (activeIndex + 1) / slides.length;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
       <View style={styles.guideImmersiveRoot}>
         <StatusBar barStyle="light-content" />
         <FlatList
@@ -632,9 +751,17 @@ export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }:
           extraData={slideW}
         />
 
-        <View style={[styles.guideTopOverlay, { paddingTop: insets.top + 6 }]} pointerEvents="box-none">
+        <View
+          style={[styles.guideTopOverlay, { paddingTop: insets.top + 6 }]}
+          pointerEvents="box-none"
+        >
           <View style={styles.guideProgressTrack}>
-            <View style={[styles.guideProgressFill, { width: `${progress * 100}%` }]} />
+            <View
+              style={[
+                styles.guideProgressFill,
+                { width: `${progress * 100}%` },
+              ]}
+            />
           </View>
           <View style={styles.guideTopOverlayRow}>
             <View style={{ width: 44 }} />
@@ -657,10 +784,20 @@ export function GuestManagementGuideModal({ visible, onClose, bottomInset = 0 }:
         >
           <View style={styles.guideDotsRowLight}>
             {slides.map((_, i) => (
-              <View key={String(i)} style={[styles.guideDotLight, i === activeIndex && styles.guideDotLightActive]} />
+              <View
+                key={String(i)}
+                style={[
+                  styles.guideDotLight,
+                  i === activeIndex && styles.guideDotLightActive,
+                ]}
+              />
             ))}
           </View>
-          <TouchableOpacity style={styles.guideModalCtaLight} onPress={onClose} activeOpacity={0.92}>
+          <TouchableOpacity
+            style={styles.guideModalCtaLight}
+            onPress={onClose}
+            activeOpacity={0.92}
+          >
             <Text style={styles.guideModalCtaLightText}>Got it</Text>
           </TouchableOpacity>
         </LinearGradient>
@@ -674,7 +811,10 @@ type StartInvitingGuestsCardProps = {
   onLearnHowItWorks: () => void;
 };
 
-export function StartInvitingGuestsCard({ onInviteGuests, onLearnHowItWorks }: StartInvitingGuestsCardProps) {
+export function StartInvitingGuestsCard({
+  onInviteGuests,
+  onLearnHowItWorks,
+}: StartInvitingGuestsCardProps) {
   return (
     <View style={styles.startInviteCard}>
       <View style={styles.startInviteIconWrap}>
@@ -682,14 +822,25 @@ export function StartInvitingGuestsCard({ onInviteGuests, onLearnHowItWorks }: S
       </View>
       <Text style={styles.startInviteTitle}>Start inviting guests</Text>
       <Text style={styles.startInviteSub}>
-        Add people from your contacts, send SMS invitations, and track RSVPs and gifts in one place.
+        Add people from your contacts, send SMS invitations, and track RSVPs and
+        gifts in one place.
       </Text>
-      <TouchableOpacity style={styles.startInvitePrimary} onPress={onInviteGuests} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={styles.startInvitePrimary}
+        onPress={onInviteGuests}
+        activeOpacity={0.9}
+      >
         <Text style={styles.startInvitePrimaryText}>Invite guests</Text>
         <ChevronRight size={20} color={colors.onPrimary} strokeWidth={2.5} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={onLearnHowItWorks} hitSlop={{ top: 8, bottom: 8 }} style={styles.startInviteSecondary}>
-        <Text style={styles.startInviteSecondaryText}>How guest management works</Text>
+      <TouchableOpacity
+        onPress={onLearnHowItWorks}
+        hitSlop={{ top: 8, bottom: 8 }}
+        style={styles.startInviteSecondary}
+      >
+        <Text style={styles.startInviteSecondaryText}>
+          How guest management works
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -706,7 +857,9 @@ export function GuestListSection({ event, onViewAll }: GuestListSectionProps) {
     const qv = q.trim().toLowerCase();
     if (!qv) return event.guests;
     return event.guests.filter(
-      (g) => g.name.toLowerCase().includes(qv) || g.phone.replace(/\D/g, "").includes(qv.replace(/\D/g, ""))
+      (g) =>
+        g.name.toLowerCase().includes(qv) ||
+        g.phone.replace(/\D/g, "").includes(qv.replace(/\D/g, "")),
     );
   }, [event.guests, q]);
 
@@ -723,7 +876,11 @@ export function GuestListSection({ event, onViewAll }: GuestListSectionProps) {
       case "invalid_phone":
         return { text: "INVALID", bg: "#FEF3C7", color: "#B45309" };
       default:
-        return { text: "ADDED", bg: colors.surfaceContainerLow, color: colors.onSurfaceVariant };
+        return {
+          text: "ADDED",
+          bg: colors.surfaceContainerLow,
+          color: colors.onSurfaceVariant,
+        };
     }
   };
 
@@ -750,8 +907,23 @@ export function GuestListSection({ event, onViewAll }: GuestListSectionProps) {
       {event.guests.length === 0 ? (
         <View style={{ alignItems: "center", paddingVertical: 16 }}>
           <Text style={{ fontSize: 36, marginBottom: 8 }}>👥</Text>
-          <Text style={{ fontSize: 15, fontWeight: "700", color: colors.onSurfaceVariant }}>No guests yet</Text>
-          <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4, textAlign: "center" }}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "700",
+              color: colors.onSurfaceVariant,
+            }}
+          >
+            No guests yet
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.muted,
+              marginTop: 4,
+              textAlign: "center",
+            }}
+          >
             Add guests to start sending invites
           </Text>
         </View>
@@ -764,7 +936,9 @@ export function GuestListSection({ event, onViewAll }: GuestListSectionProps) {
             return (
               <View key={guest.id} style={styles.guestRow}>
                 <View style={styles.guestAvatar}>
-                  <Text style={styles.guestAvatarText}>{guest.name.charAt(0).toUpperCase()}</Text>
+                  <Text style={styles.guestAvatarText}>
+                    {guest.name.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.guestName}>{guest.name}</Text>
@@ -773,7 +947,9 @@ export function GuestListSection({ event, onViewAll }: GuestListSectionProps) {
                   </Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: st.bg }]}>
-                  <Text style={[styles.statusBadgeText, { color: st.color }]}>{st.text}</Text>
+                  <Text style={[styles.statusBadgeText, { color: st.color }]}>
+                    {st.text}
+                  </Text>
                 </View>
               </View>
             );
@@ -790,8 +966,9 @@ export function WhatsNextTip() {
       <Text style={styles.tipIcon}>ⓘ</Text>
       <View style={{ flex: 1 }}>
         <Text style={styles.tipText}>
-          Most parents finalize the guest list 2 weeks before. Use the <Text style={{ fontWeight: "800" }}>Share Link</Text>{" "}
-          to get quick RSVPs via WhatsApp or Text.
+          Most parents finalize the guest list 2 weeks before. Use the{" "}
+          <Text style={{ fontWeight: "800" }}>Share Link</Text> to get quick
+          RSVPs via WhatsApp or Text.
         </Text>
       </View>
     </View>
@@ -816,7 +993,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarText: { fontSize: 18, fontWeight: "800", color: VIOLET },
-  brandTitle: { fontSize: 18, fontWeight: "800", color: VIOLET, letterSpacing: -0.3 },
+  brandTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: VIOLET,
+    letterSpacing: -0.3,
+  },
   bellWrap: { position: "relative", padding: 4 },
   notifDot: {
     position: "absolute",
@@ -868,7 +1050,12 @@ const styles = StyleSheet.create({
     color: "#F87171",
     letterSpacing: 4,
   },
-  placeholderSub: { marginTop: 12, fontSize: 13, color: colors.muted, fontWeight: "600" },
+  placeholderSub: {
+    marginTop: 12,
+    fontSize: 13,
+    color: colors.muted,
+    fontWeight: "600",
+  },
   posterOverlayBottom: {
     position: "absolute",
     bottom: 0,
@@ -880,8 +1067,19 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "rgba(0,0,0,0.45)",
   },
-  activeLabel: { fontSize: 10, fontWeight: "800", color: "rgba(255,255,255,0.7)", letterSpacing: 1 },
-  themeTitle: { fontSize: 16, fontWeight: "800", color: colors.onPrimary, marginTop: 4, maxWidth: "70%" },
+  activeLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 1,
+  },
+  themeTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.onPrimary,
+    marginTop: 4,
+    maxWidth: "70%",
+  },
   fabGenerate: {
     flexDirection: "row",
     alignItems: "center",
@@ -903,7 +1101,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.15)",
   },
-  fabMutedText: { fontSize: 11, fontWeight: "700", color: "rgba(255,255,255,0.85)", lineHeight: 15 },
+  fabMutedText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 15,
+  },
   basicInviteInner: {
     flex: 1,
     paddingHorizontal: 20,
@@ -944,8 +1147,18 @@ const styles = StyleSheet.create({
   pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
   pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   pillText: { fontSize: 13, fontWeight: "800", letterSpacing: 0.3 },
-  eventTitle: { fontSize: 26, fontWeight: "900", color: colors.onSurface, letterSpacing: -0.5 },
-  celebrationSub: { fontSize: 16, fontWeight: "700", color: VIOLET, marginTop: 4 },
+  eventTitle: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: colors.onSurface,
+    letterSpacing: -0.5,
+  },
+  celebrationSub: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: VIOLET,
+    marginTop: 4,
+  },
   liveBanner: {
     marginHorizontal: 20,
     marginTop: 14,
@@ -960,7 +1173,13 @@ const styles = StyleSheet.create({
     borderLeftColor: "#10B981",
   },
   liveBannerCheck: { fontSize: 16, color: "#059669", fontWeight: "900" },
-  liveBannerText: { flex: 1, fontSize: 14, fontWeight: "600", color: "#065F46", lineHeight: 20 },
+  liveBannerText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#065F46",
+    lineHeight: 20,
+  },
   posterIntroWrap: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -1012,7 +1231,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#EF4444",
   },
-  gridLabel: { fontSize: 14, fontWeight: "800", color: colors.onSurface, marginTop: 8, textAlign: "center", letterSpacing: 0.2 },
+  gridLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.onSurface,
+    marginTop: 8,
+    textAlign: "center",
+    letterSpacing: 0.2,
+  },
   involveCard: {
     marginHorizontal: 20,
     marginTop: 16,
@@ -1033,7 +1259,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
   },
-  linkAccountText: { fontSize: 11, fontWeight: "800", color: colors.onPrimary, letterSpacing: 0.5 },
+  linkAccountText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.onPrimary,
+    letterSpacing: 0.5,
+  },
   whiteCard: {
     marginHorizontal: 20,
     backgroundColor: colors.surfaceContainerLowest,
@@ -1056,11 +1287,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  detailLabel: { fontSize: 12, fontWeight: "700", color: colors.muted, marginBottom: 4 },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.muted,
+    marginBottom: 4,
+  },
   detailValue: { fontSize: 16, fontWeight: "800", color: colors.onSurface },
-  detailTime: { fontSize: 15, fontWeight: "700", color: colors.onSurface, marginTop: 4 },
+  detailTime: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.onSurface,
+    marginTop: 4,
+  },
   detailSub: { fontSize: 13, color: colors.onSurfaceVariant, marginTop: 4 },
-  directionsLink: { fontSize: 14, fontWeight: "800", color: VIOLET, marginTop: 8 },
+  directionsLink: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: VIOLET,
+    marginTop: 8,
+  },
   mapThumb: {
     width: 56,
     height: 56,
@@ -1091,7 +1337,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 12,
   },
-  miniLabel: { fontSize: 10, fontWeight: "800", color: colors.muted, marginBottom: 6, letterSpacing: 0.5 },
+  miniLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.muted,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
   miniValue: { fontSize: 14, fontWeight: "700", color: colors.onSurface },
   glHeader: {
     flexDirection: "row",
@@ -1110,7 +1362,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     gap: 8,
   },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 15, fontWeight: "600", color: colors.onSurface },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.onSurface,
+  },
   guestRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   guestAvatar: {
     width: 44,
@@ -1125,7 +1383,12 @@ const styles = StyleSheet.create({
   guestSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   statusBadgeText: { fontSize: 13, fontWeight: "800", letterSpacing: 0.2 },
-  emptyGuests: { fontSize: 14, color: colors.muted, textAlign: "center", paddingVertical: 8 },
+  emptyGuests: {
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
   tipCard: {
     marginHorizontal: 20,
     marginTop: 16,
@@ -1140,7 +1403,12 @@ const styles = StyleSheet.create({
     borderColor: "#FEF3C7",
   },
   tipIcon: { fontSize: 18, color: "#D97706", fontWeight: "900" },
-  tipText: { fontSize: 14, color: "#92400E", lineHeight: 20, fontWeight: "500" },
+  tipText: {
+    fontSize: 14,
+    color: "#92400E",
+    lineHeight: 20,
+    fontWeight: "500",
+  },
   guideImmersiveRoot: {
     flex: 1,
     backgroundColor: "#020617",

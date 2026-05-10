@@ -30,7 +30,7 @@ function eventStatusLabel(status: EventSummary["status"]): string {
 
 export default function UpcomingEventPosterRow({ event, formattedDate, onPress }: Props) {
   const guests = event.guestStats?.total ?? event.totalGuests ?? 0;
-  const raisedUsd = (event.guestStats?.totalPaid ?? 0) / 100;
+  const totalGifts = event.guestStats?.total ?? 0;
   const statusLabel = eventStatusLabel(event.status);
 
   const cardInner = (
@@ -58,7 +58,7 @@ export default function UpcomingEventPosterRow({ event, formattedDate, onPress }
           <View style={styles.raisedRow}>
             <Wallet size={16} color={colors.primary} strokeWidth={2.2} />
             <Text style={styles.raisedText}>
-              ${raisedUsd.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} Raised
+              {totalGifts} Gifts
             </Text>
           </View>
         </View>

@@ -85,7 +85,7 @@ export default function HomeScreen() {
     getFormattedEventDate,
   } = useHomeScreen();
 
-  /** Full white loading: hide mesh (opaque root) + bottom tab bar; no Stripe footer strip */
+  /** Loading: transparent root so mesh shows; hide bottom tab bar; no Stripe footer strip */
   useLayoutEffect(() => {
     navigation.setOptions({
       tabBarStyle: loading ? hiddenTabBarStyle : defaultTabBarStyle,
@@ -97,7 +97,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <View style={{ flex: 1, backgroundColor: "transparent" }}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <LoadingLogoLottie />
         </View>
@@ -130,8 +130,8 @@ export default function HomeScreen() {
                 flexDirection: "row",
                 alignItems: "flex-start",
                 gap: 12,
-                marginBottom: spacing[6],
-                paddingRight: spacing[2],
+                // marginBottom: spacing[2],
+                // paddingRight: spacing[2],
               }}
             >
               <Animated.View style={{ flex: 1 }} entering={FadeInDown.duration(520).delay(80).springify()}>
@@ -139,20 +139,20 @@ export default function HomeScreen() {
                   style={[
                     typography.bodyLg,
                     {
-                      color: colors.onSurfaceVariant,
+                      color: colors.onSurface,
                       lineHeight: 28,
                       fontSize: 17,
                       marginBottom: 2,
                     },
                   ]}
                 >
-                  Create your child&apos;s birthday event to start
+                  Create your child's birthday event to start
                 </Text>
                 <EmptyHomeCaptionGradientLine width={emptyCaptionWidth} />
               </Animated.View>
-              <Animated.View entering={FadeInDown.duration(520).delay(160).springify()}>
+              {/* <Animated.View entering={FadeInDown.duration(520).delay(160).springify()}>
                 <Sparkles size={22} color={colors.primary} strokeWidth={2.4} style={{ marginTop: 4 }} />
-              </Animated.View>
+              </Animated.View> */}
             </View>
             <PartyPlannerEmptyContent onCreateEvent={goToCreateEvent} />
           </View>
@@ -160,8 +160,6 @@ export default function HomeScreen() {
 
         {homeState === "pre-event-pending-banking" && event && (
           <PreEventBankingPendingState
-
-            
             event={event}
             formattedEventDate={getFormattedEventDate()}
             onCompleteBanking={goToBankingSetup}

@@ -382,7 +382,7 @@ const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProp
                                 </View>
 
                                 {/* Theme & Attire */}
-                                {(event.theme || event.attireType) && (
+                                {(event.theme || event.dressCode?.trim()) && (
                                     <View style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: "#F3F4F6" }}>
                                         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                                             {event.theme && (
@@ -390,11 +390,11 @@ const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProp
                                                     <Text style={{ fontSize: 12, fontWeight: "700", color: "#7C3AED" }}>🎭 {event.theme}</Text>
                                                 </View>
                                             )}
-                                            {event.attireType && (
+                                            {event.dressCode?.trim() ? (
                                                 <View style={{ backgroundColor: "#DBEAFE", borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12 }}>
-                                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#2563EB" }}>👕 {event.attireType}</Text>
+                                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#2563EB" }}>👔 {event.dressCode}</Text>
                                                 </View>
-                                            )}
+                                            ) : null}
                                         </View>
                                     </View>
                                 )}

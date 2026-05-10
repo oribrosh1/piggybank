@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontStyle: "italic",
     letterSpacing: -0.3,
-    fontSize: 20,
+    fontSize: 30,
   },
   actions: {
     flexDirection: "row",

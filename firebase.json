@@ -2,9 +2,11 @@
     "functions": {
         "source": "functions",
         "predeploy": [],
-        "runtime": "nodejs20"
+        "runtime": "nodejs20",
+        "region": "us-east1"
     },
     "firestore": {
-        "rules": "firestore.rules"
+        "rules": "firestore.rules",
+        "region": "us-east1"
     }
 }

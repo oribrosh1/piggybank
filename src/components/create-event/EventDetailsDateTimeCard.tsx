@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Calendar } from "lucide-react-native";
+import { Calendar, Clock } from "lucide-react-native";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
 import { colors, spacing, radius, fontFamily } from "@/src/theme";
 
 function formatTimeTo24h(timeStr: string): string {
@@ -26,24 +27,53 @@ type EventDetailsDateTimeCardProps = {
   onTimePress: () => void;
 };
 
-const CARD_FILL = colors.surfaceContainerLowest;
 const ICON_HOLE = "rgba(107, 56, 212, 0.14)";
 
 export default function EventDetailsDateTimeCard(props: EventDetailsDateTimeCardProps) {
   const p = props;
   const hasError = !!(p.dateError || p.timeError);
   const bothEmpty = !p.dateValue && !p.timeValue;
-  const borderColor =
-    p.dateFocused || p.timeFocused ? "rgba(107, 56, 212, 0.35)" : hasError ? "#EF4444" : "transparent";
+  const shellBorderColor =
+    p.dateFocused || p.timeFocused
+      ? "rgba(107, 56, 212, 0.35)"
+      : hasError
+        ? "#EF4444"
+        : "rgba(107, 56, 212, 0.1)";
 
   return (
     <View style={styles.wrap}>
-      <View style={[styles.card, { borderColor }]}>
+                       <View style={{ 
+                  flexDirection: "row",
+                  alignItems: "center",
+                  // gap: spacing[2],
+                  marginTop: spacing[1],
+                  marginBottom: spacing[2],
+                  marginLeft: spacing[2],
+
+                  }}>
+        <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "10deg" }] }}>
+          <Clock size={26} color={colors.primary} strokeWidth={2.4} />
+        </View>
+        <Text style={{
+    fontFamily: fontFamily.headline,
+    fontSize: 13,
+    marginLeft: spacing[2],
+    textTransform: "uppercase",
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: 1.1,
+  }}>Date & time</Text>    
+    </View>
+      <GlassCardDark
+        padding={0}
+        borderRadius={radius.md}
+        borderColor={shellBorderColor}
+        contentStyle={styles.cardContent}
+      >
         <View style={styles.iconWrap}>
           <Calendar size={22} color={colors.primary} strokeWidth={2.2} />
         </View>
         <View style={styles.body}>
-          <Text style={styles.label}>Date & time</Text>
           {bothEmpty ? (
             <TouchableOpacity onPress={p.onDatePress} activeOpacity={0.75}>
               <Text style={styles.emptyPrompt}>Select date and start time</Text>
@@ -55,8 +85,10 @@ export default function EventDetailsDateTimeCard(props: EventDetailsDateTimeCard
                   {p.dateValue ? p.formatDateDisplay(p.dateValue) : "Date"}
                 </Text>
               </TouchableOpacity>
-              <Text style={styles.dot}>·</Text>
-              <TouchableOpacity style={styles.valueTouch} onPress={p.onTimePress} activeOpacity={0.75}>
+              <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "10deg" }] }}>
+          <Clock size={26} color={colors.primary} strokeWidth={2.4} />
+        </View>
+                      <TouchableOpacity style={{...styles.valueTouch, marginLeft: spacing[2]}} onPress={p.onTimePress} activeOpacity={0.75}>
                 <Text style={[styles.valueText, !p.timeValue && styles.placeholder]} numberOfLines={1}>
                   {p.timeValue ? formatTimeTo24h(p.timeValue) : "Time"}
                 </Text>
@@ -64,7 +96,7 @@ export default function EventDetailsDateTimeCard(props: EventDetailsDateTimeCard
             </View>
           )}
         </View>
-      </View>
+      </GlassCardDark>
       {(p.dateError || p.timeError) && (
         <Text style={styles.err}>{p.dateError || p.timeError}</Text>
       )}
@@ -76,12 +108,9 @@ const styles = StyleSheet.create({
   wrap: {
     marginBottom: spacing[5],
   },
-  card: {
+  cardContent: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: CARD_FILL,
-    borderRadius: radius.md,
-    borderWidth: 1,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[3],
   },

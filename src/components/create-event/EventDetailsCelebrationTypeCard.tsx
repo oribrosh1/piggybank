@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import { Cake, Star, Sparkles, PartyPopper, BookOpen } from "lucide-react-native";
+import { Cake, Star, Sparkles, PartyPopper, BookOpen,  } from "lucide-react-native";
 import type { CelebrationPickerType, MitzvahCelebrationFocus } from "@/types/events";
-import { colors, spacing, radius, fontFamily, borderGhostOutline } from "@/src/theme";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { colors, spacing, radius, fontFamily } from "@/src/theme";
 
-const CARD_FILL = colors.surfaceContainerLowest;
 const ICON_HOLE = "rgba(107, 56, 212, 0.14)";
 /** Inset track behind the three celebration segments */
 const SEGMENT_TRACK = "rgba(107, 56, 212, 0.08)";
@@ -49,13 +49,31 @@ export default function EventDetailsCelebrationTypeCard({
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.sectionLabel}>What are we celebrating?</Text>
-      <View style={styles.card}>
-        <View style={styles.iconWrap}>
-          <Cake size={22} color={colors.primary} strokeWidth={2.2} />
+            <View style={{ 
+                  flexDirection: "row",
+                  alignItems: "center",
+                  // gap: spacing[2],
+                  marginTop: spacing[1],
+                  marginBottom: spacing[2],
+                  marginLeft: spacing[2],
+
+                  }}>
+        <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "10deg" }] }}>
+          <Sparkles size={26} color={colors.primary} strokeWidth={2.4} />
         </View>
+        <Text style={{
+    fontFamily: fontFamily.headline,
+    fontSize: 13,
+    marginLeft: spacing[2],
+    textTransform: "uppercase",
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: 1.1,
+  }}>What are we celebrating?</Text>    
+    </View>
+      {/* <Text style={styles.sectionLabel}>What are we celebrating?</Text> */}
+       
         <View style={styles.body}>
-          <Text style={styles.label}>Celebration type</Text>
           <View style={styles.celebrationTrack}>
             {CELEBRATION_OPTIONS.map((opt) => {
               const selected = celebrationType === opt.value;
@@ -93,8 +111,8 @@ export default function EventDetailsCelebrationTypeCard({
           </View>
 
           {showMitzvahFocus ? (
-            <View style={styles.focusBlock}>
-              <Text style={styles.focusSectionLabel}>This celebration is for:</Text>
+            <View style={{ marginTop: spacing[2] }}>
+              {/* <Text style={styles.focusSectionLabel}>This celebration is for:</Text> */}
               <View style={styles.focusTrack}>
                 {FOCUS_OPTIONS.map((opt) => {
                   const selected = mitzvahCelebrationFocus === opt.value;
@@ -117,12 +135,7 @@ export default function EventDetailsCelebrationTypeCard({
                       >
                         {opt.label}
                       </Text>
-                      <Text
-                        style={[styles.focusSegmentSub, selected && styles.focusSegmentSubSelected]}
-                        numberOfLines={2}
-                      >
-                        {opt.sub}
-                      </Text>
+                     
                     </TouchableOpacity>
                   );
                 })}
@@ -130,7 +143,6 @@ export default function EventDetailsCelebrationTypeCard({
             </View>
           ) : null}
         </View>
-      </View>
       {mitzvahFocusError ? <Text style={styles.err}>{mitzvahFocusError}</Text> : null}
     </View>
   );
@@ -148,15 +160,13 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     textTransform: "uppercase",
     marginBottom: spacing[2],
+    marginTop: spacing[2],
   },
-  card: {
+  cardContent: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: CARD_FILL,
-    borderRadius: radius.md,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[3],
-    ...borderGhostOutline,
   },
   iconWrap: {
     width: 48,

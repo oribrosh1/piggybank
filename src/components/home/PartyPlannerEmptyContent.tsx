@@ -4,6 +4,8 @@ import LottieView from "lottie-react-native";
 import Svg, { Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
 import { Sparkles, Contact, Send, BellRing, type LucideIcon } from "lucide-react-native";
 import Button from "@/src/components/common/Button";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { GlassCardDarkLottie } from "@/src/components/common/GlassCardDarkLottie";
 import {
   colors,
   radius,
@@ -67,7 +69,7 @@ function PlanYourPartyHeading({ contentWidth }: { contentWidth: number }) {
   const svgH = 44;
 
   return (
-    <View style={{ alignItems: "center", marginBottom: spacing[4] }}>
+    <View style={{ alignItems: "center", marginBottom: spacing[1] }}>
       <Text
         style={{
           fontFamily: fontFamily.display,
@@ -156,7 +158,7 @@ export default function PartyPlannerEmptyContent({ onCreateEvent }: PartyPlanner
             textAlign: "center",
             color: colors.onSurfaceVariant,
             lineHeight: 26,
-            marginBottom: spacing[6],
+            marginBottom: spacing[2],
             paddingHorizontal: spacing[4],
             fontSize: 17,
             fontFamily: fontFamily.body,
@@ -209,39 +211,27 @@ export default function PartyPlannerEmptyContent({ onCreateEvent }: PartyPlanner
         </View>
       </View> */}
 
-      <View
-        style={[
-          {
-            height: 250,
-            borderRadius: radius.md,
-            overflow: "hidden",
-            marginBottom: spacing[6],
-            backgroundColor: colors.surfaceContainerLow,
-          },
-          ambientShadow,
-        ]}
+      <GlassCardDarkLottie
+        style={{ marginBottom: spacing[4] }}
+        padding={0}
+        contentStyle={{
+          height: 200,
+          overflow: "hidden",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <View
+        <LottieView
+          source={SMS_PREVIEW_LOTTIE}
           style={{
-            width: contentWidth,
-            height: 250,
-            overflow: "hidden",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 400,
+            height: 400,
+            backgroundColor: "transparent",
           }}
-        >
-          <LottieView
-            source={SMS_PREVIEW_LOTTIE}
-            style={{
-              width: contentWidth,
-              height: 250,
-            }}
-            autoPlay
-            loop
-            resizeMode="cover"
-          />
-        </View>
-      </View>
+          autoPlay
+          loop
+        />
+      </GlassCardDarkLottie>
       <Button
         label="Create Event"
         onPress={onCreateEvent}
@@ -267,22 +257,15 @@ export default function PartyPlannerEmptyContent({ onCreateEvent }: PartyPlanner
         {PARTY_TOOLS.map((tool) => {
           const Icon = tool.icon;
           return (
-            <View
+            <GlassCardDark
               key={tool.title}
-              style={{
+              padding={spacing[4]}
+              borderRadius={radius.md}
+              borderColor="rgba(107, 56, 212, 0.1)"
+              contentStyle={{
                 flexDirection: "row",
                 alignItems: "center",
                 gap: spacing[4],
-                backgroundColor: colors.surfaceContainerLowest,
-                borderRadius: radius.md,
-                paddingVertical: spacing[4],
-                paddingHorizontal: spacing[4],
-                borderWidth: 1,
-                borderColor: "rgba(107, 56, 212, 0.1)",
-                ...ambientShadow,
-                shadowOpacity: 0.06,
-                shadowRadius: 16,
-                elevation: 2,
               }}
             >
               <View
@@ -321,7 +304,7 @@ export default function PartyPlannerEmptyContent({ onCreateEvent }: PartyPlanner
                   {tool.subtitle}
                 </Text>
               </View>
-            </View>
+            </GlassCardDark>
           );
         })}
       </View>
@@ -368,7 +351,7 @@ export default function PartyPlannerEmptyContent({ onCreateEvent }: PartyPlanner
             fontSize: 15,
             color: colors.onSurfaceVariant,
             textAlign: "center",
-            marginBottom: spacing[6],
+            // marginBottom: spacing[6],
             lineHeight: 24,
             paddingHorizontal: spacing[3],
             fontFamily: fontFamily.body,

@@ -55,9 +55,6 @@ export default function PreEventBankingPendingState({
       >
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Upcoming Event</Text>
-          <TouchableOpacity onPress={onViewAllEvents} hitSlop={8}>
-            <Text style={styles.viewAll}>View All</Text>
-          </TouchableOpacity>
         </View>
         <UpcomingEventPosterRow event={event} formattedDate={formattedEventDate} onPress={onViewEvent} />
       </Animated.View>
@@ -92,6 +89,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.3,
+    marginTop:10,
   },
   viewAll: {
     fontFamily: fontFamily.title,

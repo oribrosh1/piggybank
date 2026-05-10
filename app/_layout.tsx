@@ -140,25 +140,25 @@ export default function RootLayout() {
               />
             </View>
           </View>
-          {(!isReady || !minBootstrapLottieDone || !fontsLoaded) && (
+          {/* {(!isReady || !minBootstrapLottieDone || !fontsLoaded) && (
             <View style={styles.authLoadingOverlay} pointerEvents="auto">
               <LoadingLogoLottie />
             </View>
-          )}
+          )} */}
           <FirstLaunchLottieOverlay />
         </GestureHandlerRootView>
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
-
 const styles = StyleSheet.create({
   authLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "white",
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 99998,
     elevation: 99998,
   },
 });
+

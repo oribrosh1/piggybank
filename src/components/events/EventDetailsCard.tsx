@@ -118,8 +118,33 @@ export default function EventDetailsCard({ event, delay = 300, onEdit }: EventDe
                 </View>
             </View>
 
+            {/* Venue notes */}
+            {event.locationNotes?.trim() ? (
+                <View style={{ flexDirection: "row", alignItems: "flex-start", marginTop: 16 }}>
+                    <View
+                        style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 12,
+                            backgroundColor: "#EDE9FE",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 12,
+                        }}
+                    >
+                        <Text style={{ fontSize: 18 }}>📝</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "600" }}>Venue notes</Text>
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>
+                            {event.locationNotes.trim()}
+                        </Text>
+                    </View>
+                </View>
+            ) : null}
+
             {/* Parking */}
-            {event.parking && (
+            {event.parking?.trim() ? (
                 <View style={{ flexDirection: "row", alignItems: "flex-start", marginTop: 16 }}>
                     <View
                         style={{
@@ -136,10 +161,10 @@ export default function EventDetailsCard({ event, delay = 300, onEdit }: EventDe
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "600" }}>Parking</Text>
-                        <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>{event.parking}</Text>
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>{event.parking.trim()}</Text>
                     </View>
                 </View>
-            )}
+            ) : null}
         </Animated.View>
     );
 }

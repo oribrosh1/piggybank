@@ -22,14 +22,17 @@ export interface EventData {
     eventCategory?: string;
     partyType?: string;
     otherPartyType?: string;
-    attireType?: string;
-    footwearType?: string;
+    dressCode?: string;
     theme?: string;
     parking?: string;
+    /** Gate, entrance, elevator, unit — guests see near address */
+    locationNotes?: string;
     kosherType?: string;
     mealType?: string;
     vegetarianType?: string;
     age?: string;
+    /** Poster hero; synced with app `HonoreeGender` */
+    honoreeGender?: "boy" | "girl" | "other";
     date: string;
     time: string;
     address1: string;

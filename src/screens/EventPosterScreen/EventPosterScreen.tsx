@@ -32,6 +32,8 @@ export default function EventPosterScreen() {
     eventId,
     celebrationLine,
     displayPosterUrl,
+    posterStreamingPreviewUrl,
+    posterPreviewWhileGenerating,
     posterReady,
     continueToGuests,
     latestVersionNumber,
@@ -123,16 +125,28 @@ export default function EventPosterScreen() {
           </View>
         ) : null}
 
-        {displayPosterUrl ? (
+        {displayPosterUrl ||
+        (isGenerating && posterPreviewWhileGenerating && !displayPosterUrl) ? (
           <View style={{ marginTop: 16, padding: 12, backgroundColor: "#1e293b", borderRadius: 16, borderWidth: 1, borderColor: "rgba(148,163,184,0.2)" }}>
             <Text style={{ fontSize: 11, fontWeight: "800", color: ACCENT, letterSpacing: 0.8, marginBottom: 8 }}>
-              YOUR POSTER{latestVersionNumber != null ? ` · VERSION ${latestVersionNumber}` : ""}
+              {displayPosterUrl
+                ? `YOUR POSTER${latestVersionNumber != null ? ` · VERSION ${latestVersionNumber}` : ""}`
+                : posterStreamingPreviewUrl
+                  ? "PREVIEW (STREAMING) — SHARPENING"
+                  : "PREVIEW (FAST) — FINAL RENDERING"}
             </Text>
             <View style={{ borderRadius: 12, overflow: "hidden", alignSelf: "center", width: Math.min(CARD_W, 280) }}>
               <Image
-                source={{ uri: displayPosterUrl }}
+                source={{ uri: displayPosterUrl || posterPreviewWhileGenerating || "" }}
                 style={{ width: "100%", aspectRatio: A4, backgroundColor: "#0f172a" }}
                 resizeMode="cover"
+                blurRadius={
+                  displayPosterUrl
+                    ? 0
+                    : posterStreamingPreviewUrl
+                      ? 4
+                      : 14
+                }
               />
             </View>
           </View>

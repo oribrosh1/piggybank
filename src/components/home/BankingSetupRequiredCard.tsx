@@ -4,17 +4,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import LottieView from "lottie-react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { AlertTriangle, Check, CreditCard } from "lucide-react-native";
-
-const VERIFY_CREDITKID_LOTTIE = require("../../../assets/lotties/verify-creditkid.json");
-
-function canUseNativeLottie(): boolean {
-  if (Platform.OS === "web") return false;
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    return false;
-  }
-  return true;
-}
+import { AlertTriangle, Building2, Check, CreditCard, FileUp, ScanFace } from "lucide-react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -38,6 +28,96 @@ import {
   cardsHtmlCardGlowPulseMs,
   cardsHtmlRevealCheckDelayMs,
 } from "@/src/theme";
+
+const VERIFY_CREDITKID_LOTTIE = require("../../../assets/lotties/verify-creditkid.json");
+
+function canUseNativeLottie(): boolean {
+  if (Platform.OS === "web") return false;
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return false;
+  }
+  return true;
+}
+
+const SETUP_STEP_CIRCLE = 44;
+const SETUP_LINE_PULSE_MS = 1600;
+const SETUP_LINE_SHIMMER_MS = 2800;
+
+function BankingSetupProgressBar() {
+  const linePulse = useSharedValue(0);
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    linePulse.value = withRepeat(
+      withTiming(1, { duration: SETUP_LINE_PULSE_MS, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    shimmer.value = withRepeat(withTiming(1, { duration: SETUP_LINE_SHIMMER_MS, easing: Easing.linear }), -1, false);
+  }, [linePulse, shimmer]);
+
+  const seg1PulseStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(linePulse.value, [0, 1], [0.65, 1]),
+  }));
+
+  const seg2PurplePulseStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(linePulse.value, [0, 1], [0.65, 1]),
+  }));
+
+  const seg2GrayPulseStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(linePulse.value, [0, 1], [0.45, 0.82]),
+  }));
+
+  const lineShimmerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(shimmer.value, [0, 1], [-72, 320]) }],
+    opacity: interpolate(shimmer.value, [0, 0.15, 0.45, 0.75, 1], [0, 0.55, 0.75, 0.45, 0]),
+  }));
+
+  return (
+    <View style={styles.setupProgress} accessibilityRole="progressbar" accessibilityLabel="Bank setup progress">
+      <View style={styles.setupProgressTrack}>
+        <View style={styles.setupProgressLines} pointerEvents="none">
+          <View style={styles.setupProgressLinesInner}>
+            <Animated.View style={[styles.setupLineSegmentFull, seg1PulseStyle]} />
+            <View style={styles.setupLineSegmentPartial}>
+              <Animated.View style={[styles.setupConnectorPartialPurple, seg2PurplePulseStyle]} />
+              <Animated.View style={[styles.setupConnectorPartialGray, seg2GrayPulseStyle]} />
+            </View>
+          </View>
+          <Animated.View style={[styles.setupLineShimmer, lineShimmerStyle]} />
+        </View>
+        <View style={styles.setupProgressRow}>
+          <View style={styles.setupColEqual}>
+            <View style={styles.stepCircleDone}>
+              <FileUp size={20} color={colors.onPrimary} strokeWidth={2} />
+            </View>
+          </View>
+          <View style={styles.setupColEqual}>
+            <View style={styles.stepCircleDone}>
+              <ScanFace size={20} color={colors.onPrimary} strokeWidth={2} />
+            </View>
+          </View>
+          <View style={styles.setupColEqual}>
+            <View style={styles.stepCircleDone}>
+              <CreditCard size={20} color={colors.onPrimary} strokeWidth={2} />
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.setupProgressLabelsRow}>
+        <View style={styles.setupColEqual}>
+          <Text style={styles.setupLabelActive}>Upload Documents</Text>
+        </View>
+        <View style={styles.setupColEqual}>
+          <Text style={styles.setupLabelActive}>Biometric Check</Text>
+        </View>
+        <View style={styles.setupColEqual}>
+          <Text style={styles.setupLabelActive}>Get Credit Card</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 const HALO_GRADIENT: [string, string, string] = [
   "rgba(107, 56, 212, 0.35)",
@@ -157,10 +237,11 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
         </View>
         <Text style={styles.title}>Verify & Get A CreditKid Card</Text>
       </View>
-        <Text style={{...styles.body, marginTop: 10}}>
-          To send SMS invitations and start collecting digital gifts, you need to verify your identity and link a bank
-          account.
-        </Text>
+      <Text style={[styles.body, styles.bodyBelowCopy]}>
+        To send SMS invitations and start collecting digital gifts, you need to verify your identity.
+      </Text>
+
+      <BankingSetupProgressBar />
 
       <View style={styles.ctaBlock}>
         <TouchableOpacity onPress={onCompleteSetup} activeOpacity={0.92} style={styles.ctaTouch}>
@@ -170,7 +251,7 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
             end={primaryGradient.end}
             style={styles.ctaGradient}
           >
-            <Text style={styles.ctaLabel}>Complete Setup</Text>
+            <Text style={styles.ctaLabel}>Start Identity Verification</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -371,8 +452,133 @@ const styles = StyleSheet.create({
     color: "rgba(18, 28, 42, 0.7)",
     lineHeight: 22,
   },
+  bodyBelowCopy: {
+    width: "100%",
+    alignSelf: "stretch",
+    marginTop: spacing[3],
+  },
+  setupProgress: {
+    width: "100%",
+    alignSelf: "stretch",
+    marginTop: spacing[4],
+    marginBottom: spacing[2],
+    zIndex: 3,
+  },
+  setupProgressTrack: {
+    position: "relative",
+    minHeight: SETUP_STEP_CIRCLE,
+    justifyContent: "center",
+  },
+  setupProgressLines: {
+    position: "absolute",
+    left: "16.66%",
+    right: "16.66%",
+    top: SETUP_STEP_CIRCLE / 2 - 1,
+    height: 4,
+    overflow: "hidden",
+    zIndex: 0,
+    justifyContent: "center",
+  },
+  setupProgressLinesInner: {
+    flexDirection: "row",
+    width: "100%",
+    height: 2,
+    alignSelf: "center",
+  },
+  setupLineShimmer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 6,
+  },
+  setupLineSegmentFull: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.primary,
+  },
+  setupLineSegmentPartial: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    height: 2,
+  },
+  setupConnectorPartialPurple: {
+    width: "25%",
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.primary,
+  },
+  setupConnectorPartialGray: {
+    flex: 1,
+    height: 1,
+    borderRadius: 0.5,
+    backgroundColor: "rgba(203, 195, 215, 0.95)",
+  },
+  setupProgressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    zIndex: 1,
+  },
+  setupColEqual: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+  stepCircleDone: {
+    width: SETUP_STEP_CIRCLE,
+    height: SETUP_STEP_CIRCLE,
+    borderRadius: SETUP_STEP_CIRCLE / 2,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepCirclePending: {
+    width: SETUP_STEP_CIRCLE,
+    height: SETUP_STEP_CIRCLE,
+    borderRadius: SETUP_STEP_CIRCLE / 2,
+    backgroundColor: "rgba(239, 244, 255, 0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    borderStyle: "dashed",
+  },
+  setupProgressLabelsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    width: "100%",
+    marginTop: spacing[3],
+  },
+  setupLabelActive: {
+    fontFamily: fontFamily.headline,
+    fontSize: 13,
+    width:"80%",
+
+    fontWeight: "700",
+    color: colors.onSurface,
+    textAlign: "center",
+    lineHeight: 14,
+  },
+  setupLabelPending: {
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    width:"80%",
+    fontWeight: "500",
+    color: colors.muted,
+    textAlign: "center",
+    lineHeight: 14,
+  },
   ctaBlock: {
-    marginTop: spacing[2],
+    marginTop: spacing[3],
     gap: spacing[2],
     zIndex: 3,
   },
@@ -411,6 +617,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.onSurfaceVariant,
     letterSpacing: 1.2,
+    marginTop: 2,
+    marginRight: -6,
     textTransform: "uppercase",
   },
   stripeChip: {

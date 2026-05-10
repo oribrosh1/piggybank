@@ -117,7 +117,7 @@ export function LoadingLogoLottie({
 
 const styles = StyleSheet.create({
   brandBlock: {
-    backgroundColor: colors.surfaceContainerLowest,
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing[6],

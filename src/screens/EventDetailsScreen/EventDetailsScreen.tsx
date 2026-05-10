@@ -1,4 +1,13 @@
-import { View, Animated, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { useRef, useCallback } from "react";
+import {
+  View,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
 import {
   EventDetailsScreenHeader,
@@ -15,6 +24,8 @@ import {
 } from "@/src/components/create-event";
 import { useEventDetailsScreen } from "./useEventDetailsScreen";
 import { colors, spacing } from "@/src/theme";
+import EventThemeAndVibeCard from "@/src/components/create-event/EventThemeAndVibeCard";
+import PosterSkeletonPreviewSection from "@/src/components/create-event/PosterSkeletonPreviewSection";
 
 function parseTimeToDate(timeStr: string): Date | null {
   const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -31,6 +42,11 @@ function parseTimeToDate(timeStr: string): Date | null {
 
 export default function EventDetailsScreen() {
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollToTopOnError = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const {
     formData,
     errors,
@@ -60,9 +76,12 @@ export default function EventDetailsScreen() {
     isPartyMode,
     setOptionalDetailsLater,
     isCreating,
+    posterGenLive,
     pickHonoreePhoto,
     clearHonoreePhoto,
-  } = useEventDetailsScreen();
+  } = useEventDetailsScreen({ scrollToTopOnError });
+
+  const themeInputRef = useRef<TextInput>(null);
 
   const openDatePicker = () => {
     if (formData.date) {
@@ -95,6 +114,7 @@ export default function EventDetailsScreen() {
     >
       <View style={styles.screen}>
         <Animated.ScrollView
+          ref={scrollRef}
           style={[styles.scroll, { opacity: fadeAnim }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -103,8 +123,8 @@ export default function EventDetailsScreen() {
         >
           <EventDetailsScreenHeader
             progressWidth={progressWidth}
-            progressPercentLabel="33%"
-            stepLabel="STEP 1 OF 3"
+            progressPercentLabel="50%"
+            stepLabel="STEP 1 OF 2"
             onBack={() => router.back()}
           />
 
@@ -125,6 +145,9 @@ export default function EventDetailsScreen() {
               onAgeBlur={clearFocus}
               onPickHonoreePhoto={pickHonoreePhoto}
               onClearHonoreePhoto={clearHonoreePhoto}
+              honoreeGender={formData.honoreeGender}
+              honoreeGenderError={errors.honoreeGender}
+              onHonoreeGenderChange={(g) => handleInputChange("honoreeGender", g)}
             />
 
             <EventDetailsCelebrationTypeCard
@@ -153,12 +176,36 @@ export default function EventDetailsScreen() {
               onAddressSelect={setAddressFromPlace}
               onAddressFocus={() => setFocusedField("address1")}
               onAddressBlur={clearFocus}
+              locationNotes={formData.locationNotes ?? ""}
+              parking={formData.parking ?? ""}
+              locationNotesFocused={focusedField === "locationNotes"}
+              parkingFocused={focusedField === "parking"}
+              onLocationNotesChange={(v) =>
+                handleInputChange("locationNotes", v)
+              }
+              onParkingChange={(v) => handleInputChange("parking", v)}
+              onLocationNotesFocus={() =>
+                setFocusedField("locationNotes")
+              }
+              onLocationNotesBlur={clearFocus}
+              onParkingFocus={() => setFocusedField("parking")}
+              onParkingBlur={clearFocus}
+            />
+            
+            <EventThemeAndVibeCard
+              formData={formData}
+              focusedField={focusedField}
+              setFocusedField={setFocusedField}
+              isPartyMode={!!isPartyMode}
+              onInputChange={handleInputChange}
+              themeInputRef={themeInputRef}
             />
 
-            <EventDetailsKosherCateringCard
+
+            {/* <EventDetailsKosherCateringCard
               selected={formData.kosherCateringPartnerId}
               onSelect={(value) => handleInputChange("kosherCateringPartnerId", value)}
-            />
+            /> */}
 
             <EventDetailsOptionalCard
               formData={formData}
@@ -166,22 +213,26 @@ export default function EventDetailsScreen() {
               optionalDetailsLater={formData.optionalDetailsLater ?? false}
               onOptionalDetailsLaterChange={setOptionalDetailsLater}
               focusedField={focusedField}
+              setFocusedField={setFocusedField}
+
               isBarBatMitzvah={!!isBarBatMitzvah}
               isPartyMode={!!isPartyMode}
               onToggleDetails={() => setShowEventDetails(!showEventDetails)}
               onInputChange={handleInputChange}
-              setFocusedField={setFocusedField}
             />
-
+            <PosterSkeletonPreviewSection
+              visible={!!posterGenLive}
+              posterUrl={posterGenLive?.posterUrl}
+              posterStreamingPreviewUrl={posterGenLive?.posterStreamingPreviewUrl}
+              skeletonPosterUrl={posterGenLive?.skeletonPosterUrl}
+            />
+{/* 
             <EventDetailsLocationCard
               address1={formData.address1}
               address2={formData.address2}
-              parking={formData.parking ?? ""}
-              parkingFocused={focusedField === "parking"}
-              onParkingChange={(v) => handleInputChange("parking", v)}
-              onParkingFocus={() => setFocusedField("parking")}
-              onParkingBlur={clearFocus}
-            />
+              locationNotes={formData.locationNotes}
+              parking={formData.parking}
+            /> */}
           </View>
         </Animated.ScrollView>
 

@@ -20,6 +20,7 @@ export type GlassCardDarkProps = {
   borderRadius?: number;
   /** Default: white 30% — use `glassCardBorderLocked` from theme for locked tiles (`border-white/40`) */
   borderColor?: string;
+  blurIntensity?: number;
 };
 
 /**
@@ -33,12 +34,13 @@ export function GlassCardDark({
   padding = spacing[3],
   borderRadius = radius.md,
   borderColor = GLASS_CARD_DARK_BORDER_DEFAULT,
+  blurIntensity = BLUR_INTENSITY
 }: GlassCardDarkProps) {
   const shellStyle: ViewStyle = {
     borderRadius,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor,
+    borderColor
   };
 
   const innerBase: ViewStyle = {
@@ -51,7 +53,7 @@ export function GlassCardDark({
     <View style={[styles.outer, { borderRadius }, style]}>
       <View style={shellStyle}>
         {Platform.OS === "ios" ? (
-          <BlurView intensity={BLUR_INTENSITY} tint="light" style={[innerBase, contentStyle]}>
+          <BlurView intensity={blurIntensity} tint="light" style={[innerBase, contentStyle]}>
             {children}
           </BlurView>
         ) : (

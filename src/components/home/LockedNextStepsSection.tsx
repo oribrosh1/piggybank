@@ -1,37 +1,53 @@
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
-import { Send, Bell, Lock } from "lucide-react-native";
+import { Lock } from "lucide-react-native";
 import { GlassCardDark } from "@/src/components/common/GlassCardDark";
 import { colors, spacing, fontFamily, radius, glassCardBorderLocked } from "@/src/theme";
+import LottieView from "lottie-react-native";
+
+const CREDITKID_LOTTIE = require("../../../assets/lotties/creditkid-lottiejson.json");
+const SMS_PREVIEW_LOTTIE = require("../../../assets/lotties/sms-preview.json");
 
 interface LockedRowProps {
-  icon: "send" | "bell";
+  icon: "send" | "card";
   title: string;
   style?: StyleProp<ViewStyle>;
 }
 
 function LockedRow({ icon, title, style }: LockedRowProps) {
-  const Icon = icon === "send" ? Send : Bell;
-  const inner = (
-    <>
-      <View style={styles.iconCircle}>
-        <Icon size={20} color={colors.primary} strokeWidth={2.2} />
-      </View>
-      <Text style={styles.lockedTitle}>{title}</Text>
-      <View style={styles.unlockRow}>
-        <Lock size={12} color={colors.primary} strokeWidth={2.4} />
-        <Text style={styles.unlockText}>Unlock after setup</Text>
-      </View>
-    </>
-  );
 
   return (
     <GlassCardDark
-      borderRadius={radius.sm + 6}
+      borderRadius={radius.md}
       borderColor={glassCardBorderLocked}
-      contentStyle={{ minHeight: 124 }}
+      contentStyle={styles.lockedCardContent}
       style={[styles.lockedCardOuter, style]}
     >
-      {inner}
+      <View style={styles.lockedCardInner}>
+        <View style={styles.lockedBgLayer} pointerEvents="none">
+          <View style={styles.decoSquare} />
+          <View style={styles.decoBlob} />
+          <View style={styles.blurredLockCluster}>
+            <Lock size={100} color="rgba(82, 84, 94, 0.62)" strokeWidth={1.35} style={styles.blurredLockGlyph} />
+          </View>
+        </View>
+
+        <View style={styles.lockedForeground}>
+            {icon === "card" ? (
+          <View style={{...styles.iconCircle, marginLeft:-15}}>
+              <LottieView source={CREDITKID_LOTTIE} autoPlay loop style={styles.iconLottieCreditKid} />
+          </View>
+            ) : (
+            <View style={styles.iconCircle}>
+              <LottieView source={SMS_PREVIEW_LOTTIE} autoPlay loop style={styles.iconLottieSMS} />
+          </View>
+        )}
+          <Text style={styles.lockedTitle}>{title}</Text>
+          <View style={styles.unlockRow}>
+            <Lock size={12} color={colors.primary} strokeWidth={2.4} />
+            <Text style={styles.unlockText}>Unlock after setup</Text>
+          </View>
+        </View>
+      </View>
     </GlassCardDark>
   );
 }
@@ -42,15 +58,11 @@ function LockedRow({ icon, title, style }: LockedRowProps) {
 export default function LockedNextStepsSection() {
   return (
     <View style={styles.section}>
-      <View style={styles.padlockWrap} pointerEvents="none">
-        <Lock size={140} color={colors.primary} strokeWidth={1.2} style={styles.padlockWatermark} />
-      </View>
-
       <Text style={styles.sectionTitle}>Next Steps</Text>
 
       <View style={styles.row}>
-        <LockedRow icon="send" title="Send Invitations" style={{ flex: 1, marginBottom: 0 }} />
-        <LockedRow icon="bell" title="Set Reminders" style={{ flex: 1, marginBottom: 0 }} />
+        <LockedRow icon="send" title="Schedule Automated Invitations & Reminders" style={{ flex: 1, marginBottom: 0 }} />
+        <LockedRow icon="card" title="Get Gifts From Guests Into Your CreditKid Card" style={{ flex: 1, marginBottom: 0 }} />
       </View>
     </View>
   );
@@ -59,17 +71,7 @@ export default function LockedNextStepsSection() {
 const styles = StyleSheet.create({
   section: {
     position: "relative",
-    overflow: "hidden",
-    paddingBottom: spacing[2],
-  },
-  padlockWrap: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: spacing[8],
-  },
-  padlockWatermark: {
-    opacity: 0.06,
+    overflow: "visible",
   },
   sectionTitle: {
     fontFamily: fontFamily.headline,
@@ -90,26 +92,92 @@ const styles = StyleSheet.create({
   lockedCardOuter: {
     marginBottom: spacing[3],
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceContainerLowest,
+  lockedCardContent: {
+    minHeight: 136,
+    padding: 0,
+    overflow: "hidden",
+  },
+  lockedCardInner: {
+    flex: 1,
+    minHeight: 136,
+    position: "relative",
+  },
+  lockedBgLayer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  /** Faint purple rounded square — left */
+  decoSquare: {
+    position: "absolute",
+    left: -6,
+    top: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "rgba(107, 56, 212, 0.06)",
+  },
+  /** Soft purple blob — top right */
+  decoBlob: {
+    position: "absolute",
+    right: -24,
+    top: -18,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "rgba(107, 56, 212, 0.05)",
+  },
+  /** Large lock watermark — top-right, clipped by card; pairs with glass blur on the shell */
+  blurredLockCluster: {
+    position: "absolute",
+    top: -6,
+    right: -32,
+    width: 128,
+    height: 128,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing[2],
-    shadowColor: colors.onSurface,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    transform: [{ rotate: "-10deg" }],
+  },
+  /** Watermark lock — slightly higher contrast than before (reads less “blurred”) */
+  blurredLockGlyph: {
+    opacity: 0.58,
+  },
+  lockedForeground: {
+    // flex: 1,
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+    paddingLeft: spacing[3],
+    zIndex: 2,
+  },
+  iconCircle: {
+    width: 100,
+    height: 80,
+    borderRadius: 40,
+    marginLeft:-20,
+    marginTop:-20,
+    marginBottom:-10,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  iconLottieCreditKid: {
+    width: 120,
+    height: 120,
+    backgroundColor: "transparent",
+  },
+  iconLottieSMS: {
+    width: 65,
+    height: 65,
+    backgroundColor: "transparent",
   },
   lockedTitle: {
-    fontFamily: fontFamily.title,
-    fontSize: 13,
-    fontWeight: "700",
-    color: "rgba(18, 28, 42, 0.5)",
-    marginBottom: spacing[2],
+    fontFamily: fontFamily.headline,
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.onSurface,
+    // letterSpacing: -0.2,
+    lineHeight: 20,
+    marginBottom: spacing[3],
   },
   unlockRow: {
     flexDirection: "row",
@@ -119,9 +187,10 @@ const styles = StyleSheet.create({
   },
   unlockText: {
     fontFamily: fontFamily.label,
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
     color: colors.primary,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
 });

@@ -126,7 +126,7 @@ export default function EmailSignInScreen() {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
-            <LinearGradient
+            {/* <LinearGradient
               {...primaryGradient}
               style={{
                 width: 32,
@@ -137,11 +137,11 @@ export default function EmailSignInScreen() {
               }}
             >
               <Ionicons name="wallet" size={16} color={colors.onPrimary} />
-            </LinearGradient>
+            </LinearGradient> */}
             <Text
               style={[
                 typography.titleLg,
-                { fontSize: 18, color: colors.primary, fontStyle: "italic", fontFamily: fontFamily.title },
+                { fontSize: 22, color: colors.primary, fontStyle: "italic", fontFamily: fontFamily.title },
               ]}
             >
               CreditKid

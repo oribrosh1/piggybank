@@ -34,7 +34,10 @@ import Animated, {
 } from "react-native-reanimated";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useLoginScreen } from "./useLoginScreen";
-import { colors, typography, primaryGradient, fontFamily, ambientShadow } from "@/src/theme";
+import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { GlassCardDarkLottie } from "@/src/components/common/GlassCardDarkLottie";
+import { colors, typography, primaryGradient, fontFamily, radius } from "@/src/theme";
 import LottieView from "lottie-react-native";
 
 const PAY_EVERYWHERE_LOTTIE = require("../../../assets/lotties/pay-everywhere-creditkid.json");
@@ -42,6 +45,8 @@ const STRIPE_TICKER_WORDMARK = require("../../../assets/images/stripe-icon.png")
 
 const TERMS_URL = "https://creditkid.vercel.app/terms";
 const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
+
+const LOGIN_SPLASH_MS = 2000;
 
 /** Shimmer band width inside Get Started (px) — travel is full screen via measureInWindow */
 const GET_STARTED_SHIMMER_BAND_W = 100;
@@ -108,6 +113,28 @@ export default function LoginScreen() {
     handleGoogleSignIn,
   } = useLoginScreen();
 
+  const [splashDone, setSplashDone] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSplashDone(true), LOGIN_SPLASH_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!splashDone) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <LoadingLogoLottie />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <ScrollView
@@ -128,7 +155,7 @@ export default function LoginScreen() {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <LinearGradient
+            {/* <LinearGradient
               {...primaryGradient}
               style={{
                 width: 32,
@@ -139,8 +166,8 @@ export default function LoginScreen() {
               }}
             >
               <Ionicons name="wallet" size={16} color={colors.onPrimary} />
-            </LinearGradient>
-            <GradientBrandWord text="CreditKid" width={112} height={22} fontSize={18} anchor="start" x={0} italic />
+            </LinearGradient> */}
+            <GradientBrandWord text="CreditKid" width={112} height={22} fontSize={22} anchor="start" x={0} italic />
           </View>
           <TouchableOpacity
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -154,13 +181,13 @@ export default function LoginScreen() {
 
         {/* Hero Section */}
         <Animated.View
-          style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16, alignItems: "center" }}
+          style={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12, alignItems: "center" }}
           entering={FadeInDown.duration(520).delay(120)}
         >
           <LoginHeroGradientHeadline width={heroTextW} />
           <View
             style={{
-              marginTop: 8,
+              marginTop: 4,
               width: "100%",
               maxWidth: "100%",
               borderRadius: 20,
@@ -283,7 +310,7 @@ export default function LoginScreen() {
             SAFETY FIRST
           </Text>
           <Text style={[typography.titleLg, { fontSize: 22, marginBottom: 16 }]}>
-            {"You\u2019re Always in Control"}
+            {"You're Always in Control"}
           </Text>
 
           <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
@@ -375,9 +402,10 @@ export default function LoginScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 22 }}>
               <Text
                 style={{
-                  fontSize: 40,
+                  fontSize: 55,
                   fontWeight: "900",
-                  color: GIFT_CARD_SECTION.statMint,
+                  // paddingRight: 30,
+                  color: colors.muted,
                   fontVariant: ["tabular-nums"],
                 }}
               >
@@ -521,22 +549,25 @@ export default function LoginScreen() {
               onPress={handleAppleSignIn}
               activeOpacity={0.85}
               disabled={isAuthenticating}
-              style={{
-                backgroundColor: colors.surfaceContainerLowest,
-                borderRadius: 14,
-                height: 52,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-              }}
+              style={{ alignSelf: "stretch" }}
             >
-              <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: colors.onSurface }}>
-                Continue with Apple
-              </Text>
+              <GlassCardDark
+                padding={0}
+                borderRadius={14}
+                borderColor="#E5E7EB"
+                contentStyle={{
+                  height: 52,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                }}
+              >
+                <Ionicons name="logo-apple" size={20} color={colors.onSurface} />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: colors.onSurface }}>
+                  Continue with Apple
+                </Text>
+              </GlassCardDark>
             </TouchableOpacity>
           )}
 
@@ -544,22 +575,25 @@ export default function LoginScreen() {
             onPress={handleGoogleSignIn}
             activeOpacity={0.85}
             disabled={isAuthenticating}
-            style={{
-              backgroundColor: colors.surfaceContainerLowest,
-              borderRadius: 14,
-              height: 52,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              borderWidth: 1,
-              borderColor: "#E5E7EB",
-            }}
+            style={{ alignSelf: "stretch" }}
           >
-            <Ionicons name="logo-google" size={18} color="#4285F4" />
-            <Text style={{ fontSize: 15, fontWeight: "600", color: colors.onSurface }}>
-              Continue with Google
-            </Text>
+            <GlassCardDark
+              padding={0}
+              borderRadius={14}
+              borderColor="#E5E7EB"
+              contentStyle={{
+                height: 52,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+              }}
+            >
+              <Ionicons name="logo-google" size={18} color="#4285F4" />
+              <Text style={{ fontSize: 15, fontWeight: "600", color: colors.onSurface }}>
+                Continue with Google
+              </Text>
+            </GlassCardDark>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -583,13 +617,38 @@ export default function LoginScreen() {
         </View>
 
         {/* Login Link */}
-        <View style={{ alignItems: "center", marginTop: 16, marginBottom: 24 }}>
+        <View style={{ alignItems: "center", marginTop: 16, marginBottom: 6 }}>
           <Text style={[typography.bodyMd, { color: colors.onSurfaceVariant }]}>
             Already have an account?{" "}
             <Text onPress={handleEmailSignIn} style={{ fontFamily: fontFamily.title, color: colors.primary }}>
               Log in
             </Text>
           </Text>
+        </View>
+
+        {/* Secured by Stripe */}
+        <View style={{ alignItems: "center", marginBottom: -15, paddingHorizontal: 24 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 0 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "700",
+                letterSpacing: 0.6,
+                textTransform: "uppercase",
+                color: colors.onSurfaceVariant,
+                fontFamily: fontFamily.label,
+                marginTop:2
+              }}
+            >
+              Secured by
+            </Text>
+            <Image
+              source={STRIPE_TICKER_WORDMARK}
+              resizeMode="contain"
+              accessibilityLabel="Stripe"
+              style={{ width: 80, height: 50 }}
+            />
+          </View>
         </View>
 
         {/* Footer Links */}
@@ -615,21 +674,7 @@ export default function LoginScreen() {
               Terms of Service
             </Text>
           </View>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 20,
-              marginBottom: 12,
-            }}
-          >
-            <Text style={[typography.bodyMd, { fontSize: 12, color: colors.muted }]}>
-              Contact Us
-            </Text>
-            <Text style={[typography.bodyMd, { fontSize: 12, color: colors.muted }]}>
-              Cookie Policy
-            </Text>
-          </View>
+       
           <Text
             style={{
               fontSize: 11,
@@ -935,19 +980,20 @@ const PAY_EVERYWHERE_LOTTIE_HEIGHT = 210;
 function PayEverywhereLottie() {
   const useNative = useMemo(() => payEverywhereLottieCanRunNatively(), []);
 
-  const slotStyle = {
-    width: "100%" as const,
+  const contentStyle: ViewStyle = {
     height: PAY_EVERYWHERE_LOTTIE_HEIGHT,
-    borderRadius: 16,
-    overflow: "hidden" as const,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "rgba(203, 195, 215, 0.4)",
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   if (!useNative) {
     return (
-      <View style={[slotStyle, { alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }]}>
+      <GlassCardDarkLottie
+        padding={0}
+        borderRadius={radius.md}
+        contentStyle={[contentStyle, { paddingHorizontal: 16 }]}
+      >
         <MaterialIcons name="payments" size={48} color={colors.primary} />
         <Text
           style={{
@@ -961,21 +1007,25 @@ function PayEverywhereLottie() {
         >
           Preview: open in a dev build (npx expo run:ios) to play the Pay Everywhere animation. Expo Go cannot run native Lottie.
         </Text>
-      </View>
+      </GlassCardDarkLottie>
     );
   }
 
   return (
-    <View style={slotStyle} collapsable={false}>
+    <GlassCardDarkLottie padding={0} borderRadius={radius.md} contentStyle={contentStyle}>
       <LottieView
         source={PAY_EVERYWHERE_LOTTIE}
-        style={{ width: "100%", height: PAY_EVERYWHERE_LOTTIE_HEIGHT }}
+        style={{
+          width: 500,
+          height: 220,
+          backgroundColor: "transparent",
+        }}
         autoPlay
         loop
-        resizeMode="contain"
+        // resizeMode="contain"
         renderMode="AUTOMATIC"
       />
-    </View>
+    </GlassCardDarkLottie>
   );
 }
 
@@ -1044,6 +1094,7 @@ function LoginTrustTicker() {
                 textTransform: "uppercase",
                 color: colors.onSurfaceVariant,
                 fontFamily: fontFamily.label,
+                marginRight: item.label == "Secured by" ? -10 : 0,
               }}
               numberOfLines={1}
             >
@@ -1053,7 +1104,7 @@ function LoginTrustTicker() {
               source={STRIPE_TICKER_WORDMARK}
               resizeMode="contain"
               accessibilityLabel="Stripe"
-              style={{ width: 56, height: 18 }}
+              style={{ width: 56, height: 22 }}
             />
           </>
         ) : (
@@ -1362,16 +1413,11 @@ function ControlCard({
   color: string;
 }) {
   return (
-    <View
-      style={[
-        {
-          flex: 1,
-          backgroundColor: colors.surfaceContainerLowest,
-          borderRadius: 14,
-          padding: 16,
-        },
-        ambientShadow,
-      ]}
+    <GlassCardDark
+      style={{ flex: 1 }}
+      padding={16}
+      borderRadius={14}
+      borderColor="rgba(107, 56, 212, 0.1)"
     >
       <View
         style={{
@@ -1392,6 +1438,6 @@ function ControlCard({
       <Text style={[typography.bodyMd, { fontSize: 12, color: colors.muted, lineHeight: 16 }]}>
         {description}
       </Text>
-    </View>
+    </GlassCardDark>
   );
 }

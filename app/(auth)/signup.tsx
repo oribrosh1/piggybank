@@ -11,7 +11,6 @@ import {
   ScrollView,
   Linking,
   type TextStyle,
-  StyleSheet,
   Image,
   type ImageSourcePropType,
 } from "react-native";
@@ -58,44 +57,6 @@ const CARD_PREVIEW = {
   pan: "**** **** **** 1234",
   exp: "10/32",
 } as const;
-
-function SignUpBackgroundMesh() {
-  return (
-    <>
-      <LinearGradient
-        colors={["#eef2ff", "#f8f9ff", "#f0f4ff"]}
-        locations={[0, 0.45, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[StyleSheet.absoluteFill, { overflow: "hidden" }]} pointerEvents="none">
-        <LinearGradient
-          colors={["rgba(107, 56, 212, 0.22)", "rgba(132, 85, 239, 0.06)", "transparent"]}
-          style={{
-            position: "absolute",
-            top: -100,
-            right: -80,
-            width: 320,
-            height: 320,
-            borderRadius: 160,
-          }}
-        />
-        <LinearGradient
-          colors={["transparent", "rgba(4, 120, 87, 0.08)", "rgba(4, 120, 87, 0.14)"]}
-          style={{
-            position: "absolute",
-            bottom: -40,
-            left: -60,
-            width: 260,
-            height: 260,
-            borderRadius: 130,
-          }}
-        />
-      </View>
-    </>
-  );
-}
 
 function SignUpCardPreview() {
   return (
@@ -283,9 +244,9 @@ export default function SignUpScreen() {
     },
   ];
 
+  // Transparent so root AppMeshBackground shows through (app/_layout).
   return (
     <View style={{ flex: 1, backgroundColor: "transparent" }}>
-      <SignUpBackgroundMesh />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <Animated.View entering={FadeIn.duration(420)} style={{ zIndex: 1 }}>
           <View
@@ -302,7 +263,7 @@ export default function SignUpScreen() {
               <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
             </TouchableOpacity>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <LinearGradient
+              {/* <LinearGradient
                 {...primaryGradient}
                 style={{
                   width: 32,
@@ -313,12 +274,12 @@ export default function SignUpScreen() {
                 }}
               >
                 <Ionicons name="wallet" size={16} color={colors.onPrimary} />
-              </LinearGradient>
+              </LinearGradient> */}
               <Text
                 style={[
                   typography.titleLg,
                   {
-                    fontSize: 18,
+                    fontSize: 22,
                     color: colors.primary,
                     fontStyle: "italic",
                     fontFamily: fontFamily.title,
@@ -344,10 +305,9 @@ export default function SignUpScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View entering={FadeInDown.duration(520).delay(60)}>
-            <Text style={[typography.headlineLg, { lineHeight: 38, marginBottom: spacing[2] }]}>
-              Welcome to{"\n"}
+            <Text style={[typography.headlineLg, { lineHeight: 38, marginBottom: spacing[2], fontSize: 30 }]}>
+              Welcome to{" "}
               <Text style={{ color: colors.primary }}>CreditKid</Text>
-              <Text style={{ color: colors.onSurface }}>.</Text>
             </Text>
             <Text
               style={[
@@ -355,7 +315,7 @@ export default function SignUpScreen() {
                 { fontSize: 15, color: colors.onSurfaceVariant, lineHeight: 22, marginBottom: spacing[5] },
               ]}
             >
-              {"The smartest way to manage your child's celebration gifts."}
+              {"The modern way to manage your child's birthday gifts."}
             </Text>
           </Animated.View>
 
@@ -620,10 +580,10 @@ export default function SignUpScreen() {
               borderColor: "rgba(203, 195, 215, 0.35)",
             }}
           >
-            <Text style={[typography.labelMd, { fontSize: 10, color: colors.onSurfaceVariant, fontWeight: "700" }]}>
+            <Text style={[typography.labelMd, { fontSize: 12, color: colors.onSurfaceVariant, fontWeight: "700" ,marginTop:1}]}>
               SECURED BY
             </Text>
-            <Image source={STRIPE_WORDMARK} resizeMode="contain" accessibilityLabel="Stripe" style={{ width: 52, height: 16 }} />
+            <Image source={STRIPE_WORDMARK} resizeMode="contain" accessibilityLabel="Stripe" style={{ width: 52, height: 24, marginLeft:-10 }} />
           </Animated.View>
 
           <Animated.View entering={FadeInDown.duration(520).delay(360)} style={{ alignItems: "center", marginBottom: spacing[5] }}>

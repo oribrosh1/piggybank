@@ -25,7 +25,7 @@ export const defaultTabBarStyle: ViewStyle = {
   }),
 };
 
-/** Hide bottom tabs (e.g. home bootstrap loading — full white screen) */
+/** Hide bottom tabs (e.g. home bootstrap loading — full-screen loader over mesh) */
 export const hiddenTabBarStyle: ViewStyle = {
   height: 0,
   overflow: "hidden",

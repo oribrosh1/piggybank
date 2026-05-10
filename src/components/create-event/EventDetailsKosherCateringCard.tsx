@@ -168,7 +168,7 @@ export default function EventDetailsKosherCateringCard({ selected, onSelect }: E
           marginTop: 14,
           borderRadius: 14,
           padding: 14,
-          paddingRight: laterSelected ? 48 : 14,
+          paddingRight: laterSelected ? 10 : 14,
           borderWidth: 2,
           borderColor: laterSelected ? colors.primary : "#D1D5DB",
           backgroundColor: laterSelected ? SELECTED_TINT : colors.surfaceContainerLowest,
@@ -181,9 +181,14 @@ export default function EventDetailsKosherCateringCard({ selected, onSelect }: E
           </View>
         ) : null}
         <Text style={{ fontSize: 13, fontWeight: "800", color: colors.primary }}>No barcode yet — poster first</Text>
-        <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4, lineHeight: 18 }}>
-          Don't save a partner dining barcode on this step. Your poster and invites still work; add a restaurant barcode later in Edit event when you know where you'll order.
-        </Text>
+        <View style={{ width: "100%", marginTop: laterSelected ? 10 : 0 }}>
+          <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4, lineHeight: 18 }}>
+            Don't save a partner dining barcode on this step.
+          </Text>
+          <Text style={{ fontSize: 12, color: "#6B7280", lineHeight: 18 }}>
+          Add a restaurant barcode later in Edit Event to add it to your poster and invites.
+          </Text>
+        </View>
       </TouchableOpacity>
     </View>
   );

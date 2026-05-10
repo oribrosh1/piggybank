@@ -1,159 +1,210 @@
 import React from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { MapPin } from "lucide-react-native";
-import { colors, spacing, radius, typography, fontFamily, borderGhostOutline } from "@/src/theme";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import { MapPin, Car } from "lucide-react-native";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import { colors, spacing, radius, typography, fontFamily } from "@/src/theme";
+
+const ADDRESS_BG = Platform.select({
+  ios: "rgba(255, 255, 255, 0.5)",
+  default: "rgba(255, 255, 255, 0.72)",
+});
+const ADDRESS_BORDER = "rgba(107, 56, 212, 0.1)";
+const EXTRA_BG = Platform.select({
+  ios: "rgba(255, 255, 255, 0.42)",
+  default: "rgba(255, 255, 255, 0.62)",
+});
+const EXTRA_BORDER = "rgba(107, 56, 212, 0.09)";
 
 type EventDetailsLocationCardProps = {
   address1: string;
   address2: string;
-  parking: string;
-  parkingFocused: boolean;
-  onParkingChange: (value: string) => void;
-  onParkingFocus: () => void;
-  onParkingBlur: () => void;
-  onRequestParkingNotes?: () => void;
+  locationNotes?: string;
+  parking?: string;
 };
 
 export default function EventDetailsLocationCard(props: EventDetailsLocationCardProps) {
-  const {
-    address1,
-    address2,
-    parking,
-    parkingFocused,
-    onParkingChange,
-    onParkingFocus,
-    onParkingBlur,
-    onRequestParkingNotes,
-  } = props;
+  const { address1, address2, locationNotes, parking } = props;
+  const notesTrim = locationNotes?.trim();
+  const parkingTrim = parking?.trim();
+  const hasExtras = !!(notesTrim || parkingTrim);
 
   return (
-    <View style={styles.card}>
+    <GlassCardDark
+      style={{ marginBottom: spacing[6] }}
+      padding={0}
+      borderRadius={radius.md}
+      borderColor="rgba(107, 56, 212, 0.1)"
+      contentStyle={styles.cardInner}
+    >
       <View style={styles.headerRow}>
-        <MapPin size={20} color={colors.onSurfaceVariant} strokeWidth={2} />
-        <Text style={styles.title}>Location & parking</Text>
+        <View style={styles.headerIcon}>
+          <MapPin size={17} color={colors.primary} strokeWidth={2} />
+        </View>
+        <View style={styles.headerCopy}>
+          <Text style={styles.title}>
+            Where you’ll meet<Text style={styles.headerHintInline}> · preview</Text>
+          </Text>
+        </View>
       </View>
 
       {address1 ? (
-        <View style={styles.addressBlock}>
+        <View style={[styles.surfaceBlock, styles.addressBlock]}>
           <Text style={styles.addressPrimary}>{address1}</Text>
-          {address2 ? <Text style={styles.addressSecondary}>{address2}</Text> : null}
+          {address2 ? (
+            <Text style={styles.addressSecondary}>{address2}</Text>
+          ) : null}
         </View>
-      ) : (
-        <Text style={styles.hint}>Map preview will use the address you enter above.</Text>
-      )}
+      ) : null}
 
-      <View style={styles.divider} />
-
-      <View style={styles.fieldHeader}>
-        <Text style={styles.fieldLabel}>Parking notes</Text>
-        <TouchableOpacity
-          onPress={() => {
-            onRequestParkingNotes?.();
-            onParkingFocus();
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+      {hasExtras ? (
+        <View
+          style={[
+            styles.surfaceBlock,
+            styles.extrasBlock,
+            address1 ? { marginTop: spacing[3] } : undefined,
+          ]}
         >
-        </TouchableOpacity>
-      </View>
+          {notesTrim ? (
+            <>
+              <Text style={styles.miniLabel}>Venue notes</Text>
+              <Text style={styles.previewBody}>{notesTrim}</Text>
+            </>
+          ) : null}
+          {notesTrim && parkingTrim ? <View style={styles.inlineDivider} /> : null}
+          {parkingTrim ? (
+            <>
+              <View style={styles.parkingHeader}>
+                <Car size={12} color={colors.primary} strokeWidth={2.25} />
+                <Text style={styles.miniLabelInline}>Parking</Text>
+              </View>
+              <Text style={styles.previewBody}>{parkingTrim}</Text>
+            </>
+          ) : null}
+        </View>
+      ) : null}
 
-      <TextInput
-        style={[styles.input, parkingFocused && styles.inputFocused]}
-        placeholder="Valet, garage entrance, shuttle…"
-        placeholderTextColor={colors.muted}
-        value={parking}
-        onChangeText={onParkingChange}
-        onFocus={onParkingFocus}
-        onBlur={onParkingBlur}
-        multiline
-      />
-    </View>
+      {!address1 && !hasExtras ? (
+        <Text style={styles.placeholder}>
+          Add an address above to see your preview here.
+        </Text>
+      ) : null}
+    </GlassCardDark>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing[6],
-    backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: radius.sm + 8,
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[5],
-    paddingBottom: spacing[5],
-    ...borderGhostOutline,
+  cardInner: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
-    marginBottom: spacing[4],
+    marginBottom: spacing[3],
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "rgba(107, 56, 212, 0.11)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: "center",
   },
   title: {
     fontFamily: fontFamily.title,
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "600",
     color: colors.onSurface,
-    letterSpacing: -0.2,
+    letterSpacing: -0.28,
+    lineHeight: 20,
+  },
+  headerHintInline: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    letterSpacing: -0.1,
+  },
+  placeholder: {
+    ...typography.bodyMd,
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    lineHeight: 21,
+  },
+  surfaceBlock: {
+    borderRadius: 11,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
   addressBlock: {
-    marginBottom: 0,
+    backgroundColor: ADDRESS_BG,
+    borderColor: ADDRESS_BORDER,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  extrasBlock: {
+    backgroundColor: EXTRA_BG,
+    borderColor: EXTRA_BORDER,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
   },
   addressPrimary: {
     ...typography.bodyMd,
+    fontSize: 15,
     fontWeight: "600",
     color: colors.onSurface,
-    lineHeight: 22,
+    lineHeight: 21,
+    letterSpacing: -0.18,
   },
   addressSecondary: {
     ...typography.bodyMd,
     fontSize: 13,
+    fontWeight: "500",
     color: colors.onSurfaceVariant,
     marginTop: spacing[1],
     lineHeight: 20,
   },
-  hint: {
-    ...typography.bodyMd,
-    fontSize: 13,
-    color: colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  divider: {
+  inlineDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(203, 195, 215, 0.35)",
-    marginVertical: spacing[4],
+    backgroundColor: "rgba(107, 56, 212, 0.12)",
+    marginVertical: spacing[3],
   },
-  fieldHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    marginBottom: spacing[2],
-  },
-  fieldLabel: {
-    fontFamily: fontFamily.label,
-    fontSize: 13,
-    fontWeight: "600",
+  miniLabel: {
+    fontSize: 11,
+    fontWeight: "700",
     color: colors.onSurfaceVariant,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+    marginBottom: spacing[1],
+    opacity: 0.92,
   },
-  fieldAction: {
-    fontFamily: fontFamily.label,
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.primary,
+  miniLabelInline: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+    opacity: 0.92,
   },
-  input: {
-    minHeight: 96,
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: "rgba(203, 195, 215, 0.45)",
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[3],
+  parkingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 3,
+  },
+  previewBody: {
+    ...typography.bodyMd,
     fontSize: 15,
-    fontFamily: fontFamily.body,
-    fontWeight: "400",
+    fontWeight: "500",
     color: colors.onSurface,
-    textAlignVertical: "top",
-  },
-  inputFocused: {
-    borderColor: "rgba(107, 56, 212, 0.45)",
-    backgroundColor: colors.surfaceContainerLowest,
+    lineHeight: 22,
+    letterSpacing: -0.15,
   },
 });

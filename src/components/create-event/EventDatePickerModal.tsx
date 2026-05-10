@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { colors } from "@/src/theme/designTokens";
 
 interface EventDatePickerModalProps {
   visible: boolean;
@@ -39,7 +40,7 @@ export default function EventDatePickerModal({
             elevation: 24,
           }}
         >
-          <Text style={{ fontSize: 22, fontWeight: "800", color: "#06D6A0", marginBottom: 20, textAlign: "center" }}>
+          <Text style={{ fontSize: 22, fontWeight: "800", color: colors.primary, marginBottom: 20, textAlign: "center" }}>
             📅 Select Event Date
           </Text>
           <View style={{ alignItems: "center" }}>
@@ -55,9 +56,9 @@ export default function EventDatePickerModal({
           <View style={{ marginTop: 20, gap: 12 }}>
             <TouchableOpacity
               onPress={() => onConfirm(selectedDate)}
-              style={{ backgroundColor: "#06D6A0", borderRadius: 16, paddingVertical: 16, alignItems: "center" }}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>Confirm Date</Text>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: colors.onPrimary }}>Confirm Date</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onCancel}

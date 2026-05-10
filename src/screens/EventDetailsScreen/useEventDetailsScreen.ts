@@ -10,10 +10,17 @@ import {
   type MitzvahCelebrationFocus,
 } from "@/types/events";
 import * as ImagePicker from "expo-image-picker";
-import { createEvent, updateEvent } from "@/src/lib/eventService";
+import {
+  createEvent,
+  updateEvent,
+  generateEventPoster,
+  subscribeEventPosterGenerationProgress,
+} from "@/src/lib/eventService";
 import { uploadHonoreePhotoToEvent } from "@/src/lib/honoreePhotoUpload";
 
-function celebrationFromRoute(routeType: string | undefined): CelebrationPickerType {
+function celebrationFromRoute(
+  routeType: string | undefined,
+): CelebrationPickerType {
   if (routeType === "barMitzvah") return "barMitzvah";
   if (routeType === "batMitzvah") return "batMitzvah";
   return "birthday";
@@ -30,16 +37,36 @@ export function celebrationTypeFromAge(ageStr: string): CelebrationPickerType {
   return "birthday";
 }
 
+function mitzvahFocusOrDefault(prev: EventFormData): MitzvahCelebrationFocus {
+  const f = prev.mitzvahCelebrationFocus;
+  return f === "party" || f === "ceremony" ? f : "party";
+}
+
+function defaultHonoreeGenderForType(
+  type: CelebrationPickerType,
+  prev?: EventFormData["honoreeGender"],
+): EventFormData["honoreeGender"] | undefined {
+  if (prev === "boy" || prev === "girl") return prev;
+  if (type === "barMitzvah") return "boy";
+  if (type === "batMitzvah") return "girl";
+  return prev;
+}
+
 function mergeAgeIntoForm(prev: EventFormData, nextAge: string): EventFormData {
   const nextType = celebrationTypeFromAge(nextAge);
   const next: EventFormData = {
     ...prev,
     age: nextAge,
     celebrationType: nextType,
+    honoreeGender: defaultHonoreeGenderForType(nextType, prev.honoreeGender),
   };
   if (nextType === "birthday") {
     next.mitzvahCelebrationFocus = undefined;
     next.eventCategory = undefined;
+  } else {
+    const focus = mitzvahFocusOrDefault(prev);
+    next.mitzvahCelebrationFocus = focus;
+    next.eventCategory = focus === "ceremony" ? "formal" : "party";
   }
   return next;
 }
@@ -50,22 +77,40 @@ const initialFormData: EventFormData = {
   eventCategory: undefined,
   partyType: "",
   otherPartyType: "",
-  attireType: "",
-  footwearType: "",
+  dressCode: "",
   theme: "",
+  partyVibe: "",
+  honoreeFavoriteColor: "",
   parking: "",
+  locationNotes: "",
   kosherType: "",
   mealType: "",
   vegetarianType: "",
   date: new Date().toISOString().split("T")[0],
-  time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  time: new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
   address1: "",
   address2: "",
   optionalDetailsLater: false,
   kosherCateringPartnerId: "later",
 };
 
-export function useEventDetailsScreen() {
+export type UseEventDetailsScreenOptions = {
+  /** Called when validation or create fails so the screen can scroll errors into view. */
+  scrollToTopOnError?: () => void;
+};
+
+export function useEventDetailsScreen(
+  options?: UseEventDetailsScreenOptions,
+) {
+  const scrollToTopOnError = options?.scrollToTopOnError;
+
+  const notifyErrorScroll = useCallback(() => {
+    if (!scrollToTopOnError) return;
+    requestAnimationFrame(() => scrollToTopOnError());
+  }, [scrollToTopOnError]);
   const router = useRouter();
   const { eventType } = useLocalSearchParams<{ eventType?: string }>();
 
@@ -81,6 +126,15 @@ export function useEventDetailsScreen() {
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [showEventDetails, setShowEventDetails] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  /** Live poster URLs while awaiting `generateEventPoster` after create (Firestore snapshot). */
+  const [posterGenLive, setPosterGenLive] = useState<{
+    eventId: string;
+    posterUrl: string | null;
+    skeletonPosterUrl: string | null;
+    posterStreamingPreviewUrl: string | null;
+    visualTeaser?: string | null;
+    skeletonProgress?: { steps: number; url: string; durationMs?: number }[] | null;
+  } | null>(null);
 
   const googlePlacesRef = useRef<unknown>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -103,6 +157,9 @@ export function useEventDetailsScreen() {
     const newErrors: { [key: string]: string } = {};
     if (!formData.childName.trim()) newErrors.childName = "Name is required";
     if (!formData.age.trim()) newErrors.age = "Age is required";
+    if (formData.honoreeGender !== "boy" && formData.honoreeGender !== "girl") {
+      newErrors.honoreeGender = "Select boy or girl";
+    }
     if (!formData.date.trim()) newErrors.date = "Date is required";
     if (!formData.time.trim()) newErrors.time = "Time is required";
     if (!formData.address1.trim()) newErrors.address1 = "Address is required";
@@ -111,7 +168,8 @@ export function useEventDetailsScreen() {
         formData.celebrationType === "batMitzvah") &&
       !formData.mitzvahCelebrationFocus
     ) {
-      newErrors.mitzvahCelebrationFocus = "Choose whether this is mainly for the party or the ceremony";
+      newErrors.mitzvahCelebrationFocus =
+        "Choose whether this is mainly for the party or the ceremony";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -122,7 +180,10 @@ export function useEventDetailsScreen() {
   };
 
   const handleContinue = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      notifyErrorScroll();
+      return;
+    }
     setIsCreating(true);
     try {
       const resolvedType = (formData.celebrationType ??
@@ -138,7 +199,10 @@ export function useEventDetailsScreen() {
         const localPhoto = formData.honoreePhotoUri?.trim();
         if (localPhoto) {
           try {
-            const honoreePhotoUrl = await uploadHonoreePhotoToEvent(eventId, localPhoto);
+            const honoreePhotoUrl = await uploadHonoreePhotoToEvent(
+              eventId,
+              localPhoto,
+            );
             const up = await updateEvent(eventId, { honoreePhotoUrl });
             if (!up.success) {
               throw new Error(up.error || "Update failed");
@@ -147,24 +211,67 @@ export function useEventDetailsScreen() {
             console.error(uploadErr);
             Alert.alert(
               "Photo upload",
-              "Your event was saved, but the honoree photo could not be uploaded. You can add one when editing the event; the AI poster may not match their face until then."
+              "Your event was saved, but the honoree photo could not be uploaded. You can add one when editing the event; the AI poster may not match their face until then.",
             );
           }
         }
-        router.push({
-          pathname: routes.createEvent.eventPoster,
-          params: {
+        const posterRes = await (async () => {
+          setPosterGenLive({
             eventId,
-            childName: formData.childName.trim(),
-            eventType:
-              formData.celebrationType ??
-              celebrationFromRoute(eventType as string | undefined),
-          },
-        });
+            posterUrl: null,
+            skeletonPosterUrl: null,
+            posterStreamingPreviewUrl: null,
+            visualTeaser: null,
+            skeletonProgress: null,
+          });
+          const unsub = subscribeEventPosterGenerationProgress(
+            eventId,
+            (snap) => {
+              setPosterGenLive((prev) =>
+                prev && prev.eventId === eventId
+                  ? {
+                      ...prev,
+                      posterUrl: snap.posterUrl,
+                      skeletonPosterUrl: snap.skeletonPosterUrl,
+                      posterStreamingPreviewUrl: snap.posterStreamingPreviewUrl,
+                      visualTeaser: snap.visualTeaser ?? prev.visualTeaser,
+                      skeletonProgress: snap.skeletonProgress ?? null,
+                    }
+                  : prev,
+              );
+            },
+          );
+          try {
+            return await generateEventPoster(eventId);
+          } finally {
+            unsub();
+            setPosterGenLive(null);
+          }
+        })();
+        if (posterRes.success) {
+          if (!posterRes.posterUrl) {
+            Alert.alert(
+              "Poster image",
+              "We saved your invitation text. The image may still be processing—or you can generate it again from your event dashboard.",
+            );
+          }
+        } else {
+          Alert.alert(
+            "Couldn’t generate poster",
+            posterRes.error ||
+              "Your event was created. Open your event dashboard to try generating the poster again.",
+          );
+        }
+        router.replace(routes.eventDashboard(eventId));
       } else {
-        Alert.alert("Error", result.error || "Could not create event. Please try again.");
+        notifyErrorScroll();
+        Alert.alert(
+          "Error",
+          result.error || "Could not create event. Please try again.",
+        );
       }
     } catch (e: unknown) {
+      notifyErrorScroll();
       Alert.alert("Error", (e as Error).message || "Something went wrong.");
     } finally {
       setIsCreating(false);
@@ -177,6 +284,7 @@ export function useEventDetailsScreen() {
       setErrors((prev) => ({
         ...prev,
         age: "",
+        honoreeGender: "",
         ...(celebrationTypeFromAge(value) === "birthday"
           ? { mitzvahCelebrationFocus: "" }
           : {}),
@@ -192,7 +300,10 @@ export function useEventDetailsScreen() {
   const pickHonoreePhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Photo access", "Allow photo library access to add a picture of your child for the AI poster.");
+      Alert.alert(
+        "Photo access",
+        "Allow photo library access to add a picture of your child for the AI poster.",
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -215,23 +326,44 @@ export function useEventDetailsScreen() {
   };
 
   const setCelebrationType = useCallback((value: CelebrationPickerType) => {
-    setFormData((prev) => ({
-      ...prev,
-      celebrationType: value,
-      mitzvahCelebrationFocus: value === "birthday" ? undefined : prev.mitzvahCelebrationFocus,
-      eventCategory: value === "birthday" ? undefined : prev.eventCategory,
-    }));
-    setErrors((prev) => ({ ...prev, mitzvahCelebrationFocus: "" }));
+    setFormData((prev) => {
+      if (value === "birthday") {
+        return {
+          ...prev,
+          celebrationType: value,
+          mitzvahCelebrationFocus: undefined,
+          eventCategory: undefined,
+          honoreeGender: prev.honoreeGender,
+        };
+      }
+      const focus = mitzvahFocusOrDefault(prev);
+      return {
+        ...prev,
+        celebrationType: value,
+        mitzvahCelebrationFocus: focus,
+        eventCategory: focus === "ceremony" ? "formal" : "party",
+        honoreeGender:
+          prev.honoreeGender === "boy" || prev.honoreeGender === "girl"
+            ? prev.honoreeGender
+            : value === "barMitzvah"
+              ? "boy"
+              : "girl",
+      };
+    });
+    setErrors((prev) => ({ ...prev, mitzvahCelebrationFocus: "", honoreeGender: "" }));
   }, []);
 
-  const setMitzvahCelebrationFocus = useCallback((value: MitzvahCelebrationFocus) => {
-    setFormData((prev) => ({
-      ...prev,
-      mitzvahCelebrationFocus: value,
-      eventCategory: value === "ceremony" ? "formal" : "party",
-    }));
-    setErrors((prev) => ({ ...prev, mitzvahCelebrationFocus: "" }));
-  }, []);
+  const setMitzvahCelebrationFocus = useCallback(
+    (value: MitzvahCelebrationFocus) => {
+      setFormData((prev) => ({
+        ...prev,
+        mitzvahCelebrationFocus: value,
+        eventCategory: value === "ceremony" ? "formal" : "party",
+      }));
+      setErrors((prev) => ({ ...prev, mitzvahCelebrationFocus: "" }));
+    },
+    [],
+  );
 
   const setAddressFromPlace = (address1: string, address2: string) => {
     setFormData((prev) => ({ ...prev, address1, address2 }));
@@ -240,7 +372,11 @@ export function useEventDetailsScreen() {
 
   const formatDateDisplay = (dateString: string) => {
     const [year, month, day] = dateString.split("-");
-    const date = new Date(parseInt(year!, 10), parseInt(month!, 10) - 1, parseInt(day!, 10));
+    const date = new Date(
+      parseInt(year!, 10),
+      parseInt(month!, 10) - 1,
+      parseInt(day!, 10),
+    );
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -311,6 +447,7 @@ export function useEventDetailsScreen() {
     isPartyMode,
     setOptionalDetailsLater,
     isCreating,
+    posterGenLive,
     pickHonoreePhoto,
     clearHonoreePhoto,
   };

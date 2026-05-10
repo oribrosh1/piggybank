@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { colors, spacing } from "@/src/theme/designTokens";
 
 interface EventTimePickerModalProps {
   visible: boolean;
@@ -39,8 +40,8 @@ export default function EventTimePickerModal({
             elevation: 24,
           }}
         >
-          <Text style={{ fontSize: 22, fontWeight: "800", color: "#06D6A0", marginBottom: 20, textAlign: "center" }}>
-            ⏰ Select Event Time
+          <Text style={{ fontSize: 22, fontWeight: "800", color: colors.primary, marginBottom: 20, textAlign: "center" }}>
+            ⏰  Select Event Time
           </Text>
           <View style={{ alignItems: "center" }}>
             <DateTimePicker
@@ -55,15 +56,15 @@ export default function EventTimePickerModal({
           <View style={{ marginTop: 20, gap: 12 }}>
             <TouchableOpacity
               onPress={() => onConfirm(selectedTime)}
-              style={{ backgroundColor: "#06D6A0", borderRadius: 16, paddingVertical: 16, alignItems: "center" }}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF" }}>Confirm Time</Text>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: colors.onPrimary }}>Confirm Time</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={onCancel}
               style={{ backgroundColor: "#F3F4F6", borderRadius: 16, paddingVertical: 14, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 14, fontWeight: "700", color: "#6B7280" }}>Cancel</Text>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.onSurfaceVariant }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
