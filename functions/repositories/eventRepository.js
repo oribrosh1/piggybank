@@ -25,7 +25,7 @@ async function update(eventId, data) {
     await ref.update(updateData);
 }
 
-async function updatePoster(eventId, posterPrompt, posterUrl = null) {
+async function updatePoster(eventId, posterPrompt, posterUrl = null, visualTeaser) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     const data = {
         posterPrompt,
@@ -33,7 +33,120 @@ async function updatePoster(eventId, posterPrompt, posterUrl = null) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     if (posterUrl != null) data.posterUrl = posterUrl;
+    if (typeof visualTeaser === "string" && visualTeaser.trim().length > 0) {
+        data.visualTeaser = visualTeaser.trim();
+    }
     await ref.update(data);
+}
+
+/**
+ * Patch fast-preview skeleton poster URL (parallel Stage B, Imagen fast).
+ * @param {string} eventId
+ * @param {string} skeletonPosterUrl
+ * @param {{ skeletonProgress?: { steps: number, url: string, durationMs?: number }[] }} [patch]
+ */
+async function updateSkeletonPoster(eventId, skeletonPosterUrl, patch = {}) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    const data = {
+        skeletonPosterUrl,
+        skeletonPosterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (Array.isArray(patch.skeletonProgress)) {
+        data.skeletonProgress = patch.skeletonProgress;
+    }
+    await ref.update(data);
+}
+
+/**
+ * Append one progressive skeleton preview URL (Vertex streaming partials).
+ * @param {string} eventId
+ * @param {string} previewUrl
+ */
+async function appendSkeletonPartialPreviewUrl(eventId, previewUrl) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        skeletonPartialPreviewUrls: admin.firestore.FieldValue.arrayUnion(previewUrl),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Clear skeleton preview fields before a new generation run (optional hygiene).
+ * @param {string} eventId
+ */
+async function clearSkeletonPoster(eventId) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        skeletonPosterUrl: admin.firestore.FieldValue.delete(),
+        skeletonPosterGeneratedAt: admin.firestore.FieldValue.delete(),
+        skeletonPartialPreviewUrls: admin.firestore.FieldValue.delete(),
+        skeletonProgress: admin.firestore.FieldValue.delete(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Progressive OpenAI **final** streaming preview only (`preview_invitation_*` in Storage).
+ * Together FLUX skeleton frames use `skeletonPosterUrl` / `skeletonProgress`, not this field.
+ * @param {string} eventId
+ * @param {string} posterStreamingPreviewUrl
+ */
+async function updatePosterStreamingPreview(eventId, posterStreamingPreviewUrl) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        posterStreamingPreviewUrl,
+        posterStreamingPreviewUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/** Remove streaming preview fields after final poster is committed or before a new run. */
+async function clearPosterStreamingPreview(eventId) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        posterStreamingPreviewUrl: admin.firestore.FieldValue.delete(),
+        posterStreamingPreviewUpdatedAt: admin.firestore.FieldValue.delete(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Wall-clock timings (ms) for poster pipeline steps — written at end of generatePoster.
+ * @param {string} eventId
+ * @param {{
+ *   honoreeFetchMs?: number|null,
+ *   stageAMs?: number|null,
+ *   stageBMs?: number|null,
+ *   posterUploadMs?: number|null,
+ *   skeletonStageMs?: number|null,
+ *   finalStageMs?: number|null,
+ *   totalMs: number,
+ *   stageASkipped?: boolean,
+ *   openAIPartialArrivalMs?: Record<string, number>|null,
+ *   openAIPartialDeltaMs?: Record<string, number>|null,
+ * }} timing
+ */
+async function setPosterGenerationTiming(eventId, timing) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    const posterGenTiming = { totalMs: timing.totalMs };
+    if (timing.honoreeFetchMs != null) posterGenTiming.honoreeFetchMs = timing.honoreeFetchMs;
+    if (timing.stageAMs != null) posterGenTiming.stageAMs = timing.stageAMs;
+    if (timing.stageBMs != null) posterGenTiming.stageBMs = timing.stageBMs;
+    if (timing.posterUploadMs != null) posterGenTiming.posterUploadMs = timing.posterUploadMs;
+    if (timing.skeletonStageMs != null) posterGenTiming.skeletonStageMs = timing.skeletonStageMs;
+    if (timing.finalStageMs != null) posterGenTiming.finalStageMs = timing.finalStageMs;
+    if (timing.stageASkipped === true) posterGenTiming.stageASkipped = true;
+    if (timing.openAIPartialArrivalMs && typeof timing.openAIPartialArrivalMs === "object") {
+        posterGenTiming.openAIPartialArrivalMs = timing.openAIPartialArrivalMs;
+    }
+    if (timing.openAIPartialDeltaMs && typeof timing.openAIPartialDeltaMs === "object") {
+        posterGenTiming.openAIPartialDeltaMs = timing.openAIPartialDeltaMs;
+    }
+    await ref.update({
+        posterGenTiming,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 }
 
 async function getAll() {
@@ -46,5 +159,11 @@ module.exports = {
     getRef,
     update,
     updatePoster,
+    updateSkeletonPoster,
+    appendSkeletonPartialPreviewUrl,
+    clearSkeletonPoster,
+    updatePosterStreamingPreview,
+    clearPosterStreamingPreview,
+    setPosterGenerationTiming,
     getAll,
 };

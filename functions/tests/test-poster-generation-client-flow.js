@@ -5,7 +5,7 @@
  *   1. Firebase Auth (email/password, same client SDK as rules tests)
  *   2. Create `events/{eventId}` with the same fields the app expects
  *   3. Attach Firestore listeners (like React Native):
- *        - `events/{eventId}` → posterUrl
+ *        - `events/{eventId}` → posterUrl (final), posterStreamingPreviewUrl (OpenAI stream), skeletonPosterUrl (Together FLUX.2-dev fast or Vertex fallback)
  *        - `eventPosterVersions` where eventId == …
  *   4. POST `/generatePoster` with Bearer ID token (+ optional App Check, same rules as client)
  *   5. Wait until `posterUrl` appears on the event doc (or versions collection)
@@ -17,11 +17,16 @@
  *   - `functions/.env`: GEMINI_API_KEY when not using `--mock` (override merge)
  *   - `firebaseserviceAccountKey.json` at repo root (Admin + Storage for in-process aiService)
  *
+ * Pipeline (non-mock): Stage A Gemini text (default `gemini-2.5-flash`); Stage B parallel Together
+ * `black-forest-labs/FLUX.2-dev` skeleton (`skeletonPosterUrl`, Vertex Imagen fallback if Together fails/disabled) +
+ * OpenAI `gpt-image-2` streaming final (`posterUrl`), with optional `posterStreamingPreviewUrl` patches during the stream
+ * (or Vertex ultra final if `POSTER_FINAL_PROVIDER=vertex`).
+ *
  * Generation mode:
- *   - `--mock` (recommended for CI / no quota): simulates Gemini — writes `posterPrompt`, `posterUrl`,
- *     `posterThemeId`, and `eventPosterVersions` via Admin (same shape as aiService). No GEMINI_API_KEY.
+ *   - `--mock` (recommended for CI / no quota): simulates responses — writes `posterPrompt`, `posterUrl`,
+ *     and `eventPosterVersions` via Admin (same shape as aiService). No GEMINI_API_KEY.
  *   - Default (no --mock): run `functions/services/aiService.js` in-process (needs GEMINI_API_KEY).
- *   - `--http`: POST to deployed /generatePoster (needs GEMINI in GCP).
+ *   - `--http`: POST to deployed /generatePoster (needs GEMINI + Vertex config in GCP).
  *
  * Flags:
  *   --no-cleanup   Keep Firestore user/event and downloaded file for inspection
@@ -69,7 +74,6 @@ const CLOUD_API_BASE =
 const RUN_ID = Date.now();
 const TEST_EMAIL = `poster-e2e-${RUN_ID}@test-creditkid.app`;
 const PASSWORD = `PosterTest!${RUN_ID}`;
-const POSTER_THEME_ID = "space_explorer";
 
 const NO_CLEANUP = process.argv.includes("--no-cleanup");
 const TEMP_DIR = path.join(__dirname, "temp-images");
@@ -161,7 +165,7 @@ async function buildClientLikeHeaders() {
 
 async function callGeneratePosterHttp() {
     const headers = await buildClientLikeHeaders();
-    const body = JSON.stringify({ eventId, posterThemeId: POSTER_THEME_ID });
+    const body = JSON.stringify({ eventId });
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 170_000);
 
@@ -211,13 +215,12 @@ async function applyMockGeminiWrites() {
             posterPrompt: mockPrompt,
             posterUrl: MOCK_POSTER_IMAGE_URL,
             posterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-            posterThemeId: POSTER_THEME_ID,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
     await posterVersionRepository.addPosterVersion(uid, eventId, {
         posterUrl: MOCK_POSTER_IMAGE_URL,
         posterPrompt: mockPrompt,
-        posterThemeId: POSTER_THEME_ID,
+        posterThemeId: null,
     });
     return { posterUrl: MOCK_POSTER_IMAGE_URL };
 }
@@ -378,7 +381,7 @@ async function main() {
                     if (!snap.exists) throw new Error("Event missing before local generatePoster");
                     const eventData = { id: snap.id, ...snap.data() };
                     log.info("Calling aiService.generatePoster in-process…");
-                    const out = await aiService.generatePoster(eventId, eventData, POSTER_THEME_ID);
+                    const out = await aiService.generatePoster(eventId, eventData);
                     log.ok(`Local aiService returned posterUrl=${!!out.posterUrl}`);
                     if (out.posterUrl && !snapshotDone) {
                         finish(out.posterUrl, "aiService direct");

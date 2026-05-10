@@ -1,6 +1,6 @@
 /**
- * Visual style presets for AI invitation posters.
- * IDs must match app types PosterThemeId.
+ * Legacy palette metadata (optional UI / docs). Poster AI styling uses only `partyTypePosterStyles`
+ * + event fields — see `aiService.buildPromptForPrompt`.
  */
 const POSTER_THEMES = {
   space_explorer: {
