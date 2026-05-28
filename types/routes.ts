@@ -24,6 +24,7 @@ export type AppRoute =
     | "/create-event/event-details"
     | "/create-event/select-guests"
     | "/create-event/event-poster"
+    | "/create-event/review-create"
     | "/create-event/review-invitation"
     | `/event-dashboard/${string}`
     // Banking setup flow
@@ -92,6 +93,7 @@ export const routes = {
         eventDetails: route("/create-event/event-details"),
         selectGuests: route("/create-event/select-guests"),
         eventPoster: route("/create-event/event-poster"),
+        reviewCreate: route("/create-event/review-create"),
         review: route("/create-event/review-invitation"),
     },
     banking: {

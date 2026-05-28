@@ -1,30 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Alert, Animated } from "react-native";
+import { Animated, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { routes } from "@/types/routes";
 import {
   EventFormData,
-  CreateEventData,
-  EventType,
   type CelebrationPickerType,
   type MitzvahCelebrationFocus,
 } from "@/types/events";
 import * as ImagePicker from "expo-image-picker";
-import {
-  createEvent,
-  updateEvent,
-  generateEventPoster,
-  subscribeEventPosterGenerationProgress,
-} from "@/src/lib/eventService";
-import { uploadHonoreePhotoToEvent } from "@/src/lib/honoreePhotoUpload";
-
-function celebrationFromRoute(
-  routeType: string | undefined,
-): CelebrationPickerType {
-  if (routeType === "barMitzvah") return "barMitzvah";
-  if (routeType === "batMitzvah") return "batMitzvah";
-  return "birthday";
-}
+import { useCreateEventDraftStore } from "@/src/stores/createEventDraftStore";
+import { resolveCreateFlowEventType } from "@/src/lib/createEventFlowSubmit";
 
 /** Turning age drives celebration type on step 2: 12 → bat, 13 → bar, else birthday. */
 export function celebrationTypeFromAge(ageStr: string): CelebrationPickerType {
@@ -35,6 +20,12 @@ export function celebrationTypeFromAge(ageStr: string): CelebrationPickerType {
   if (n === 12) return "batMitzvah";
   if (n === 13) return "barMitzvah";
   return "birthday";
+}
+
+/** Show bar/bat vs birthday picker only for mitzvah ages. */
+export function isMitzvahTurningAge(ageStr: string): boolean {
+  const n = parseInt(String(ageStr).trim(), 10);
+  return !Number.isNaN(n) && (n === 12 || n === 13);
 }
 
 function mitzvahFocusOrDefault(prev: EventFormData): MitzvahCelebrationFocus {
@@ -113,6 +104,7 @@ export function useEventDetailsScreen(
   }, [scrollToTopOnError]);
   const router = useRouter();
   const { eventType } = useLocalSearchParams<{ eventType?: string }>();
+  const setCreateDraft = useCreateEventDraftStore((s) => s.setDraft);
 
   const [formData, setFormData] = useState<EventFormData>(() => ({
     ...initialFormData,
@@ -125,33 +117,17 @@ export function useEventDetailsScreen(
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [showEventDetails, setShowEventDetails] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  /** Live poster URLs while awaiting `generateEventPoster` after create (Firestore snapshot). */
-  const [posterGenLive, setPosterGenLive] = useState<{
-    eventId: string;
-    posterUrl: string | null;
-    skeletonPosterUrl: string | null;
-    posterStreamingPreviewUrl: string | null;
-    visualTeaser?: string | null;
-    skeletonProgress?: { steps: number; url: string; durationMs?: number }[] | null;
-  } | null>(null);
 
   const googlePlacesRef = useRef<unknown>(null);
-  const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: 1 / 3,
-      duration: 800,
-      useNativeDriver: false,
-    }).start();
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, [progressAnim, fadeAnim]);
+  }, [fadeAnim]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -179,103 +155,20 @@ export function useEventDetailsScreen(
     setFormData((prev) => ({ ...prev, optionalDetailsLater: v }));
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!validateForm()) {
       notifyErrorScroll();
       return;
     }
-    setIsCreating(true);
-    try {
-      const resolvedType = (formData.celebrationType ??
-        celebrationFromRoute(eventType as string | undefined)) as EventType;
-      const eventData: CreateEventData = {
-        eventType: resolvedType,
-        formData,
-        guests: [],
-      };
-      const result = await createEvent(eventData);
-      if (result.success && result.eventId) {
-        const eventId = result.eventId;
-        const localPhoto = formData.honoreePhotoUri?.trim();
-        if (localPhoto) {
-          try {
-            const honoreePhotoUrl = await uploadHonoreePhotoToEvent(
-              eventId,
-              localPhoto,
-            );
-            const up = await updateEvent(eventId, { honoreePhotoUrl });
-            if (!up.success) {
-              throw new Error(up.error || "Update failed");
-            }
-          } catch (uploadErr) {
-            console.error(uploadErr);
-            Alert.alert(
-              "Photo upload",
-              "Your event was saved, but the honoree photo could not be uploaded. You can add one when editing the event; the AI poster may not match their face until then.",
-            );
-          }
-        }
-        const posterRes = await (async () => {
-          setPosterGenLive({
-            eventId,
-            posterUrl: null,
-            skeletonPosterUrl: null,
-            posterStreamingPreviewUrl: null,
-            visualTeaser: null,
-            skeletonProgress: null,
-          });
-          const unsub = subscribeEventPosterGenerationProgress(
-            eventId,
-            (snap) => {
-              setPosterGenLive((prev) =>
-                prev && prev.eventId === eventId
-                  ? {
-                      ...prev,
-                      posterUrl: snap.posterUrl,
-                      skeletonPosterUrl: snap.skeletonPosterUrl,
-                      posterStreamingPreviewUrl: snap.posterStreamingPreviewUrl,
-                      visualTeaser: snap.visualTeaser ?? prev.visualTeaser,
-                      skeletonProgress: snap.skeletonProgress ?? null,
-                    }
-                  : prev,
-              );
-            },
-          );
-          try {
-            return await generateEventPoster(eventId);
-          } finally {
-            unsub();
-            setPosterGenLive(null);
-          }
-        })();
-        if (posterRes.success) {
-          if (!posterRes.posterUrl) {
-            Alert.alert(
-              "Poster image",
-              "We saved your invitation text. The image may still be processing—or you can generate it again from your event dashboard.",
-            );
-          }
-        } else {
-          Alert.alert(
-            "Couldn’t generate poster",
-            posterRes.error ||
-              "Your event was created. Open your event dashboard to try generating the poster again.",
-          );
-        }
-        router.replace(routes.eventDashboard(eventId));
-      } else {
-        notifyErrorScroll();
-        Alert.alert(
-          "Error",
-          result.error || "Could not create event. Please try again.",
-        );
-      }
-    } catch (e: unknown) {
-      notifyErrorScroll();
-      Alert.alert("Error", (e as Error).message || "Something went wrong.");
-    } finally {
-      setIsCreating(false);
-    }
+    const resolvedEventType = resolveCreateFlowEventType(
+      formData,
+      eventType as string | undefined,
+    );
+    setCreateDraft({
+      formData: { ...formData },
+      resolvedEventType,
+    });
+    router.push(routes.createEvent.reviewCreate);
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -407,11 +300,7 @@ export function useEventDetailsScreen(
     formData.celebrationType === "barMitzvah" ||
     formData.celebrationType === "batMitzvah";
   const isPartyMode = isBirthday || formData.eventCategory === "party";
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"],
-  });
+  const showCelebrationTypeSection = isMitzvahTurningAge(formData.age);
 
   return {
     eventType,
@@ -430,9 +319,7 @@ export function useEventDetailsScreen(
     showEventDetails,
     setShowEventDetails,
     googlePlacesRef,
-    progressAnim,
     fadeAnim,
-    progressWidth,
     validateForm,
     handleContinue,
     handleInputChange,
@@ -445,9 +332,8 @@ export function useEventDetailsScreen(
     isBirthday,
     isBarBatMitzvah,
     isPartyMode,
+    showCelebrationTypeSection,
     setOptionalDetailsLater,
-    isCreating,
-    posterGenLive,
     pickHonoreePhoto,
     clearHonoreePhoto,
   };

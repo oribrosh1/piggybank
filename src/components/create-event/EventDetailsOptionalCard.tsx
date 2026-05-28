@@ -59,57 +59,37 @@ export default function EventDetailsOptionalCard(
   const themeInputRef = useRef<TextInput>(null);
 
   return (
-    <View
-      style={{
-        marginBottom: 24,
-        borderRadius: 22,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "rgba(107, 56, 212, 0.18)",
-        ...Platform.select({
-          ios: {
-            shadowColor: "#4C1D95",
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.08,
-            shadowRadius: 20,
-          },
-          android: { elevation: 4 },
-        }),
-      }}
+    <GlassCardDark
+      style={styles.cardOuter}
+      padding={18}
+      borderRadius={radius.lg}
+      borderColor="rgba(107, 56, 212, 0.12)"
+      blurIntensity={24}
     >
-      <LinearGradient
-        colors={["rgba(139, 92, 246, 0.09)", colors.surfaceContainerLow]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ padding: 18 }}
-      >
       <TouchableOpacity
         onPress={onToggleDetails}
         activeOpacity={0.85}
-        style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+        style={styles.headerRow}
       >
-    <View style={{transform: [{ rotate: "10deg" }]}}>
-        <Utensils size={18} color={colors.primary} strokeWidth={2.2} />
+        <View style={styles.headerIconBubble}>
+          <Utensils size={22} color={colors.primary} strokeWidth={2.2} />
         </View>
-        <View style={{ flex: 1, marginLeft: 10 }}>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-            <Text
-              style={{
-                fontSize: 17,
-                fontWeight: "800",
-                color: colors.primary,
-              }}
-            >
-              Catering Preferences
-            </Text>
+        <View style={styles.headerTextBlock}>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.headerTitle}>Catering Preferences</Text>
             <OptionalSectionBadge />
           </View>
+          <Text style={styles.headerSubtitle} numberOfLines={2}>
+            Tell us what kind of food and options work best for your guests
+          </Text>
         </View>
-        {showEventDetails ? (
-          <ChevronUp size={22} color={colors.primary} />
-        ) : (
-          <ChevronDown size={22} color={colors.primary} />
-        )}
+        {/* <View style={styles.headerChevron}>
+          {showEventDetails ? (
+            <ChevronUp size={22} color={colors.primary} />
+          ) : (
+            <ChevronDown size={22} color={colors.primary} />
+          )}
+        </View> */}
       </TouchableOpacity>
 
       {/* <View
@@ -279,7 +259,59 @@ export default function EventDetailsOptionalCard(
            topSpacing={!!optionalDetailsLater}
          />
       )}
-      </LinearGradient>
-    </View>
+    </GlassCardDark>
   );
 }
+
+const styles = StyleSheet.create({
+  cardOuter: {
+    marginBottom: 24,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 12,
+  },
+  headerIconBubble: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    backgroundColor: "rgba(107, 56, 212, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTextBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerTitleRow: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerTitle: {
+    fontFamily: fontFamily.headline,
+    fontSize: 20,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  headerSubtitle: {
+    marginTop: 4,
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 16,
+  },
+  headerChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    backgroundColor: "rgba(107, 56, 212, 0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

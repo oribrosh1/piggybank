@@ -29,13 +29,14 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 9,
           fontFamily: fontFamily.label,
           marginTop: 2,
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
         },
         tabBarItemStyle: {
           paddingVertical: 2,
+          paddingHorizontal: 0,
         },
       }}
     >
@@ -122,14 +123,14 @@ function TabIcon({
       style={{
         backgroundColor: focused ? TAB_FOCUS_BG : "transparent",
         borderRadius: radius.sm,
-        padding: 8,
-        width: 44,
-        height: 44,
+        padding: 6,
+        width: 40,
+        height: 40,
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Ionicons name={icon} size={22} color={color} />
+      <Ionicons name={icon} size={20} color={color} />
     </View>
   );
 }

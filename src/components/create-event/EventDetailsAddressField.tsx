@@ -279,6 +279,10 @@ export default function EventDetailsAddressField({
             </View>
           )}
         </View>
+
+        {addressError ? (
+          <Text style={styles.addressErr}>{addressError}</Text>
+        ) : null}
       </View>
 
       <View style={styles.notesSection}>
@@ -300,8 +304,6 @@ export default function EventDetailsAddressField({
           {notesParkingInputs}
         </GlassCardDark>
       </View>
-
-      {addressError ? <Text style={styles.err}>{addressError}</Text> : null}
     </View>
   );
 }
@@ -501,10 +503,12 @@ const styles = StyleSheet.create({
     minHeight: 52,
     overflow: "visible",
   },
-  err: {
+  addressErr: {
     fontSize: 12,
     color: "#EF4444",
-    marginTop: spacing[2],
+    marginTop: spacing[1],
+    marginLeft: spacing[1],
     fontWeight: "600",
+    lineHeight: 16,
   },
 });

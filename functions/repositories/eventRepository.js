@@ -59,6 +59,34 @@ async function updateSkeletonPoster(eventId, skeletonPosterUrl, patch = {}) {
 }
 
 /**
+ * Patch the second FLUX preview that includes on-poster typography (Stage B parallel branch).
+ * @param {string} eventId
+ * @param {string} skeletonPosterWithTextUrl
+ */
+async function updateSkeletonPosterWithText(eventId, skeletonPosterWithTextUrl) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        skeletonPosterWithTextUrl,
+        skeletonPosterWithTextGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Persist the Gemini-generated invitation headline (separate from `posterPrompt`).
+ * @param {string} eventId
+ * @param {string} aiPosterTitle
+ */
+async function updateAiPosterTitle(eventId, aiPosterTitle) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        aiPosterTitle,
+        aiPosterTitleGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
  * Append one progressive skeleton preview URL (Vertex streaming partials).
  * @param {string} eventId
  * @param {string} previewUrl
@@ -82,6 +110,12 @@ async function clearSkeletonPoster(eventId) {
         skeletonPosterGeneratedAt: admin.firestore.FieldValue.delete(),
         skeletonPartialPreviewUrls: admin.firestore.FieldValue.delete(),
         skeletonProgress: admin.firestore.FieldValue.delete(),
+        skeletonPosterWithTextUrl: admin.firestore.FieldValue.delete(),
+        skeletonPosterWithTextGeneratedAt: admin.firestore.FieldValue.delete(),
+        aiPosterTitle: admin.firestore.FieldValue.delete(),
+        aiPosterTitleGeneratedAt: admin.firestore.FieldValue.delete(),
+        honoreeFaceCropUrl: admin.firestore.FieldValue.delete(),
+        honoreeFaceCropGeneratedAt: admin.firestore.FieldValue.delete(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 }
@@ -120,6 +154,8 @@ async function clearPosterStreamingPreview(eventId) {
  *   stageBMs?: number|null,
  *   posterUploadMs?: number|null,
  *   skeletonStageMs?: number|null,
+ *   skeletonWithTextStageMs?: number|null,
+ *   coolTitleMs?: number|null,
  *   finalStageMs?: number|null,
  *   totalMs: number,
  *   stageASkipped?: boolean,
@@ -135,6 +171,9 @@ async function setPosterGenerationTiming(eventId, timing) {
     if (timing.stageBMs != null) posterGenTiming.stageBMs = timing.stageBMs;
     if (timing.posterUploadMs != null) posterGenTiming.posterUploadMs = timing.posterUploadMs;
     if (timing.skeletonStageMs != null) posterGenTiming.skeletonStageMs = timing.skeletonStageMs;
+    if (timing.skeletonWithTextStageMs != null)
+        posterGenTiming.skeletonWithTextStageMs = timing.skeletonWithTextStageMs;
+    if (timing.coolTitleMs != null) posterGenTiming.coolTitleMs = timing.coolTitleMs;
     if (timing.finalStageMs != null) posterGenTiming.finalStageMs = timing.finalStageMs;
     if (timing.stageASkipped === true) posterGenTiming.stageASkipped = true;
     if (timing.openAIPartialArrivalMs && typeof timing.openAIPartialArrivalMs === "object") {
@@ -145,6 +184,20 @@ async function setPosterGenerationTiming(eventId, timing) {
     }
     await ref.update({
         posterGenTiming,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Persist public URL for the server-generated face crop (`honoree_face_reference.png`).
+ * @param {string} eventId
+ * @param {string} honoreeFaceCropUrl
+ */
+async function updateHonoreeFaceCropUrl(eventId, honoreeFaceCropUrl) {
+    const ref = getDb().collection(COLLECTION).doc(eventId);
+    await ref.update({
+        honoreeFaceCropUrl,
+        honoreeFaceCropGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 }
@@ -160,10 +213,13 @@ module.exports = {
     update,
     updatePoster,
     updateSkeletonPoster,
+    updateSkeletonPosterWithText,
+    updateAiPosterTitle,
     appendSkeletonPartialPreviewUrl,
     clearSkeletonPoster,
     updatePosterStreamingPreview,
     clearPosterStreamingPreview,
     setPosterGenerationTiming,
+    updateHonoreeFaceCropUrl,
     getAll,
 };

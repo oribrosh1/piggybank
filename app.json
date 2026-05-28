@@ -20,7 +20,11 @@
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.oribrosh.piggybank",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Allow CreditKid to save invitation poster images to your photo library.",
+        "NSPhotoLibraryUsageDescription": "Allow CreditKid to access your photos for uploading identity documents."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -55,6 +59,14 @@
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos for uploading identity documents.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take photos of identity documents."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to save poster previews.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save invitation poster images to your photo library.",
+          "isAccessMediaLocationEnabled": false
         }
       ],
       [

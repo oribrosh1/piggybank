@@ -67,6 +67,12 @@ type EventDetailsCelebrationCardProps = {
   onNameBlur: () => void;
   onAgeFocus: () => void;
   onAgeBlur: () => void;
+  /**
+   * When provided, the age cell renders as a tap target (instead of an
+   * editable number input) and calls this callback on press — the caller
+   * opens its own picker/modal to mutate `age` via `onAgeChange`.
+   */
+  onAgePress?: () => void;
   onPickHonoreePhoto: () => void;
   onClearHonoreePhoto: () => void;
   /** For AI poster & copy — explicit boy / girl selection. */
@@ -90,6 +96,7 @@ export default function EventDetailsCelebrationCard({
   onNameBlur,
   onAgeFocus,
   onAgeBlur,
+  onAgePress,
   onPickHonoreePhoto,
   onClearHonoreePhoto,
   honoreeGender,
@@ -105,8 +112,8 @@ export default function EventDetailsCelebrationCard({
   return (
     <View style={styles.wrap}>
       {/* Section 1 — name & age on one line */}
-
-      <View style={{...styles.photoSectionHeader, marginTop: 85}}>
+      <GlassCardDark blurIntensity={30} padding={spacing[4]} borderRadius={radius.md} borderColor="rgba(107, 56, 212, 0.1)">
+      <View style={{...styles.photoSectionHeader, marginTop: 0}}>
         <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "10deg" }] }}>
           <PartyPopperIcon size={26} color={colors.primary} strokeWidth={2.4} />
         </View>
@@ -117,12 +124,11 @@ export default function EventDetailsCelebrationCard({
     textTransform: "uppercase",
     fontWeight: "800",
     color: colors.onSurface,
-    letterSpacing: 1.1,
+    letterSpacing: 1.1
   }}>Who are we celebrating?</Text>    
     </View>
 
 
-      <GlassCardDark blurIntensity={30} padding={spacing[4]} borderRadius={radius.md} borderColor="rgba(107, 56, 212, 0.1)">
         <View style={styles.nameAgeRow}>
           <View style={styles.nameColumn}>
             <Text style={styles.fieldLabelAbove}>Child's Name</Text>
@@ -152,29 +158,75 @@ export default function EventDetailsCelebrationCard({
             <Text style={[styles.fieldLabelAbove, styles.ageFieldLabelAbove]}>
               Turning age
             </Text>
-            <View
-              style={[
-                styles.ageCell,
-                (ageFocused || ageError) && {
-                  borderBottomWidth: 2,
-                  borderBottomColor: ageUnderline,
-                },
-              ]}
-            >
-              <TextInput
-                style={styles.ageInput}
-                placeholder="16"
-                placeholderTextColor={colors.muted}
-                value={age}
-                onChangeText={onAgeChange}
-                onFocus={onAgeFocus}
-                onBlur={onAgeBlur}
-                keyboardType="number-pad"
-                maxLength={3}
-              />
-            </View>
+            {onAgePress ? (
+              <TouchableOpacity
+                activeOpacity={0.78}
+                onPress={onAgePress}
+                accessibilityRole="button"
+                accessibilityLabel="Pick turning age"
+                style={[
+                  styles.ageCell,
+                  (ageFocused || ageError) && {
+                    borderBottomWidth: 2,
+                    borderBottomColor: ageUnderline,
+                  },
+                ]}
+              >
+                {/*
+                  Render the value with the same `TextInput` styling so the
+                  visual layout matches the editable variant — but with the
+                  input itself disabled and ignoring touches so the press
+                  always falls through to the wrapping button.
+                */}
+                <TextInput
+                  style={styles.ageInput}
+                  placeholder="16"
+                  placeholderTextColor={colors.muted}
+                  value={age}
+                  editable={false}
+                  pointerEvents="none"
+                  showSoftInputOnFocus={false}
+                />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[
+                  styles.ageCell,
+                  (ageFocused || ageError) && {
+                    borderBottomWidth: 2,
+                    borderBottomColor: ageUnderline,
+                  },
+                ]}
+              >
+                <TextInput
+                  style={styles.ageInput}
+                  placeholder="16"
+                  placeholderTextColor={colors.muted}
+                  value={age}
+                  onChangeText={onAgeChange}
+                  onFocus={onAgeFocus}
+                  onBlur={onAgeBlur}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                />
+              </View>
+            )}
           </View>
         </View>
+
+        {(nameError || ageError) ? (
+          <View style={styles.nameAgeErrRow}>
+            <View style={styles.nameColumn}>
+              {nameError ? <Text style={styles.fieldErr}>{nameError}</Text> : null}
+            </View>
+            <View style={styles.ageColumn}>
+              {ageError ? (
+                <Text style={[styles.fieldErr, styles.ageFieldErrText]}>{ageError}</Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.genderBlock}>
           <Text style={styles.genderLabel}>Boy or girl</Text>
           <View style={styles.genderChipsRow}>
@@ -218,12 +270,19 @@ export default function EventDetailsCelebrationCard({
           )}
         </View>
       </GlassCardDark>
-      <Text style={styles.hint}>
+
+      {/* <Text style={styles.hint}>
         This name and age appear on your poster and invitations.
-      </Text>
+      </Text> */}
 
       {/* Section 2 — photo hero + AI poster copy */}
-      <View style={styles.photoSectionHeader}>
+      <LinearGradient
+        colors={["rgba(107, 56, 212, 0.1)", colors.surfaceContainerLowest]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.photoHeroCard}
+      >
+        <View style={styles.photoSectionHeader}>
         <View style={{ flexDirection: "row", alignItems: "center" , transform: [{ rotate: "15deg" }] }}>
         <FontAwesome name="camera-retro" size={24} color={colors.primary}/>
         </View>
@@ -245,12 +304,7 @@ export default function EventDetailsCelebrationCard({
           </View>
         </View>
       </View>
-      <LinearGradient
-        colors={["rgba(107, 56, 212, 0.1)", colors.surfaceContainerLowest]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.photoHeroCard}
-      >
+      
         <View style={styles.photoSectionRow}>
           {hasPhoto ? (
             <View style={styles.photoAvatarWrap}>
@@ -338,8 +392,6 @@ export default function EventDetailsCelebrationCard({
         </View>
       </LinearGradient>
 
-      {nameError ? <Text style={styles.err}>{nameError}</Text> : null}
-      {ageError ? <Text style={styles.err}>{ageError}</Text> : null}
     </View>
   );
 }
@@ -363,8 +415,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     // gap: spacing[2],
-    marginTop: spacing[5],
-    marginBottom: spacing[2],
+    marginBottom: spacing[4],
     marginLeft: spacing[2],
 
   },
@@ -501,6 +552,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[4],
+    marginTop: spacing[3],
     borderWidth: 1,
     borderColor: "rgba(107, 56, 212, 0.14)",
     shadowColor: colors.primary,
@@ -643,12 +695,24 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     marginTop: spacing[1],
     marginLeft: spacing[2],
+    marginBottom: spacing[4],
     lineHeight: 18,
   },
-  err: {
+  nameAgeErrRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing[3],
+    marginBottom: spacing[1],
+  },
+  fieldErr: {
     fontSize: 12,
     color: "#EF4444",
-    marginTop: spacing[2],
     fontWeight: "600",
+    marginTop: spacing[1],
+    lineHeight: 16,
+  },
+  ageFieldErrText: {
+    textAlign: "center",
+    width: "100%",
   },
 });

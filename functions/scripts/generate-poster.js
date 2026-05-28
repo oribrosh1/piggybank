@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 /**
- * CLI: runs `generatePoster(eventId, event)` from aiService (Stage A: Gemini text,
- * default `gemini-2.5-flash`, override `GEMINI_STAGE_A_MODEL`;
- * Stage B: parallel Together FLUX skeleton (`black-forest-labs/FLUX.2-dev`;
- * Vertex Imagen fallback) + OpenAI `gpt-image-2` streaming final, or Vertex ultra final when `POSTER_FINAL_PROVIDER=vertex`).
+ * CLI: runs `generatePoster(eventId, event)` from aiService (Stage A: two parallel
+ * Gemini text calls — `posterBrief` + `visualTeaser`, default `gemini-2.5-flash`,
+ * override `GEMINI_STAGE_A_MODEL`;
+ * Stage B: 4-way parallel — Gemini invitation headline (`aiPosterTitle`),
+ * Together FLUX no-text preview (`skeletonPosterUrl`, `black-forest-labs/FLUX.2-dev`; Vertex Imagen fallback),
+ * Together FLUX with-text preview (`skeletonPosterWithTextUrl`; same Together model, Vertex fallback),
+ * and OpenAI `gpt-image-2` streaming final (`posterUrl`), or Vertex ultra final when `POSTER_FINAL_PROVIDER=vertex`).
  *
  * Run from repo root or from `functions/` (paths are resolved from this file):
  *   node functions/scripts/generate-poster.js --event-id=<FirestoreEventDocId>
@@ -251,9 +254,11 @@ function printTimingsMs(posterGenTiming) {
     ["honoreeFetchMs (read Storage ref)", posterGenTiming.honoreeFetchMs],
     ["stageAMs (Gemini brief)", posterGenTiming.stageAMs],
     ["stageASkipped", posterGenTiming.stageASkipped],
-    ["skeletonStageMs (Together FLUX skeleton or Vertex fallback)", posterGenTiming.skeletonStageMs],
+    ["coolTitleMs (Gemini invitation headline)", posterGenTiming.coolTitleMs],
+    ["skeletonStageMs (Together FLUX no-text preview, Vertex fallback)", posterGenTiming.skeletonStageMs],
+    ["skeletonWithTextStageMs (Together FLUX with-text preview, Vertex fallback)", posterGenTiming.skeletonWithTextStageMs],
     ["finalStageMs (OpenAI streaming final or Vertex when POSTER_FINAL_PROVIDER=vertex)", posterGenTiming.finalStageMs],
-    ["stageBMs (parallel Stage B wall-clock)", posterGenTiming.stageBMs],
+    ["stageBMs (4-way parallel Stage B wall-clock)", posterGenTiming.stageBMs],
     ["posterUploadMs (final to Storage)", posterGenTiming.posterUploadMs],
     ["totalMs (handler)", posterGenTiming.totalMs],
   ];
@@ -284,6 +289,8 @@ function printTimingsMs(posterGenTiming) {
  * @param {string} [opts.posterPrompt]
  * @param {string} [opts.posterUrl]
  * @param {string} [opts.skeletonPosterUrl]
+ * @param {string} [opts.skeletonPosterWithTextUrl]
+ * @param {string} [opts.aiPosterTitle]
  * @param {string} [opts.visualTeaser]
  * @param {string[]} [opts.streamingPreviewUrls] ordered unique URLs seen during generatePoster
  * @param {object|null} [opts.posterGenTiming]
@@ -298,6 +305,8 @@ async function saveRunArtifacts(opts) {
     posterPrompt,
     posterUrl,
     skeletonPosterUrl,
+    skeletonPosterWithTextUrl,
+    aiPosterTitle,
     visualTeaser,
     streamingPreviewUrls,
     posterGenTiming,
@@ -322,10 +331,13 @@ async function saveRunArtifacts(opts) {
     posterPrompt: posterPrompt ?? null,
     posterUrl: posterUrl ?? null,
     skeletonPosterUrl: skeletonPosterUrl ?? null,
+    skeletonPosterWithTextUrl: skeletonPosterWithTextUrl ?? null,
+    aiPosterTitle: aiPosterTitle ?? null,
     visualTeaser: visualTeaser ?? null,
     posterGenTiming: posterGenTiming ?? null,
     localPosterFile: null,
     localSkeletonFile: null,
+    localSkeletonWithTextFile: null,
     streamingPreviewUrls: streamingPreviewUrls?.length ? streamingPreviewUrls : null,
     localStreamingFiles: [],
   };
@@ -373,6 +385,30 @@ async function saveRunArtifacts(opts) {
     if (localSk) {
       payload.localSkeletonFile = localSk;
     }
+  }
+
+  if (!dryRun && skeletonPosterWithTextUrl) {
+    await fsPromises.writeFile(
+      path.join(base, "skeleton-with-text-image-url.txt"),
+      `${skeletonPosterWithTextUrl}\n`,
+      "utf8",
+    );
+    const localSkWithText = await tryDownloadPoster(
+      skeletonPosterWithTextUrl,
+      base,
+      "skeleton-with-text",
+    );
+    if (localSkWithText) {
+      payload.localSkeletonWithTextFile = localSkWithText;
+    }
+  }
+
+  if (!dryRun && aiPosterTitle) {
+    await fsPromises.writeFile(
+      path.join(base, "ai-poster-title.txt"),
+      `${aiPosterTitle}\n`,
+      "utf8",
+    );
   }
 
   if (!dryRun && posterUrl) {
@@ -599,6 +635,8 @@ async function main() {
       posterPrompt: out.posterPrompt,
       posterUrl: out.posterUrl,
       skeletonPosterUrl: out.skeletonPosterUrl,
+      skeletonPosterWithTextUrl: out.skeletonPosterWithTextUrl,
+      aiPosterTitle: out.aiPosterTitle,
       visualTeaser: out.visualTeaser,
       streamingPreviewUrls,
       posterGenTiming,

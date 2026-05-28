@@ -12,6 +12,7 @@ export const colors = {
   surfaceContainerLow: "#eff4ff",
   /** Highest pop — main cards */
   surfaceContainerLowest: "#ffffff",
+  surfaceContainerLowest2: "#e5e7eb", // #e5e7eb
   /** Inset areas: search, code-like blocks */
   surfaceContainerHigh: "#dee9fc",
   /** Glass / frosted overlays (pair with BlurView) */
@@ -135,6 +136,10 @@ export const spacing = {
   8: 32,
   10: 40,
   12: 48,
+  14: 56,
+  16: 64,
+  18: 72,
+  20: 80,
 } as const;
 
 /** Minimum corner radius — nothing sharper than sm */
@@ -165,6 +170,8 @@ export const fontFamily = {
   title: "Inter_600SemiBold",
   body: "Inter_400Regular",
   label: "Inter_500Medium",
+  /** Handwritten brush script used for hero accents (e.g. "invitation", "See examples"). */
+  script: "CaveatBrush_400Regular",
 } as const;
 
 /** Typography scale — sizes in px (rem approx at 16px root) */

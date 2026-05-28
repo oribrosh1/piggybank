@@ -9,18 +9,24 @@
  *        - `eventPosterVersions` where eventId == …
  *   4. POST `/generatePoster` with Bearer ID token (+ optional App Check, same rules as client)
  *   5. Wait until `posterUrl` appears on the event doc (or versions collection)
- *   6. Download the image URL to `functions/tests/temp-images/poster-<eventId>-<ts>.png`
+ *   6. Download assets to `functions/tests/temp-images/`: final `poster-*.png`, no-text skeleton
+ *      `skeleton-no-text-*.png`, with-text skeleton `skeleton-with-text-*.png`, and `ai-title-*.txt`
+ *      (non-mock local/HTTP only — fields come from Firestore after `generatePoster`).
  *
  * Prerequisites:
  *   - Run from repo root: `node functions/tests/test-poster-generation-client-flow.js`
+ *   - Existing event + honoree photo from Storage: `node functions/tests/test-poster-generation-existing-event.js`
+ *   - Vertex Imagen skeleton pair (read-only, no DB): `node functions/tests/test-vertex-imagen-skeleton-pair.js`
  *   - Root `.env`: EXPO_PUBLIC_FIREBASE_* and app keys
  *   - `functions/.env`: GEMINI_API_KEY when not using `--mock` (override merge)
  *   - `firebaseserviceAccountKey.json` at repo root (Admin + Storage for in-process aiService)
  *
- * Pipeline (non-mock): Stage A Gemini text (default `gemini-2.5-flash`); Stage B parallel Together
- * `black-forest-labs/FLUX.2-dev` skeleton (`skeletonPosterUrl`, Vertex Imagen fallback if Together fails/disabled) +
- * OpenAI `gpt-image-2` streaming final (`posterUrl`), with optional `posterStreamingPreviewUrl` patches during the stream
- * (or Vertex ultra final if `POSTER_FINAL_PROVIDER=vertex`).
+ * Pipeline (non-mock): Stage A two parallel Gemini text calls (default `gemini-2.5-flash`) — `posterBrief` for final art + `visualTeaser` for the no-text preview.
+ * Stage B fans out 4-way in parallel:
+ *   - Gemini invitation headline (`aiPosterTitle`).
+ *   - Together `black-forest-labs/FLUX.2-dev` no-text preview (`skeletonPosterUrl`; Vertex Imagen fallback if Together fails/disabled).
+ *   - Together `black-forest-labs/FLUX.2-dev` with-text preview (`skeletonPosterWithTextUrl`; same fallback).
+ *   - OpenAI `gpt-image-2` streaming final (`posterUrl`), with optional `posterStreamingPreviewUrl` patches during the stream (or Vertex ultra final if `POSTER_FINAL_PROVIDER=vertex`).
  *
  * Generation mode:
  *   - `--mock` (recommended for CI / no quota): simulates responses — writes `posterPrompt`, `posterUrl`,
@@ -53,6 +59,19 @@ const useLocalAiPipeline = !FORCE_HTTP && !USE_MOCK_GEMINI;
 const PROJECT_ID = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "piggybank-a0011";
 process.env.GCLOUD_PROJECT = PROJECT_ID;
 process.env.GOOGLE_APPLICATION_CREDENTIALS = path.join(__dirname, "..", "..", "firebaseserviceAccountKey.json");
+
+/** Default Firebase Storage bucket for Admin SDK (required for `generatePoster` Storage writes). */
+function defaultStorageBucket() {
+    const fromEnv =
+        process.env.FUNCTIONS_STORAGE_BUCKET?.trim() ||
+        process.env.FIREBASE_STORAGE_BUCKET?.trim() ||
+        process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() ||
+        process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() ||
+        "";
+    if (fromEnv) return fromEnv;
+    return `${PROJECT_ID}.firebasestorage.app`;
+}
+const STORAGE_BUCKET = defaultStorageBucket();
 
 const admin = require("firebase-admin");
 const { initializeApp: initClientApp, deleteApp } = require("firebase/app");
@@ -112,6 +131,54 @@ function guestStatsEmpty() {
         invalidNumber: 0,
         notComing: 0,
         totalPaid: 0,
+    };
+}
+
+/**
+ * Poll until skeleton preview URLs appear or timeout (FLUX may finish slightly after final poster).
+ * @param {string} id
+ * @param {{ maxWaitMs?: number, intervalMs?: number }} [opts]
+ */
+async function waitForPosterFields(id, opts = {}) {
+    const maxWaitMs = opts.maxWaitMs ?? 45_000;
+    const intervalMs = opts.intervalMs ?? 2000;
+    const deadline = Date.now() + maxWaitMs;
+    let last = await readPosterFieldsFromEvent(id);
+    while (Date.now() < deadline) {
+        last = await readPosterFieldsFromEvent(id);
+        if (last.skeletonPosterUrl && last.skeletonPosterWithTextUrl) break;
+        await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return last;
+}
+
+/**
+ * Read poster-related fields from the event doc (after pipeline run).
+ * @param {string} id
+ * @returns {Promise<{ aiPosterTitle?: string, skeletonPosterUrl?: string, skeletonPosterWithTextUrl?: string, posterUrl?: string }>}
+ */
+async function readPosterFieldsFromEvent(id) {
+    const snap = await adminDb.collection("events").doc(id).get();
+    if (!snap.exists) return {};
+    const d = snap.data() || {};
+    return {
+        aiPosterTitle:
+            typeof d.aiPosterTitle === "string" && d.aiPosterTitle.trim()
+                ? d.aiPosterTitle.trim()
+                : undefined,
+        skeletonPosterUrl:
+            typeof d.skeletonPosterUrl === "string" && d.skeletonPosterUrl.trim()
+                ? d.skeletonPosterUrl.trim()
+                : undefined,
+        skeletonPosterWithTextUrl:
+            typeof d.skeletonPosterWithTextUrl === "string" &&
+            d.skeletonPosterWithTextUrl.trim()
+                ? d.skeletonPosterWithTextUrl.trim()
+                : undefined,
+        posterUrl:
+            typeof d.posterUrl === "string" && d.posterUrl.trim()
+                ? d.posterUrl.trim()
+                : undefined,
     };
 }
 
@@ -242,7 +309,11 @@ async function main() {
     }
 
     if (!admin.apps.length) {
-        admin.initializeApp({ projectId: PROJECT_ID });
+        admin.initializeApp({
+            projectId: PROJECT_ID,
+            storageBucket: STORAGE_BUCKET,
+        });
+        log.info(`Admin SDK: projectId=${PROJECT_ID} storageBucket=${STORAGE_BUCKET}`);
     }
     adminDb = admin.firestore();
 
@@ -401,10 +472,58 @@ async function main() {
     });
 
     const result = await donePromise;
-    const outFile = path.join(TEMP_DIR, `poster-${eventId}-${RUN_ID}.png`);
-    log.info(`Saving image from ${result.source} → ${outFile}`);
-    await downloadUrlToFile(result.posterUrl, outFile);
+    const base = `${eventId}-${RUN_ID}`;
+
+    const fields = USE_MOCK_GEMINI
+        ? await readPosterFieldsFromEvent(eventId)
+        : await waitForPosterFields(eventId);
+    log.info("Poster pipeline fields (from Firestore)", {
+        aiPosterTitle: fields.aiPosterTitle ?? "(none)",
+        skeletonPosterUrl: fields.skeletonPosterUrl
+            ? `${fields.skeletonPosterUrl.slice(0, 72)}…`
+            : "(none)",
+        skeletonPosterWithTextUrl: fields.skeletonPosterWithTextUrl
+            ? `${fields.skeletonPosterWithTextUrl.slice(0, 72)}…`
+            : "(none)",
+    });
+
+    const outFile = path.join(TEMP_DIR, `poster-${base}.png`);
+    const posterUrlToSave = fields.posterUrl || result.posterUrl;
+    log.info(`Saving final poster from ${result.source} → ${outFile}`);
+    await downloadUrlToFile(posterUrlToSave, outFile);
     log.ok(`Wrote ${outFile} (${fs.statSync(outFile).size} bytes)`);
+
+    if (fields.aiPosterTitle) {
+        const titlePath = path.join(TEMP_DIR, `ai-title-${base}.txt`);
+        fs.writeFileSync(titlePath, `${fields.aiPosterTitle}\n`, "utf8");
+        log.ok(`Wrote ${titlePath}`);
+    } else if (!USE_MOCK_GEMINI) {
+        log.info("No aiPosterTitle on event doc (cool-title branch may have failed)");
+    }
+
+    if (fields.skeletonPosterUrl) {
+        const skPath = path.join(TEMP_DIR, `skeleton-no-text-${base}.png`);
+        try {
+            await downloadUrlToFile(fields.skeletonPosterUrl, skPath);
+            log.ok(`Wrote ${skPath} (${fs.statSync(skPath).size} bytes)`);
+        } catch (e) {
+            log.fail("skeleton no-text download", e.message || e);
+        }
+    } else if (!USE_MOCK_GEMINI) {
+        log.info("No skeletonPosterUrl (FLUX no-text branch may have failed or was skipped)");
+    }
+
+    if (fields.skeletonPosterWithTextUrl) {
+        const sktPath = path.join(TEMP_DIR, `skeleton-with-text-${base}.png`);
+        try {
+            await downloadUrlToFile(fields.skeletonPosterWithTextUrl, sktPath);
+            log.ok(`Wrote ${sktPath} (${fs.statSync(sktPath).size} bytes)`);
+        } catch (e) {
+            log.fail("skeleton with-text download", e.message || e);
+        }
+    } else if (!USE_MOCK_GEMINI) {
+        log.info("No skeletonPosterWithTextUrl (FLUX with-text branch may have failed or was skipped)");
+    }
 
     if (unsubEvent) unsubEvent();
     if (unsubVersions) unsubVersions();

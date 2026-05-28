@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "firebase emulators:start --only functions",
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
@@ -25,6 +26,7 @@
   "dependencies": {
     "@google-cloud/aiplatform": "^6.7.0",
     "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.7.0",
     "cors": "^2.8.5",
@@ -34,6 +36,7 @@
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.0.0",
     "openai": "^6.36.0",
+    "sharp": "^0.33.5",
     "stripe": "^20.0.0",
     "together-ai": "^0.39.0",
     "twilio": "^5.0.0"

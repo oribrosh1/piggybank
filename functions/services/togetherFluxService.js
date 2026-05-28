@@ -91,6 +91,20 @@ function clampTogetherFluxSteps(steps, model) {
   return Math.min(cap, Math.max(1, n));
 }
 
+/**
+ * Step count for skeleton / preview only (default **6**). Override `TOGETHER_SKELETON_STEPS`.
+ * @returns {number}
+ */
+function resolveTogetherSkeletonFluxSteps() {
+  const apiModel = DEFAULT_SKELETON_TOGETHER_MODEL;
+  const raw = process.env.TOGETHER_SKELETON_STEPS?.trim();
+  if (raw != null && raw !== "") {
+    const n = parseInt(String(raw), 10);
+    if (!Number.isNaN(n)) return clampTogetherFluxSteps(n, apiModel);
+  }
+  return clampTogetherFluxSteps(6, apiModel);
+}
+
 function shouldSendStepsForModel(model) {
   const m = String(model).toLowerCase();
   if (m.includes("imagen")) return false;
@@ -212,7 +226,7 @@ function attachHonoreeUrlsToTogetherBody(body, honoreeUrls) {
  *   honoreeReferenceUrls?: string[];
  *   skeletonStage?: boolean;
  *   steps?: number;
- * }} [options] Stage-B loop id (`together-flux-pro` → Imagen 4 fast; `together-flux-pro2` → FLUX.2-pro; `together-flux-schnell`; or any Together `model` string). `honoreeReferenceUrls`: HTTPS URLs (signed GCS). Routed to Kontext (`image_url`) or kept on FLUX.2-style models (`reference_images`) per Together’s supported parameters — Imagen rejects both in practice. `skeletonStage`: always uses `black-forest-labs/FLUX.2-dev` for the API request (not `TOGETHER_FLUX_MODEL` / not honoree reroute). `steps`: optional explicit step count (clamped per model).
+ * }} [options] Stage-B loop id (`together-flux-pro` → Imagen 4 fast; `together-flux-pro2` → FLUX.2-pro; `together-flux-schnell`; or any Together `model` string). `honoreeReferenceUrls`: HTTPS signed GCS URLs — pass **`getHonoreeReferenceSignedReadUrl`** so FLUX sees a **face-cropped** PNG when the pipeline wrote `honoree_face_reference.png`. Routed to Kontext (`image_url`) or FLUX.2-style (`reference_images`) per Together. `skeletonStage`: always `black-forest-labs/FLUX.2-dev` (not `TOGETHER_FLUX_MODEL` / not honoree reroute). `steps`: optional explicit step count (clamped per model).
  * @returns {Promise<Buffer|null>}
  */
 async function generatePosterBufferWithTogetherFlux(promptText, options = {}) {
@@ -295,5 +309,6 @@ module.exports = {
   DEFAULT_TOGETHER_IMAGE_MODEL,
   DEFAULT_SKELETON_TOGETHER_MODEL,
   resolveTogetherFluxSteps,
+  resolveTogetherSkeletonFluxSteps,
   clampTogetherFluxSteps,
 };

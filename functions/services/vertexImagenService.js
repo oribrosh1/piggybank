@@ -16,6 +16,10 @@ const MAX_IMAGEN_PROMPT_CHARS = 4000;
 /** Default publisher ids — parallel skeleton (fast) + final (ultra). */
 const DEFAULT_IMAGEN_SKELETON_MODEL = "imagen-3.0-fast-generate-001";
 const DEFAULT_IMAGEN_FINAL_MODEL = "imagen-4.0-ultra-generate-001";
+/** Text + reference image (Instruct Customization) — fast-generate does not accept referenceImages. */
+const DEFAULT_IMAGEN_CAPABILITY_MODEL = "imagen-3.0-capability-001";
+
+const MAX_REFERENCE_IMAGE_BYTES = 10 * 1024 * 1024;
 
 /** Reuse gRPC channels per regional endpoint (TLS handshake amortization). */
 const predictionClientsByEndpoint = new Map();
@@ -41,6 +45,12 @@ function resolveVertexImagenFinalModelId() {
     process.env.VERTEX_IMAGEN_FINAL_MODEL || process.env.VERTEX_IMAGEN_MODEL;
   if (typeof primary === "string" && primary.trim()) return primary.trim();
   return DEFAULT_IMAGEN_FINAL_MODEL;
+}
+
+function resolveVertexImagenCapabilityModelId() {
+  const fromEnv = process.env.VERTEX_IMAGEN_CAPABILITY_MODEL;
+  if (typeof fromEnv === "string" && fromEnv.trim()) return fromEnv.trim();
+  return DEFAULT_IMAGEN_CAPABILITY_MODEL;
 }
 
 function resolveGcpProjectId() {
@@ -263,8 +273,16 @@ async function* streamPosterBuffersWithVertexImagen(promptText, callOptions = {}
 
 /**
  * Unary predict (legacy path / fallback).
+ * When `callOptions.referenceImageBytes` is a non-empty Buffer (≤10MB), uses Imagen 3 **Instruct
+ * Customization** (`imagen-3.0-capability-001` by default): the prompt should reference image `[1]`
+ * per https://cloud.google.com/vertex-ai/generative-ai/docs/image/instruct-customization
+ *
  * @param {string} promptText
- * @param {{ vertexModelId?: string }} [callOptions]
+ * @param {{
+ *   vertexModelId?: string,
+ *   referenceImageBytes?: Buffer,
+ *   referenceVertexModelId?: string,
+ * }} [callOptions]
  * @returns {Promise<Buffer|null>} PNG bytes or null if skipped / no image
  */
 async function generatePosterBufferWithVertexImagen(promptText, callOptions = {}) {
@@ -285,11 +303,36 @@ async function generatePosterBufferWithVertexImagen(promptText, callOptions = {}
     typeof callOptions.vertexModelId === "string"
       ? callOptions.vertexModelId.trim()
       : "";
-  const modelId = (
-    fromCall ||
-    process.env.VERTEX_IMAGEN_MODEL ||
-    DEFAULT_IMAGEN_FINAL_MODEL
-  ).trim();
+
+  const refCandidate = callOptions.referenceImageBytes;
+  let useReference =
+    Buffer.isBuffer(refCandidate) && refCandidate.length > 0;
+  if (useReference && refCandidate.length > MAX_REFERENCE_IMAGE_BYTES) {
+    console.warn(
+      `[VertexImagen] referenceImageBytes exceeds ${MAX_REFERENCE_IMAGE_BYTES} bytes; ignoring reference`,
+    );
+    useReference = false;
+  }
+
+  const refModelFromCall =
+    typeof callOptions.referenceVertexModelId === "string"
+      ? callOptions.referenceVertexModelId.trim()
+      : "";
+
+  const modelId = useReference
+    ? refModelFromCall || resolveVertexImagenCapabilityModelId()
+    : (
+        fromCall ||
+        process.env.VERTEX_IMAGEN_MODEL ||
+        DEFAULT_IMAGEN_FINAL_MODEL
+      ).trim();
+
+  if (useReference) {
+    console.info(
+      `[VertexImagen] predict with reference image (Instruct Customization) model=${modelId} refBytes=${refCandidate.length}`,
+    );
+  }
+
   const aspectRatio = (
     process.env.VERTEX_IMAGEN_ASPECT_RATIO || "9:16"
   ).trim();
@@ -305,7 +348,22 @@ async function generatePosterBufferWithVertexImagen(promptText, callOptions = {}
   const client = getPredictionClient(apiEndpoint);
   const endpoint = `projects/${projectId}/locations/${location}/publishers/google/models/${modelId}`;
 
-  const instance = helpers.toValue({ prompt });
+  const instancePlain = useReference
+    ? {
+        prompt,
+        referenceImages: [
+          {
+            referenceType: "REFERENCE_TYPE_RAW",
+            referenceId: 1,
+            referenceImage: {
+              bytesBase64Encoded: refCandidate.toString("base64"),
+            },
+          },
+        ],
+      }
+    : { prompt };
+
+  const instance = helpers.toValue(instancePlain);
   const parameters = helpers.toValue({
     sampleCount: 1,
     aspectRatio,
@@ -326,8 +384,10 @@ async function generatePosterBufferWithVertexImagen(promptText, callOptions = {}
     return null;
   }
 
+  const p0 = predictions[0];
   const b64 =
-    predictions[0].structValue?.fields?.bytesBase64Encoded?.stringValue;
+    p0?.structValue?.fields?.bytesBase64Encoded?.stringValue ||
+    (typeof p0?.bytesBase64Encoded === "string" ? p0.bytesBase64Encoded : null);
   if (!b64) {
     console.warn("[VertexImagen] Missing bytesBase64Encoded in prediction");
     return null;
@@ -369,4 +429,5 @@ module.exports = {
   isImagenFallbackEnabled,
   resolveVertexImagenSkeletonModelId,
   resolveVertexImagenFinalModelId,
+  resolveVertexImagenCapabilityModelId,
 };

@@ -4,6 +4,7 @@ export { default as EventDetailsAddressField } from "./EventDetailsAddressField"
 export { default as EventDetailsScreenFooter } from "./EventDetailsScreenFooter";
 export { default as EventDatePickerModal } from "./EventDatePickerModal";
 export { default as EventTimePickerModal } from "./EventTimePickerModal";
+export { default as EventAgePickerModal } from "./EventAgePickerModal";
 export { default as EventDetailsAgeField } from "./EventDetailsAgeField";
 export { default as EventDetailsNameField } from "./EventDetailsNameField";
 export { default as EventDetailsCelebrationCard } from "./EventDetailsCelebrationCard";

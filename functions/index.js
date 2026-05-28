@@ -1,10 +1,13 @@
+const path = require("path");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 const Stripe = require("stripe");
 
-require("dotenv").config();
+// Repo-root `.env` then `functions/.env` (same pattern as `functions/tests/*` scripts).
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.join(__dirname, ".env"), override: true });
 
 admin.initializeApp();
 const db = admin.firestore();

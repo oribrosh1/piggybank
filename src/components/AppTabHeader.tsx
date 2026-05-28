@@ -1,6 +1,13 @@
-import { View, Text, TouchableOpacity, StyleSheet, type ViewStyle } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  type ViewStyle,
+} from "react-native";
 import { useRouter } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { Bell, UserRound } from "lucide-react-native";
 import { colors, typography, fontFamily } from "@/src/theme";
 import { routes } from "@/types/routes";
 
@@ -26,27 +33,35 @@ export default function AppTabHeader({
       <View style={styles.actions}>
         <TouchableOpacity
           onPress={onPressNotifications ?? (() => {})}
-          hitSlop={10}
+          activeOpacity={0.88}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel="Notifications"
+          style={styles.actionOuter}
         >
-          <View style={styles.notifWrap}>
-            <Ionicons name="notifications-outline" size={24} color={colors.onSurface} />
+          <View style={styles.actionChrome}>
+            <Bell size={21} color={colors.primary} strokeWidth={2.25} />
             {showNotificationDot ? <View style={styles.notifDot} /> : null}
           </View>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push(routes.tabs.profile)}
-          hitSlop={10}
+          activeOpacity={0.88}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel="Profile"
+          style={styles.actionOuter}
         >
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={20} color={colors.onSurfaceVariant} />
+          <View style={styles.actionChrome}>
+            <UserRound size={22} color={colors.primary} strokeWidth={2.25} />
           </View>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+const ACTION_SIZE = 46;
+/** Half of width/height — perfect circle */
+const CIRCLE_RADIUS = ACTION_SIZE / 2;
 
 const styles = StyleSheet.create({
   row: {
@@ -66,32 +81,48 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
-  notifWrap: {
-    width: 28,
-    height: 28,
+  actionOuter: {
+    /** Slight outer pad so purple shadow does not clip */
+    padding: 2,
+  },
+  /**
+   * Frosted “candy” control: soft white cap, lilac rim, brand lift shadow —
+   * matches the playful glass cards used elsewhere on Home.
+   */
+  actionChrome: {
+    width: ACTION_SIZE,
+    height: ACTION_SIZE,
+    borderRadius: CIRCLE_RADIUS,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(107, 56, 212, 0.2)",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.22,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+        shadowColor: colors.primary,
+      },
+      default: {},
+    }),
   },
   notifDot: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-    borderWidth: 1.5,
-    borderColor: colors.surfaceContainerLowest,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceContainerHigh,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+    top: 5,
+    right: 5,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.primaryContainer,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.95)",
   },
 });

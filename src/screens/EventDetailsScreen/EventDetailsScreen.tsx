@@ -23,9 +23,8 @@ import {
   EventDetailsKosherCateringCard,
 } from "@/src/components/create-event";
 import { useEventDetailsScreen } from "./useEventDetailsScreen";
-import { colors, spacing } from "@/src/theme";
+import { spacing } from "@/src/theme";
 import EventThemeAndVibeCard from "@/src/components/create-event/EventThemeAndVibeCard";
-import PosterSkeletonPreviewSection from "@/src/components/create-event/PosterSkeletonPreviewSection";
 
 function parseTimeToDate(timeStr: string): Date | null {
   const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -63,7 +62,6 @@ export default function EventDetailsScreen() {
     showEventDetails,
     setShowEventDetails,
     fadeAnim,
-    progressWidth,
     handleContinue,
     handleInputChange,
     setCelebrationType,
@@ -74,9 +72,8 @@ export default function EventDetailsScreen() {
     handleTimeConfirm,
     isBarBatMitzvah,
     isPartyMode,
+    showCelebrationTypeSection,
     setOptionalDetailsLater,
-    isCreating,
-    posterGenLive,
     pickHonoreePhoto,
     clearHonoreePhoto,
   } = useEventDetailsScreen({ scrollToTopOnError });
@@ -121,12 +118,7 @@ export default function EventDetailsScreen() {
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
         >
-          <EventDetailsScreenHeader
-            progressWidth={progressWidth}
-            progressPercentLabel="50%"
-            stepLabel="STEP 1 OF 2"
-            onBack={() => router.back()}
-          />
+          <EventDetailsScreenHeader onBack={() => router.back()} />
 
           <View style={styles.formBlock}>
             <EventDetailsCelebrationCard
@@ -150,13 +142,15 @@ export default function EventDetailsScreen() {
               onHonoreeGenderChange={(g) => handleInputChange("honoreeGender", g)}
             />
 
-            <EventDetailsCelebrationTypeCard
-              celebrationType={formData.celebrationType ?? "birthday"}
-              mitzvahCelebrationFocus={formData.mitzvahCelebrationFocus}
-              mitzvahFocusError={errors.mitzvahCelebrationFocus}
-              onCelebrationTypeChange={setCelebrationType}
-              onMitzvahFocusChange={setMitzvahCelebrationFocus}
-            />
+            {showCelebrationTypeSection ? (
+              <EventDetailsCelebrationTypeCard
+                celebrationType={formData.celebrationType ?? "birthday"}
+                mitzvahCelebrationFocus={formData.mitzvahCelebrationFocus}
+                mitzvahFocusError={errors.mitzvahCelebrationFocus}
+                onCelebrationTypeChange={setCelebrationType}
+                onMitzvahFocusChange={setMitzvahCelebrationFocus}
+              />
+            ) : null}
 
             <EventDetailsDateTimeCard
               dateValue={formData.date}
@@ -220,12 +214,6 @@ export default function EventDetailsScreen() {
               onToggleDetails={() => setShowEventDetails(!showEventDetails)}
               onInputChange={handleInputChange}
             />
-            <PosterSkeletonPreviewSection
-              visible={!!posterGenLive}
-              posterUrl={posterGenLive?.posterUrl}
-              posterStreamingPreviewUrl={posterGenLive?.posterStreamingPreviewUrl}
-              skeletonPosterUrl={posterGenLive?.skeletonPosterUrl}
-            />
 {/* 
             <EventDetailsLocationCard
               address1={formData.address1}
@@ -236,7 +224,10 @@ export default function EventDetailsScreen() {
           </View>
         </Animated.ScrollView>
 
-        <EventDetailsScreenFooter onContinue={handleContinue} loading={isCreating} disabled={isCreating} />
+        <EventDetailsScreenFooter
+          onContinue={handleContinue}
+          ctaTitle="Review summary"
+        />
       </View>
 
       <EventDatePickerModal

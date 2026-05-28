@@ -17,7 +17,7 @@ export const PARTY_TYPE_OPTIONS: PartyTypeOption[] = [
     iconImage: require("../../assets/images/trampoline-jumping.png"),
   },
   { value: "wall-climbing", label: "🧗", name: "Wall climbing" },
-  { value: "indoor-soccer", label: "⚽", name: "Indoor soccer game" },
+  { value: "indoor-soccer", label: "⚽", name: "Indoor soccer" },
   { value: "basketball", label: "🏀", name: "Basketball game" },
   { value: "girls-beauty-day", label: "💄", name: "Girls beauty day" },
   { value: "pool-party", label: "🏊", name: "Pool party" },

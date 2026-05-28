@@ -8,26 +8,36 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { getUserEventsStats } from "@/src/lib/eventService";
+import { getUserProfile } from "@/src/lib/userService";
+import firebase from "@/src/firebase";
 import { routes } from "@/types/routes";
 import { EventDashboardScreen } from "@/src/screens/EventDashboardScreen/EventDashboardScreen";
 import AppTabFooter from "@/src/components/AppTabFooter";
-import AppTabHeader from "@/src/components/AppTabHeader";
 import PartyPlannerEmptyContent from "@/src/components/home/PartyPlannerEmptyContent";
 import { colors, spacing, typography } from "@/src/theme";
+
+const MY_EVENT_PADDING_TOP = 12;
+const MY_EVENT_PADDING_H = spacing[5];
 
 export default function MyEventTab() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [eventId, setEventId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const userEvents = await getUserEventsStats();
+      const user = firebase.auth().currentUser;
+      const [userEvents, profile] = await Promise.all([
+        getUserEventsStats(),
+        user ? getUserProfile(user.uid) : Promise.resolve(null),
+      ]);
       userEvents.sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       setEventId(userEvents[0]?.id ?? null);
+      setFirstName(profile?.fullName?.split(" ")[0]);
     } catch (e) {
       console.error("[MyEventTab] load events:", e);
       setEventId(null);
@@ -60,14 +70,13 @@ export default function MyEventTab() {
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingHorizontal: spacing[5],
-            paddingTop: insets.top + 12,
+            paddingHorizontal: MY_EVENT_PADDING_H,
+            paddingTop: insets.top + MY_EVENT_PADDING_TOP,
             paddingBottom: Math.max(insets.bottom, 16) + 100,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AppTabHeader />
           <PartyPlannerEmptyContent
             onCreateEvent={() =>
               router.push({
@@ -75,6 +84,11 @@ export default function MyEventTab() {
                 params: { eventType: "birthday" },
               })
             }
+            firstName={firstName}
+            topInset={insets.top}
+            topContentPadding={MY_EVENT_PADDING_TOP}
+            leftInset={MY_EVENT_PADDING_H}
+            rightInset={MY_EVENT_PADDING_H}
           />
           <AppTabFooter
             style={{

@@ -16,12 +16,15 @@ interface EventDetailsScreenFooterProps {
   onContinue: () => void;
   loading?: boolean;
   disabled?: boolean;
+  /** Primary button label — defaults to “Create Event & AI Poster”. */
+  ctaTitle?: string;
 }
 
 export default function EventDetailsScreenFooter({
   onContinue,
   loading,
   disabled,
+  ctaTitle = "Create Event & AI Poster",
 }: EventDetailsScreenFooterProps) {
   const insets = useSafeAreaInsets();
   const paddingBottom = Math.max(spacing[4], insets.bottom + spacing[2]);
@@ -54,7 +57,7 @@ export default function EventDetailsScreenFooter({
               </View>
               <View style={styles.ctaCopy}>
                 <Text style={styles.ctaTitle} maxFontSizeMultiplier={1.35}>
-                  Create Event & AI Poster
+                  {ctaTitle}
                 </Text>
                 {/* <Text style={styles.ctaSubtitle} maxFontSizeMultiplier={1.3}>
                  & AI poster invitation

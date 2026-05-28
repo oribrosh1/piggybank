@@ -36,10 +36,14 @@ export interface PosterGenerationTimingMs {
   stageAMs?: number;
   /** True when client sent `posterPrompt` and Stage A was skipped. */
   stageASkipped?: boolean;
-  /** Stage B: wall-clock for parallel skeleton + final (max of both pipelines). */
+  /** Stage B: wall-clock for the 4-way parallel fan-out (max of all branches). */
   stageBMs?: number;
-  /** Fast Imagen skeleton pipeline only (ms). */
+  /** Together FLUX no-text preview branch (ms). */
   skeletonStageMs?: number;
+  /** Together FLUX with-text preview branch (ms). */
+  skeletonWithTextStageMs?: number;
+  /** Gemini invitation headline branch (`aiPosterTitle`), ms. */
+  coolTitleMs?: number;
   /** OpenAI streaming final (or Vertex when POSTER_FINAL_PROVIDER=vertex), ms. */
   finalStageMs?: number;
   /** Saving generated image bytes to Storage (only if an image was produced). */
@@ -259,10 +263,18 @@ export interface Event {
 
   // AI Generated Poster
   posterUrl?: string; // URL to AI-generated invitation poster
-  /** Fast Imagen preview while final poster is generating (public Storage URL). */
+  /** Together FLUX preview, **no on-poster typography** — the "art-first" fast preview. */
   skeletonPosterUrl?: string;
   /** When the skeleton preview image was written. */
   skeletonPosterGeneratedAt?: Date;
+  /** Together FLUX preview, **with on-poster typography** — mirrors final art direction, faster than OpenAI. */
+  skeletonPosterWithTextUrl?: string;
+  /** When the with-text FLUX preview was written. */
+  skeletonPosterWithTextGeneratedAt?: Date;
+  /** Gemini-generated invitation headline (one short phrase) for UI surfacing; separate from `posterPrompt`. */
+  aiPosterTitle?: string;
+  /** When the AI poster title was written. */
+  aiPosterTitleGeneratedAt?: Date;
   /** URLs for each progressive skeleton chunk (Vertex streamRawPredict partials). */
   skeletonPartialPreviewUrls?: string[];
   /**
@@ -275,13 +287,21 @@ export interface Event {
   posterStreamingPreviewUpdatedAt?: Date;
   posterPrompt?: string; // The prompt used to generate the poster
   /**
-   * Stage A: logistics-free poster image brief (rich scene + on-poster name, age, gender hero;
-   * reference-photo likeness when applicable). Used for skeleton preview; final still uses posterPrompt.
+   * Stage A: logistics-free **scene / character / style** image brief (Gemini). Does not request readable
+   * invitation lettering — typography is composed in posterBrief + later FLUX/OpenAI steps.
+   * Used for the no-text FLUX preview and product context; final art still uses `posterPrompt`.
    * Written when Gemini Stage A runs; omitted when client skips Stage A with `posterPrompt`.
    */
   visualTeaser?: string | null;
   /** Parent-uploaded reference photo of the honoree for AI poster likeness (Storage public URL). */
   honoreePhotoUrl?: string;
+  /**
+   * Public URL to the server-generated **face-only** honoree crop (`events/{id}/honoree_face_reference.png`).
+   * Written when poster generation runs Vision/heuristic face crop + `saveHonoreeFaceReference`.
+   */
+  honoreeFaceCropUrl?: string;
+  /** When `honoreeFaceCropUrl` was last written. */
+  honoreeFaceCropGeneratedAt?: Date;
   /** Skipped optional details at creation — basic template until details added or AI run */
   optionalDetailsLater?: boolean;
   /** Last selected AI poster theme from create flow or regenerate */
@@ -450,6 +470,19 @@ export const eventConverter: FirestoreDataConverter<Event> = {
         event.skeletonPosterGeneratedAt instanceof Date
           ? Timestamp.fromDate(event.skeletonPosterGeneratedAt)
           : event.skeletonPosterGeneratedAt;
+    if (event.skeletonPosterWithTextUrl)
+      data.skeletonPosterWithTextUrl = event.skeletonPosterWithTextUrl;
+    if (event.skeletonPosterWithTextGeneratedAt)
+      data.skeletonPosterWithTextGeneratedAt =
+        event.skeletonPosterWithTextGeneratedAt instanceof Date
+          ? Timestamp.fromDate(event.skeletonPosterWithTextGeneratedAt)
+          : event.skeletonPosterWithTextGeneratedAt;
+    if (event.aiPosterTitle) data.aiPosterTitle = event.aiPosterTitle;
+    if (event.aiPosterTitleGeneratedAt)
+      data.aiPosterTitleGeneratedAt =
+        event.aiPosterTitleGeneratedAt instanceof Date
+          ? Timestamp.fromDate(event.aiPosterTitleGeneratedAt)
+          : event.aiPosterTitleGeneratedAt;
     if (event.skeletonProgress?.length)
       data.skeletonProgress = event.skeletonProgress;
     if (event.posterStreamingPreviewUrl)
@@ -462,6 +495,12 @@ export const eventConverter: FirestoreDataConverter<Event> = {
     if (event.posterPrompt) data.posterPrompt = event.posterPrompt;
     if (event.visualTeaser) data.visualTeaser = event.visualTeaser;
     if (event.honoreePhotoUrl) data.honoreePhotoUrl = event.honoreePhotoUrl;
+    if (event.honoreeFaceCropUrl) data.honoreeFaceCropUrl = event.honoreeFaceCropUrl;
+    if (event.honoreeFaceCropGeneratedAt)
+      data.honoreeFaceCropGeneratedAt =
+        event.honoreeFaceCropGeneratedAt instanceof Date
+          ? Timestamp.fromDate(event.honoreeFaceCropGeneratedAt)
+          : event.honoreeFaceCropGeneratedAt;
     if (event.optionalDetailsLater === true) data.optionalDetailsLater = true;
     if (event.posterThemeId) data.posterThemeId = event.posterThemeId;
     if (event.needsBankingSetup === true) data.needsBankingSetup = true;
@@ -515,6 +554,12 @@ export const eventConverter: FirestoreDataConverter<Event> = {
       skeletonPosterUrl: data.skeletonPosterUrl,
       skeletonPosterGeneratedAt:
         data.skeletonPosterGeneratedAt?.toDate?.() ?? undefined,
+      skeletonPosterWithTextUrl: data.skeletonPosterWithTextUrl,
+      skeletonPosterWithTextGeneratedAt:
+        data.skeletonPosterWithTextGeneratedAt?.toDate?.() ?? undefined,
+      aiPosterTitle: data.aiPosterTitle,
+      aiPosterTitleGeneratedAt:
+        data.aiPosterTitleGeneratedAt?.toDate?.() ?? undefined,
       skeletonPartialPreviewUrls: Array.isArray(data.skeletonPartialPreviewUrls)
         ? data.skeletonPartialPreviewUrls
         : undefined,
@@ -527,6 +572,9 @@ export const eventConverter: FirestoreDataConverter<Event> = {
       posterPrompt: data.posterPrompt,
       visualTeaser: data.visualTeaser,
       honoreePhotoUrl: data.honoreePhotoUrl,
+      honoreeFaceCropUrl: data.honoreeFaceCropUrl,
+      honoreeFaceCropGeneratedAt:
+        data.honoreeFaceCropGeneratedAt?.toDate?.() ?? undefined,
       optionalDetailsLater: data.optionalDetailsLater === true,
       posterThemeId: data.posterThemeId,
       posterGenTiming: data.posterGenTiming ?? undefined,
@@ -607,6 +655,12 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
       skeletonPosterUrl: data.skeletonPosterUrl,
       skeletonPosterGeneratedAt:
         data.skeletonPosterGeneratedAt?.toDate?.() ?? undefined,
+      skeletonPosterWithTextUrl: data.skeletonPosterWithTextUrl,
+      skeletonPosterWithTextGeneratedAt:
+        data.skeletonPosterWithTextGeneratedAt?.toDate?.() ?? undefined,
+      aiPosterTitle: data.aiPosterTitle,
+      aiPosterTitleGeneratedAt:
+        data.aiPosterTitleGeneratedAt?.toDate?.() ?? undefined,
       skeletonPartialPreviewUrls: Array.isArray(data.skeletonPartialPreviewUrls)
         ? data.skeletonPartialPreviewUrls
         : undefined,
@@ -619,6 +673,9 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
       posterPrompt: data.posterPrompt,
       visualTeaser: data.visualTeaser,
       honoreePhotoUrl: data.honoreePhotoUrl,
+      honoreeFaceCropUrl: data.honoreeFaceCropUrl,
+      honoreeFaceCropGeneratedAt:
+        data.honoreeFaceCropGeneratedAt?.toDate?.() ?? undefined,
       optionalDetailsLater: data.optionalDetailsLater === true,
       posterThemeId: data.posterThemeId,
       childPhone: data.childPhone,

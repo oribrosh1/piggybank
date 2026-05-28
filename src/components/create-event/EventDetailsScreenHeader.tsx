@@ -19,7 +19,7 @@ import { colors, spacing, typography, fontFamily, radius } from "@/src/theme";
 const DECK_CARD_W = 120;
 const DECK_CARD_H = 120;
 /** Shared clockwise tilt for every card (deg). */
-const FAN_CARD_ROTATE = 30;
+const FAN_CARD_ROTATE = 20;
 /**
  * Horizontal offset (dp) per layer, back → front: small stagger so same-angle cards
  * don’t sit fully on top of each other (pivot stays bottom center).
@@ -42,18 +42,14 @@ const EXAMPLES_ASSETS = [
   require("../../../assets/images/invitation-examples/example-03.png"),
 ] as const;
 
-type EventDetailsScreenHeaderProps = {
-  progressWidth: Animated.AnimatedInterpolation<string | number>;
-  progressPercentLabel: string;
-  stepLabel?: string;
-  onBack: () => void;
-};
-
 /** Horizontal travel for “flies in from the left” (dp). */
 const EXAMPLES_THUMB_SLIDE_FROM = Math.round(Dimensions.get("window").width * 0.45);
 
-export default function EventDetailsScreenHeader(props: EventDetailsScreenHeaderProps) {
-  const { progressWidth, progressPercentLabel, stepLabel = "STEP 1 OF 3", onBack } = props;
+type EventDetailsScreenHeaderProps = {
+  onBack: () => void;
+};
+
+export default function EventDetailsScreenHeader({ onBack }: EventDetailsScreenHeaderProps) {
   const [examplesOpen, setExamplesOpen] = useState(false);
 
   const cardSlideX = useRef(
@@ -97,7 +93,10 @@ export default function EventDetailsScreenHeader(props: EventDetailsScreenHeader
         shellOverflow="visible"
         contentStyle={{ paddingBottom: spacing[2] }}
       >
-        <CreateEventTopBar onBack={onBack} progressWidth={progressWidth} />
+        <CreateEventTopBar
+          onBack={onBack}
+          showTrailingSparkles={false}
+        />
         <View style={styles.inner}>
           <View style={styles.titleRow}>
             <View style={styles.titleCol}>
@@ -106,16 +105,7 @@ export default function EventDetailsScreenHeader(props: EventDetailsScreenHeader
                 We'll use your answers to generate a unique poster and fill in your event.
               </Text>
               <View style={styles.examplesRowWrap}>
-                <TouchableOpacity
-                  onPress={() => setExamplesOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="See invitation examples — text link"
-                  accessibilityHint="Opens a gallery of sample posters"
-                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-                  style={styles.examplesBtn}
-                >
-                  <Text style={styles.examplesBtnText}>See examples</Text>
-                </TouchableOpacity>
+                
                 <TouchableOpacity
                   activeOpacity={0.92}
                   onPress={() => setExamplesOpen(true)}
@@ -159,7 +149,6 @@ export default function EventDetailsScreenHeader(props: EventDetailsScreenHeader
                 </TouchableOpacity>
               </View>
             </View>
-            {/* <Text style={styles.percent}>{progressPercentLabel}</Text> */}
           </View>
         </View>
       </GlassCardDarkLottie>
@@ -174,15 +163,7 @@ export default function EventDetailsScreenHeader(props: EventDetailsScreenHeader
 const styles = StyleSheet.create({
   inner: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[1],
-  },
-  stepLabel: {
-    ...typography.labelMd,
-    color: colors.secondary,
-    letterSpacing: 1.2,
-    marginBottom: spacing[2] - 2,
-    fontFamily: fontFamily.title,
-    fontSize: 13,
+    paddingTop: spacing[2],
   },
   titleRow: {
     flexDirection: "row",
@@ -222,7 +203,7 @@ const styles = StyleSheet.create({
   examplesDeckHit: {
     position: "absolute",
     right: 90,
-    top: "250%",
+    top: 60,
     marginTop: -EXAMPLES_DECK_H / 2,
     width: EXAMPLES_DECK_W,
     height: EXAMPLES_DECK_H,
@@ -260,11 +241,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: -0.1,
     textDecorationColor: "rgba(107, 56, 212, 0.45)",
-  },
-  percent: {
-    fontFamily: fontFamily.title,
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.primary,
   },
 });

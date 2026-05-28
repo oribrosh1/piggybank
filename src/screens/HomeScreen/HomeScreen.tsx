@@ -1,11 +1,9 @@
-import { useId, useLayoutEffect, useMemo } from "react";
-import { View, Text, ScrollView, useWindowDimensions } from "react-native";
+import { useLayoutEffect } from "react";
+import { View, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from "react-native-svg";
-import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { colors, typography, spacing, fontFamily } from "@/src/theme";
+import { spacing } from "@/src/theme";
 import PartyPlannerEmptyContent from "@/src/components/home/PartyPlannerEmptyContent";
 import { useHomeScreen } from "./useHomeScreen";
 import EventHeroCard from "@/src/components/home/EventHeroCard";
@@ -25,43 +23,14 @@ import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
 import { defaultTabBarStyle, hiddenTabBarStyle } from "@/src/navigation/defaultTabBarStyle";
 import AppTabFooter from "@/src/components/AppTabFooter";
 import AppTabHeader from "@/src/components/AppTabHeader";
-import { Sparkles } from "lucide-react-native";
 
-/** Second line only — black → violet gradient (first line stays solid body text). */
-function EmptyHomeCaptionGradientLine({ width }: { width: number }) {
-  const rawId = useId();
-  const gradId = useMemo(() => `home-empty-cap-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`, [rawId]);
-  const fs = 17;
-  const lh = 28;
-  const h = lh + 4;
-
-  return (
-    <Svg width={width} height={h}>
-      <Defs>
-        <SvgLinearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#0a0610" />
-          <Stop offset="48%" stopColor="#5b21b6" />
-          <Stop offset="100%" stopColor={colors.primaryContainer} />
-        </SvgLinearGradient>
-      </Defs>
-      <SvgText
-        fill={`url(#${gradId})`}
-        fontFamily={fontFamily.body}
-        fontSize={fs}
-        fontWeight="400"
-        x={0}
-        y={fs * 0.88}
-      >
-        receiving gifts and blessings.
-      </SvgText>
-    </Svg>
-  );
-}
+const HOME_PADDING_TOP = 12;
+const HOME_PADDING_LEFT = spacing[8];
+const HOME_PADDING_RIGHT = spacing[6];
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { width: windowW } = useWindowDimensions();
   const {
     loading,
     homeState,
@@ -92,9 +61,6 @@ export default function HomeScreen() {
     });
   }, [loading, navigation]);
 
-  /** Scroll padding + row: Sparkles (22) + gap (12) + inner paddingRight on row */
-  const emptyCaptionWidth = Math.max(160, windowW - spacing[8] - spacing[6] - 22 - 12 - spacing[2]);
-
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: "transparent" }}>
@@ -110,52 +76,25 @@ export default function HomeScreen() {
       <ScrollView
         style={{ backgroundColor: "transparent" }}
         contentContainerStyle={{
-          paddingTop: insets.top + 12,
+          paddingTop: insets.top + HOME_PADDING_TOP,
           paddingBottom: 100,
-          paddingLeft: spacing[8],
-          paddingRight: spacing[6],
+          paddingLeft: HOME_PADDING_LEFT,
+          paddingRight: HOME_PADDING_RIGHT,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <AppTabHeader />
+        {homeState !== "empty" && <AppTabHeader />}
 
         {/* Conditional State Rendering */}
         {homeState === "empty" && (
-          <View>
-            <Text style={[typography.headlineLg, { marginBottom: spacing[2] }]}>
-              Hey {getFirstName()}!
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: 12,
-                // marginBottom: spacing[2],
-                // paddingRight: spacing[2],
-              }}
-            >
-              <Animated.View style={{ flex: 1 }} entering={FadeInDown.duration(520).delay(80).springify()}>
-                <Text
-                  style={[
-                    typography.bodyLg,
-                    {
-                      color: colors.onSurface,
-                      lineHeight: 28,
-                      fontSize: 17,
-                      marginBottom: 2,
-                    },
-                  ]}
-                >
-                  Create your child's birthday event to start
-                </Text>
-                <EmptyHomeCaptionGradientLine width={emptyCaptionWidth} />
-              </Animated.View>
-              {/* <Animated.View entering={FadeInDown.duration(520).delay(160).springify()}>
-                <Sparkles size={22} color={colors.primary} strokeWidth={2.4} style={{ marginTop: 4 }} />
-              </Animated.View> */}
-            </View>
-            <PartyPlannerEmptyContent onCreateEvent={goToCreateEvent} />
-          </View>
+          <PartyPlannerEmptyContent
+            onCreateEvent={goToCreateEvent}
+            firstName={getFirstName()}
+            topInset={insets.top}
+            topContentPadding={HOME_PADDING_TOP}
+            leftInset={HOME_PADDING_LEFT}
+            rightInset={HOME_PADDING_RIGHT}
+          />
         )}
 
         {homeState === "pre-event-pending-banking" && event && (

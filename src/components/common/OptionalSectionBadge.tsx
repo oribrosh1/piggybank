@@ -42,9 +42,9 @@ export default function OptionalSectionBadge() {
         <Sparkles size={13} color="#FFFFFF" strokeWidth={2.4} />
         <Text
           style={{
-            fontSize: 10,
-            fontWeight: "900",
-            letterSpacing: 1.25,
+            fontSize: 8,
+            fontWeight: "800",
+            // letterSpacing: 1.25,
             color: "#FFFFFF",
             textTransform: "uppercase",
             textShadowColor: "rgba(107, 56, 212, 0.35)",

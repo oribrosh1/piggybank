@@ -1,104 +1,117 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { Utensils } from "lucide-react-native";
+import {
+  Platform,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Sprout, Star, UtensilsCrossed } from "lucide-react-native";
+
 import type { EventFormData } from "@/types/events";
-import { colors } from "@/src/theme";
+import { colors, fontFamily, radius, spacing } from "@/src/theme";
 
-const SELECTED_TINT = "rgba(107, 56, 212, 0.12)";
-
-const kosherOptions = [
-  { value: "kosher-style", label: "KOSHER STYLE", sub: "" },
-  { value: "kosher", label: "KOSHER", sub: "" },
-  { value: "glatt-kosher", label: "GLATT", sub: "" },
-  { value: "not-kosher", label: "NOT KOSHER", sub: "" },
+const KOSHER_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "kosher-style", label: "Kosher Style" },
+  { value: "kosher", label: "Kosher" },
+  { value: "glatt-kosher", label: "Glatt" },
+  { value: "not-kosher", label: "Not Kosher" },
 ];
 
-const mealOptions = [
-  { value: "dairy", label: "DAIRY" },
-  { value: "meat", label: "MEAT" },
-  { value: "pareve", label: "PAREVE" },
+type MealOption = {
+  value: string;
+  label: string;
+  emoji: string;
+  bubbleColor: string;
+};
+
+const MEAL_OPTIONS: ReadonlyArray<MealOption> = [
+  { value: "dairy", label: "Dairy", emoji: "🥛", bubbleColor: "#DBEAFE" },
+  { value: "meat", label: "Meat", emoji: "🥩", bubbleColor: "#FECDD3" },
+  { value: "pareve", label: "Pareve", emoji: "🌿", bubbleColor: "#D1FAE5" },
 ];
 
-const vegetarianOptionsPrimary = [
-  { value: "none", label: "🍴", name: "None", desc: "Regular menu" },
-  { value: "vegetarian", label: "🥗", name: "Vegetarian", desc: "No meat" },
-  { value: "vegan", label: "🌱", name: "Vegan", desc: "Plant-based" },
-];
+type VegetarianOption = MealOption;
 
-const vegetarianByRequestOption = { value: "by_request" as const, label: "🙋", line: "Guests can request" };
+const VEGETARIAN_OPTIONS: ReadonlyArray<VegetarianOption> = [
+  { value: "none", label: "None", emoji: "🍴", bubbleColor: "#EDE9FE" },
+  {
+    value: "vegetarian",
+    label: "Vegetarian",
+    emoji: "🥗",
+    bubbleColor: "#D1FAE5",
+  },
+  { value: "vegan", label: "Vegan", emoji: "🌱", bubbleColor: "#D1FAE5" },
+];
 
 export type CateringPreferencesBlockProps = {
   formData: EventFormData;
   onInputChange: (field: string, value: string | boolean) => void;
-  /** Extra top margin when stacked under other sections inside a card */
+  /** @deprecated Kept for API compatibility; ignored by the new layout. */
   topSpacing?: boolean;
 };
 
+/**
+ * Catering preferences — Kosher type / Meal type / Vegetarian options +
+ * a "Guests can request" toggle at the bottom.
+ *
+ * The toggle drives the existing single-field model (`vegetarianType`)
+ * because we keep "by_request" as one of its possible values. Selecting a
+ * real diet (None/Vegetarian/Vegan) clears the toggle; turning the toggle
+ * on forces the value to "by_request" so downstream code keeps working.
+ */
 export default function CateringPreferencesBlock({
   formData,
   onInputChange,
-  topSpacing,
 }: CateringPreferencesBlockProps) {
-  return (
-    <View style={{ marginTop: 10 }}>
-      <View style={{ marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primary }}>Kosher Type</Text>
-      </View>
+  /** Falls back to "none" for both `undefined` and `""` legacy values. */
+  const vegetarianType = formData.vegetarianType || "none";
+  const guestsCanRequest = vegetarianType === "by_request";
+  /** When the toggle is on, none of the diet tiles are individually selected. */
+  const selectedDietForTiles = guestsCanRequest ? null : vegetarianType;
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: 10 }}
-        contentContainerStyle={{ flexDirection: "row", flexWrap: "nowrap", gap: 8, paddingRight: 4 }}
-      >
-        {kosherOptions.map((opt) => {
-          const sel = formData.kosherType === opt.value;
+  const handleVegetarianTileSelect = (value: string) => {
+    onInputChange("vegetarianType", value);
+  };
+
+  const handleGuestsCanRequestToggle = (nextOn: boolean) => {
+    onInputChange("vegetarianType", nextOn ? "by_request" : "none");
+  };
+
+  const handleMealSelect = (value: string) => {
+    /** Chalav Yisrael is only meaningful when dairy is selected. */
+    if (value !== "dairy") onInputChange("chalavYisrael", false);
+    onInputChange("mealType", value);
+  };
+
+  return (
+    <View style={styles.block}>
+      {/* ── Kosher Type ────────────────────────────────────────── */}
+      <SectionHeader Icon={Star} label="Kosher Type" />
+      <View style={styles.kosherRow}>
+        {KOSHER_OPTIONS.map((opt) => {
+          const selected = formData.kosherType === opt.value;
           return (
             <TouchableOpacity
               key={opt.value}
               onPress={() => onInputChange("kosherType", opt.value)}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-                borderRadius: 12,
-                backgroundColor: sel ? SELECTED_TINT : colors.surfaceContainerLowest,
-                borderWidth: 2,
-                borderColor: sel ? colors.primary : "transparent",
-              }}
-            >
-              <Text style={{ fontSize: 11, fontWeight: "800", color: sel ? colors.primary : "#6B7280" }}>{opt.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-   
-      <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primary, marginBottom: 8 }}>Meal Type</Text>
-
-      <View style={{ flexDirection: "row", flexWrap: "nowrap", gap: 8, marginBottom: 16 }}>
-        {mealOptions.map((opt) => {
-          const sel = formData.mealType === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => {
-                if (opt.value !== "dairy") onInputChange("chalavYisrael", false);
-                onInputChange("mealType", opt.value);
-              }}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                paddingHorizontal: 8,
-                borderRadius: 12,
-                alignItems: "center",
-                backgroundColor: sel ? SELECTED_TINT : colors.surfaceContainerLowest,
-                borderWidth: 2,
-                borderColor: sel ? colors.primary : "transparent",
-              }}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={[
+                styles.kosherPill,
+                selected && styles.kosherPillSelected,
+              ]}
             >
               <Text
-                style={{ fontSize: 11, fontWeight: "800", color: sel ? colors.primary : "#6B7280" }}
+                style={[
+                  styles.kosherPillLabel,
+                  selected && styles.kosherPillLabelSelected,
+                ]}
                 numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {opt.label}
               </Text>
@@ -107,143 +120,362 @@ export default function CateringPreferencesBlock({
         })}
       </View>
 
+      {/* ── Meal Type ──────────────────────────────────────────── */}
+      <SectionHeader Icon={UtensilsCrossed} label="Meal Type" />
+      <View style={styles.tileRow}>
+        {MEAL_OPTIONS.map((opt) => (
+          <DietaryTile
+            key={opt.value}
+            label={opt.label}
+            emoji={opt.emoji}
+            bubbleColor={opt.bubbleColor}
+            selected={formData.mealType === opt.value}
+            onPress={() => handleMealSelect(opt.value)}
+          />
+        ))}
+      </View>
+
       {formData.mealType === "dairy" ? (
-        <View style={{ marginBottom: 14 }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: "800",
-              color: colors.onSurfaceVariant,
-              letterSpacing: 0.85,
-              marginBottom: 8,
-            }}
-          >
-            DAIRY MILK STANDARD
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "nowrap", gap: 8 }}>
-            <TouchableOpacity
-              onPress={() => onInputChange("chalavYisrael", false)}
-              activeOpacity={0.88}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                paddingHorizontal: 8,
-                borderRadius: 12,
-                alignItems: "center",
-                backgroundColor:
-                  formData.chalavYisrael !== true ? SELECTED_TINT : colors.surfaceContainerLowest,
-                borderWidth: 2,
-                borderColor: formData.chalavYisrael !== true ? colors.primary : colors.outlineVariant,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "800",
-                  color: formData.chalavYisrael !== true ? colors.primary : "#6B7280",
-                  textAlign: "center",
-                }}
-                numberOfLines={2}
-              >
-                Regular dairy
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => onInputChange("chalavYisrael", true)}
-              activeOpacity={0.88}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                paddingHorizontal: 8,
-                borderRadius: 12,
-                alignItems: "center",
-                backgroundColor:
-                  formData.chalavYisrael === true ? SELECTED_TINT : colors.surfaceContainerLowest,
-                borderWidth: 2,
-                borderColor: formData.chalavYisrael === true ? colors.primary : colors.outlineVariant,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "800",
-                  color: formData.chalavYisrael === true ? colors.primary : "#6B7280",
-                  textAlign: "center",
-                }}
-                numberOfLines={2}
-              >
-                Chalav Yisrael
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.chalavRow}>
+          <ChalavOption
+            label="Regular dairy"
+            selected={formData.chalavYisrael !== true}
+            onPress={() => onInputChange("chalavYisrael", false)}
+          />
+          <ChalavOption
+            label="Chalav Yisrael"
+            selected={formData.chalavYisrael === true}
+            onPress={() => onInputChange("chalavYisrael", true)}
+          />
         </View>
       ) : null}
 
-      <View style={{ marginBottom: 8 }}>
-        <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primary, marginBottom: 8 }}>Vegetarian Options</Text>
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-          {vegetarianOptionsPrimary.map((opt) => {
-            const sel =
-              opt.value === "none"
-                ? !formData.vegetarianType || formData.vegetarianType === "none"
-                : formData.vegetarianType === opt.value;
-            return (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => onInputChange("vegetarianType", opt.value)}
-                activeOpacity={0.88}
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: 12,
-                  backgroundColor: sel ? colors.primary : colors.surfaceContainerLowest,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontSize: 16, marginBottom: 2 }}>{opt.label}</Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "800",
-                    color: sel ? "#FFFFFF" : "#374151",
-                    textAlign: "center",
-                  }}
-                  numberOfLines={2}
-                >
-                  {opt.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      {/* ── Vegetarian Options ─────────────────────────────────── */}
+      <SectionHeader Icon={Sprout} label="Vegetarian Options" />
+      <View style={styles.tileRow}>
+        {VEGETARIAN_OPTIONS.map((opt) => (
+          <DietaryTile
+            key={opt.value}
+            label={opt.label}
+            emoji={opt.emoji}
+            bubbleColor={opt.bubbleColor}
+            selected={selectedDietForTiles === opt.value}
+            onPress={() => handleVegetarianTileSelect(opt.value)}
+          />
+        ))}
+      </View>
+
+      {/* ── Guests can request toggle ──────────────────────────── */}
+      <View style={styles.requestRow}>
+        <View style={styles.requestIconBubble}>
+          <Text style={styles.requestEmoji}>👋</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => onInputChange("vegetarianType", vegetarianByRequestOption.value)}
-          activeOpacity={0.88}
-          style={{
-            paddingVertical: 12,
-            paddingHorizontal: 14,
-            borderRadius: 12,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor:
-              formData.vegetarianType === "by_request" ? colors.primary : colors.surfaceContainerLowest,
-          }}
-        >
-          <Text style={{ fontSize: 16, marginBottom: 4 }}>{vegetarianByRequestOption.label}</Text>
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: "800",
-              color: formData.vegetarianType === "by_request" ? "#FFFFFF" : "#374151",
-              textAlign: "center",
-              lineHeight: 14,
-            }}
-          >
-            {vegetarianByRequestOption.line}
+        <View style={styles.requestTextBlock}>
+          <Text style={styles.requestTitle}>Guests can request</Text>
+          <Text style={styles.requestSubtitle}>
+            Guests will be able to request for vegan/vegetarian options.
           </Text>
-        </TouchableOpacity>
+        </View>
+        <Switch
+          value={guestsCanRequest}
+          onValueChange={handleGuestsCanRequestToggle}
+          trackColor={{ false: "#E5E7EB", true: colors.primary }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor="#E5E7EB"
+          accessibilityLabel="Allow guests to request dietary options"
+        />
       </View>
     </View>
   );
 }
+
+type SectionHeaderProps = {
+  Icon: typeof Star;
+  label: string;
+};
+
+/**
+ * Compact section header with a small soft-purple circle wrapping a lucide
+ * glyph on the left and the section label on the right. Used for Kosher
+ * Type / Meal Type / Vegetarian Options headers.
+ */
+function SectionHeader({ Icon, label }: SectionHeaderProps) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionHeaderBubble}>
+        <Icon size={14} color={colors.primary} strokeWidth={2.4} />
+      </View>
+      <Text style={styles.sectionHeaderLabel}>{label}</Text>
+    </View>
+  );
+}
+
+type DietaryTileProps = {
+  label: string;
+  emoji: string;
+  bubbleColor: string;
+  selected: boolean;
+  onPress: () => void;
+};
+
+/**
+ * White card tile with a colored circular emoji bubble on the left and the
+ * option label on the right. Selected state lights up the tile with a
+ * purple border and a soft purple wash.
+ */
+function DietaryTile({
+  label,
+  emoji,
+  bubbleColor,
+  selected,
+  onPress,
+}: DietaryTileProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[styles.dietaryTile, selected && styles.dietaryTileSelected]}
+    >
+      <View
+        style={[
+          styles.dietaryTileBubble,
+          { backgroundColor: selected ? colors.primary : bubbleColor },
+        ]}
+      >
+        <Text style={styles.dietaryTileEmoji}>{emoji}</Text>
+      </View>
+      <Text
+        style={[
+          styles.dietaryTileLabel,
+          selected && styles.dietaryTileLabelSelected,
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+type ChalavOptionProps = {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+};
+
+/**
+ * Compact dual-state segmented option for Regular dairy / Chalav Yisrael.
+ * Re-uses the kosher-pill aesthetic so the dairy sub-question reads as a
+ * follow-up to "Meal Type" rather than a brand-new section.
+ */
+function ChalavOption({ label, selected, onPress }: ChalavOptionProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[styles.chalavPill, selected && styles.chalavPillSelected]}
+    >
+      <Text
+        style={[
+          styles.chalavLabel,
+          selected && styles.chalavLabelSelected,
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  block: {
+    marginTop: -spacing[2],
+    marginBottom: 100,
+  },
+  /* ── Section header ───────────────────────────────────────── */
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: spacing[2],
+    marginTop: spacing[3],
+  },
+  sectionHeaderBubble: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: "rgba(107, 56, 212, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sectionHeaderLabel: {
+    fontFamily: fontFamily.headline,
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.1,
+  },
+  /* ── Kosher pills ─────────────────────────────────────────── */
+  kosherRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  kosherPill: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2],
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 1.5,
+    borderColor: "rgba(107, 56, 212, 0.10)",
+  },
+  kosherPillSelected: {
+    backgroundColor: "rgba(107, 56, 212, 0.10)",
+    borderColor: colors.primary,
+  },
+  kosherPillLabel: {
+    fontFamily: fontFamily.title,
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+    textAlign: "center",
+  },
+  kosherPillLabelSelected: {
+    color: colors.primary,
+    fontWeight: "800",
+  },
+  /* ── Meal / vegetarian tile row ───────────────────────────── */
+  tileRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  dietaryTile: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 1.5,
+    borderColor: "rgba(107, 56, 212, 0.08)",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#0c1c2a",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
+      },
+      android: { elevation: 1 },
+    }),
+  },
+  dietaryTileSelected: {
+    backgroundColor: "rgba(107, 56, 212, 0.08)",
+    borderColor: colors.primary,
+  },
+  dietaryTileBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dietaryTileEmoji: {
+    fontSize: 18,
+  },
+  dietaryTileLabel: {
+    flexShrink: 1,
+    fontFamily: fontFamily.title,
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  dietaryTileLabelSelected: {
+    color: colors.primary,
+    fontWeight: "800",
+  },
+  /* ── Chalav Yisrael sub-row (only when dairy) ─────────────── */
+  chalavRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    gap: 8,
+  },
+  chalavPill: {
+    flex: 1,
+    minHeight: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing[2],
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 1.5,
+    borderColor: "rgba(107, 56, 212, 0.10)",
+  },
+  chalavPillSelected: {
+    backgroundColor: "rgba(107, 56, 212, 0.10)",
+    borderColor: colors.primary,
+  },
+  chalavLabel: {
+    fontFamily: fontFamily.title,
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
+  },
+  chalavLabelSelected: {
+    color: colors.primary,
+    fontWeight: "800",
+  },
+  /* ── Guests-can-request toggle row ────────────────────────── */
+  requestRow: {
+    marginTop: spacing[4],
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.10)",
+  },
+  requestIconBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: "rgba(251, 191, 36, 0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  requestEmoji: {
+    fontSize: 20,
+  },
+  requestTextBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
+  requestTitle: {
+    fontFamily: fontFamily.headline,
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.1,
+  },
+  requestSubtitle: {
+    marginTop: 2,
+    fontFamily: fontFamily.body,
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    lineHeight: 15,
+  },
+});

@@ -364,8 +364,9 @@ stripe login
 
 ### 3. Forward webhooks to local:
 ```bash
-stripe listen --forward-to localhost:5001/piggybank-a0011/us-central1/api/webhook
+stripe listen --forward-to localhost:5101/piggybank-a0011/us-central1/api/webhook
 ```
+(Use the **Functions** port from `firebase.json` → `emulators.functions.port`, default here **5101** if 5001 is busy.)
 
 ### 4. Trigger test events:
 ```bash
