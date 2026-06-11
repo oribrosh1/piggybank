@@ -84,8 +84,8 @@ function buildApp({ stripeKey = "sk_test_fake", userMap = {} } = {}) {
     const { ipKeyGenerator } = require("express-rate-limit");
 
     const ALLOWED_ORIGINS = [
-        "https://creditkid.vercel.app",
-        "https://www.creditkid.vercel.app",
+        "https://credit-kid.com",
+        "https://www.credit-kid.com",
         /^https:\/\/creditkid-.*\.vercel\.app$/,
         /^creditkid:\/\//,
         /^exp:\/\//,
@@ -297,7 +297,7 @@ function buildApp({ stripeKey = "sk_test_fake", userMap = {} } = {}) {
     // ── getChildInviteLink ──
     app.post("/getChildInviteLink", fakeAuth, (rq, rs) => {
         if (!rq.body.eventId || !rq.body.childPhone) return rs.status(400).json({ error: "Missing fields" });
-        rs.json({ link: "https://creditkid.vercel.app/child?token=abc", pin: "123456", success: true });
+        rs.json({ link: "https://credit-kid.com/child?token=abc", pin: "123456", success: true });
     });
 
     // ── claimChildInvite ──
@@ -397,7 +397,7 @@ async function testCorsMobile(server) {
     assert("Blocked (500 CORS)", r5.status === 500);
 
     section("B6 — Subdomain spoofing attempt");
-    const r6 = await req(server, "GET", "/getBalance", { headers: { Authorization: AUTH_A, Origin: "https://creditkid.vercel.app.evil.com" } });
+    const r6 = await req(server, "GET", "/getBalance", { headers: { Authorization: AUTH_A, Origin: "https://credit-kid.com.evil.com" } });
     assert("Blocked (500 CORS)", r6.status === 500);
 
     section("B7 — Vercel preview deploy (legitimate)");
@@ -405,7 +405,7 @@ async function testCorsMobile(server) {
     assert("Allowed (200)", r7.status === 200);
 
     section("B8 — HTTP instead of HTTPS on production domain");
-    const r8 = await req(server, "GET", "/getBalance", { headers: { Authorization: AUTH_A, Origin: "http://creditkid.vercel.app" } });
+    const r8 = await req(server, "GET", "/getBalance", { headers: { Authorization: AUTH_A, Origin: "http://credit-kid.com" } });
     assert("Blocked — HTTP not allowed", r8.status === 500);
 
     section("B9 — null origin (iframe sandbox / redirect)");
@@ -1068,7 +1068,7 @@ async function testMiscEdgeCases() {
 
     section("L1 — OPTIONS preflight for /getCardDetails");
     const r1 = await req(server, "OPTIONS", "/getCardDetails", {
-        headers: { Origin: "https://creditkid.vercel.app", "Access-Control-Request-Method": "GET" },
+        headers: { Origin: "https://credit-kid.com", "Access-Control-Request-Method": "GET" },
     });
     assert("Returns 204 (preflight OK)", r1.status === 204);
 
@@ -1168,7 +1168,7 @@ async function testBodySizeLimits() {
             },
             ssn_last_4: "1234",
             business_profile_mcc: "7399",
-            business_profile_url: "https://creditkid.vercel.app/users/bartholomew-abc12345",
+            business_profile_url: "https://credit-kid.com/users/bartholomew-abc12345",
             business_profile_product_description: "Personal event fundraising and family allowance management for birthday parties, bar mitzvahs, and other celebrations.",
             statement_descriptor: "CREDITKID GIFT",
         },

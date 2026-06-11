@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const stripeAccountRepository = require("../repositories/stripeAccountRepository");
 const userRepository = require("../repositories/userRepository");
 
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://creditkid.vercel.app";
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://credit-kid.com";
 
 /**
  * Copy Connect account id onto all events created by this user so guest gift PaymentIntents
@@ -329,7 +329,7 @@ function createStripeConnectService(stripe, stripeService, provisioningService) 
             returnUrl = clientReturn;
             refreshUrl = clientRefresh;
         } else {
-            const baseUrl = (PUBLIC_BASE_URL || "https://creditkid.vercel.app").replace(/\/+$/, "");
+            const baseUrl = (PUBLIC_BASE_URL || "https://credit-kid.com").replace(/\/+$/, "");
             returnUrl = `${baseUrl}/${returnPath}`.replace(/([^:]\/)\/+/g, "$1");
             refreshUrl = `${baseUrl}/${refreshPath}`.replace(/([^:]\/)\/+/g, "$1");
         }

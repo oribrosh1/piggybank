@@ -238,7 +238,7 @@ const InvitationPreview = forwardRef<InvitationPreviewRef, InvitationPreviewProp
                                 }}
                             >
                                 <Text style={{ fontSize: 11, color: "#6B7280", fontWeight: "500" }}>
-                                    creditkid.vercel.app/event/{event.id.slice(0, 8)}...
+                                    credit-kid.com/event/{event.id.slice(0, 8)}...
                                 </Text>
                             </View>
                         </View>

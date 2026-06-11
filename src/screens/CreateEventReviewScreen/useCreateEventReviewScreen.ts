@@ -21,7 +21,7 @@ export function useCreateEventReviewScreen() {
   useEffect(() => {
     if (!draft) {
       router.replace({
-        pathname: routes.createEvent.eventDetails,
+        pathname: routes.createEvent.posterStyle,
         params: { eventType: "birthday" },
       });
     }

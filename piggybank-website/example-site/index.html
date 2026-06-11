@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreditKid — Birthday Gift Wallet for Kids</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --purple:#6f37e8;
+      --purple2:#8b5cf6;
+      --deep:#140746;
+      --ink:#111827;
+      --muted:#5f6474;
+      --soft:#f1edff;
+      --mint:#dcfbf4;
+      --pink:#fff0f7;
+      --card:#ffffffcc;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, #eee9ff 0 22%, transparent 23%),
+        radial-gradient(circle at 95% 20%, #e2d9ff 0 18%, transparent 19%),
+        linear-gradient(180deg,#faf8ff,#eef9ff 48%,#fbf8ff);
+      overflow-x:hidden;
+    }
+    .nav{
+      width:min(1180px,92%);
+      margin:22px auto 0;
+      display:flex;align-items:center;justify-content:space-between;
+      position:relative;z-index:2;
+    }
+    .logo{font-size:34px;font-weight:900;color:var(--purple);letter-spacing:-1.5px}
+    .nav a{color:#303244;text-decoration:none;font-weight:700;margin-left:26px}
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;
+      border:0;border-radius:999px;
+      padding:15px 24px;
+      background:linear-gradient(135deg,var(--purple),var(--purple2));
+      color:white;text-decoration:none;font-weight:900;
+      box-shadow:0 18px 40px #6f37e84a;
+    }
+    .ghost{background:white;color:var(--purple);box-shadow:0 12px 30px #11004514}
+    .hero{
+      width:min(1180px,92%);
+      margin:56px auto 40px;
+      display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center;
+    }
+    h1{
+      font-size:clamp(48px,7vw,88px);
+      line-height:.95;margin:0 0 22px;
+      letter-spacing:-4px;color:#11152a;
+    }
+    .purple{color:var(--purple)}
+    .sub{font-size:21px;line-height:1.55;color:#4b5164;max-width:600px;margin-bottom:30px}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap}
+    .phone-wrap{
+      min-height:610px;position:relative;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .orb{
+      position:absolute;width:470px;height:470px;border-radius:50%;
+      background:linear-gradient(135deg,#e9ddff,#d5c6ff);
+      filter:drop-shadow(0 30px 70px #6f37e830);
+    }
+    .mock-phone{
+      width:310px;height:640px;border-radius:42px;background:#09090b;
+      padding:12px;transform:rotate(4deg);position:relative;z-index:1;
+      box-shadow:0 35px 90px #1b11424a;
+    }
+    .screen{
+      width:100%;height:100%;border-radius:34px;
+      background:linear-gradient(180deg,#eeeaff,#fff);
+      overflow:hidden;padding:22px 18px;
+    }
+    .screen h3{font-size:28px;margin:16px 0 8px;color:#22144d}
+    .mini-card{background:white;border-radius:24px;padding:18px;margin:12px 0;box-shadow:0 10px 30px #3b1b7a17}
+    .wallet{background:linear-gradient(135deg,#30005f,#7b34ff);color:white}
+    .money{font-size:34px;font-weight:900;margin-top:8px}
+    .giftbox{font-size:58px;margin-top:10px}
+    .float{
+      position:absolute;z-index:3;background:white;border-radius:24px;
+      padding:16px 18px;box-shadow:0 20px 50px #33145e24;font-weight:800;
+    }
+    .f1{left:4%;top:72px}.f2{right:2%;bottom:78px}.f3{left:0;bottom:200px}
+    section{width:min(1180px,92%);margin:88px auto}
+    .section-title{text-align:center;font-size:48px;letter-spacing:-2px;margin:0 0 14px}
+    .section-sub{text-align:center;color:#656b7a;font-size:18px;margin:0 auto 34px;max-width:680px;line-height:1.6}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .feature{
+      background:rgba(255,255,255,.78);backdrop-filter:blur(16px);
+      border:1px solid #fff;border-radius:32px;padding:28px;
+      box-shadow:0 20px 50px #31205d12;min-height:230px;
+    }
+    .icon{
+      width:58px;height:58px;border-radius:18px;
+      display:grid;place-items:center;font-size:28px;
+      background:linear-gradient(135deg,#7b3ff4,#a579ff);color:white;
+      margin-bottom:18px;
+    }
+    .feature h3{font-size:24px;margin:0 0 10px;letter-spacing:-.7px}
+    .feature p{color:#606779;line-height:1.55;margin:0}
+    .showcase{
+      display:grid;grid-template-columns:1fr 1fr;gap:18px;
+    }
+    .big-card{
+      border-radius:36px;padding:34px;min-height:360px;overflow:hidden;position:relative;
+      background:linear-gradient(135deg,#160341,#7b3ff4);color:white;
+      box-shadow:0 25px 70px #4d23ad24;
+    }
+    .big-card.light{background:linear-gradient(135deg,#fff,#eee8ff);color:#16162c}
+    .big-card h3{font-size:38px;line-height:1;margin:0 0 14px;letter-spacing:-1.7px}
+    .big-card p{font-size:18px;line-height:1.5;max-width:330px}
+    .visual{
+      position:absolute;right:28px;bottom:22px;width:220px;height:300px;border-radius:34px;
+      background:white;box-shadow:0 20px 45px #0002;padding:18px;color:#21124f;
+      transform:rotate(-5deg);
+    }
+    .visual.small{width:255px;height:180px;transform:rotate(5deg);background:#111;color:white}
+    .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .step{background:white;border-radius:28px;padding:24px;border:1px solid #eee7ff}
+    .num{font-size:14px;font-weight:900;color:white;background:var(--purple);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px}
+    .cta{
+      text-align:center;border-radius:44px;padding:60px 24px;
+      background:linear-gradient(135deg,#5b26d8,#985cff);
+      color:white;position:relative;overflow:hidden;
+    }
+    .cta:before,.cta:after{content:"";position:absolute;border-radius:50%;background:#ffffff1f}
+    .cta:before{width:260px;height:260px;left:-70px;top:-80px}
+    .cta:after{width:340px;height:340px;right:-120px;bottom:-160px}
+    .cta h2{position:relative;font-size:48px;letter-spacing:-2px;margin:0 0 12px}
+    .cta p{position:relative;font-size:20px;color:#eee7ff;margin-bottom:28px}
+    footer{padding:40px 0;text-align:center;color:#697084}
+    @media(max-width:860px){
+      .nav-links{display:none}.hero{grid-template-columns:1fr;margin-top:34px}.phone-wrap{min-height:560px}.mock-phone{width:270px;height:560px}
+      .grid,.showcase,.steps{grid-template-columns:1fr}
+      .section-title{font-size:36px}
+      h1{letter-spacing:-2px}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="logo">CreditKid</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#parents">Parents</a>
+      <a class="btn ghost" href="#start">Start now</a>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <div>
+      <h1>The birthday money app for <span class="purple">modern kids.</span></h1>
+      <p class="sub">Create your child’s birthday event, invite guests, collect gifts and blessings, and let your child spend safely with smart parent controls.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#start">Create Event ›</a>
+        <a class="btn ghost" href="#features">See features</a>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="orb"></div>
+      <div class="float f1">🎁 +$50 from Grandma</div>
+      <div class="float f2">🛡 Parent controls</div>
+      <div class="float f3">💬 SMS invites</div>
+      <div class="mock-phone">
+        <div class="screen">
+          <div class="logo" style="font-size:24px">CreditKid</div>
+          <h3>Hey Ori!</h3>
+          <div class="mini-card wallet">
+            <div>Your Wallet</div>
+            <div class="money">$126.40</div>
+          </div>
+          <div class="mini-card"><b>You received</b><br><span style="color:#6f37e8;font-size:28px;font-weight:900">+$50.00</span><br>From Grandma 💜</div>
+          <div class="mini-card"><b>Spending Activity</b><br>🍿 Movie Tickets — $24<br>🎮 Online Game — $15<br>📚 Book Store — $18.50</div>
+          <div class="giftbox">🎁</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <section id="features">
+    <h2 class="section-title">Everything for the birthday flow</h2>
+    <p class="section-sub">From AI posters to SMS reminders, live RSVP, gift registry, thank-you notes and Stripe-backed payments.</p>
+    <div class="grid">
+      <div class="feature"><div class="icon">✨</div><h3>AI Invitation Poster</h3><p>Generate party-ready posters for birthdays, bar mitzvahs and bat mitzvahs in one tap.</p></div>
+      <div class="feature"><div class="icon">📱</div><h3>SMS Invites</h3><p>Send beautiful invite messages with gift links and reminders before the event.</p></div>
+      <div class="feature"><div class="icon">🔔</div><h3>Live RSVP</h3><p>Know when guests accept, send a gift, or need a reminder.</p></div>
+      <div class="feature"><div class="icon">🎀</div><h3>Gift Registry</h3><p>Let guests choose what to give while keeping the money flow simple.</p></div>
+      <div class="feature"><div class="icon">💜</div><h3>Thank You Made Easy</h3><p>Automatically send polished thank-you notes after the event.</p></div>
+      <div class="feature"><div class="icon">🛡</div><h3>Parent Control</h3><p>Track activity, set limits, receive alerts and keep spending secure.</p></div>
+    </div>
+  </section>
+
+  <section id="parents" class="showcase">
+    <div class="big-card">
+      <h3>The Modern<br>Gift Wallet</h3>
+      <p>Birthday gifts land directly in a child-friendly wallet, ready for safe spending.</p>
+      <div class="visual">
+        <b>CreditKid</b>
+        <div style="margin:28px 0;padding:18px;border-radius:20px;background:#f1edff">You received<br><span style="font-size:30px;font-weight:900;color:#6f37e8">+$50.00</span></div>
+        <div style="font-size:54px">🎁</div>
+      </div>
+    </div>
+    <div class="big-card light">
+      <h3>Pay Everywhere</h3>
+      <p>Spend birthday gifts with Apple Pay while parents stay in control.</p>
+      <div class="visual small">
+        <div style="font-size:28px;margin-bottom:20px"> Pay</div>
+        <div style="background:linear-gradient(135deg,#6f37e8,#8b5cf6);border-radius:22px;padding:24px">CreditKid<br><br>•••• 1234&nbsp;&nbsp; VISA</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2 class="section-title">Create. Invite. Receive. Spend.</h2>
+    <p class="section-sub">A clean flow for parents, a fun experience for kids, and a polished invite for every guest.</p>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Create event</h3><p>Choose birthday, bar mitzvah or bat mitzvah.</p></div>
+      <div class="step"><div class="num">2</div><h3>Generate poster</h3><p>Use AI to create a unique invite graphic.</p></div>
+      <div class="step"><div class="num">3</div><h3>Send invites</h3><p>Import contacts and send SMS reminders.</p></div>
+      <div class="step"><div class="num">4</div><h3>Receive gifts</h3><p>Guests send gifts and blessings directly.</p></div>
+    </div>
+  </section>
+
+  <section id="start" class="cta">
+    <h2>Make every birthday gift smarter.</h2>
+    <p>Launch your child’s event page and start receiving gifts in minutes.</p>
+    <a class="btn ghost" href="#">Get Started</a>
+  </section>
+
+  <footer>Secured by Stripe · Built for modern families · CreditKid</footer>
+</body>
+</html>

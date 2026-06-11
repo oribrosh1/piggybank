@@ -424,7 +424,7 @@ function GiftsTabNoEventView({
               cardWidth={cardWidth}
               onCreateEvent={() =>
                 router.push({
-                  pathname: routes.createEvent.eventDetails,
+                  pathname: routes.createEvent.posterStyle,
                   params: { eventType: "birthday" },
                 })
               }
@@ -435,7 +435,7 @@ function GiftsTabNoEventView({
               cardWidth={cardWidth}
               onCreateEvent={() =>
                 router.push({
-                  pathname: routes.createEvent.eventDetails,
+                  pathname: routes.createEvent.posterStyle,
                   params: { eventType: "birthday" },
                 })
               }
@@ -446,7 +446,7 @@ function GiftsTabNoEventView({
               cardWidth={cardWidth}
               onCreateEvent={() =>
                 router.push({
-                  pathname: routes.createEvent.eventDetails,
+                  pathname: routes.createEvent.posterStyle,
                   params: { eventType: "birthday" },
                 })
               }

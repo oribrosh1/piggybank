@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Bell, UserRound } from "lucide-react-native";
-import { colors, typography, fontFamily } from "@/src/theme";
+import { colors, typography, fontFamily, spacing } from "@/src/theme";
 import { routes } from "@/types/routes";
 
 export type AppTabHeaderProps = {
@@ -31,18 +31,7 @@ export default function AppTabHeader({
     <View style={[styles.row, style]}>
       <Text style={styles.brand}>CreditKid</Text>
       <View style={styles.actions}>
-        <TouchableOpacity
-          onPress={onPressNotifications ?? (() => {})}
-          activeOpacity={0.88}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel="Notifications"
-          style={styles.actionOuter}
-        >
-          <View style={styles.actionChrome}>
-            <Bell size={21} color={colors.primary} strokeWidth={2.25} />
-            {showNotificationDot ? <View style={styles.notifDot} /> : null}
-          </View>
-        </TouchableOpacity>
+      
         <TouchableOpacity
           onPress={() => router.push(routes.tabs.profile)}
           activeOpacity={0.88}
@@ -68,7 +57,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
   },
   brand: {
     ...typography.headlineLg,
@@ -76,7 +64,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontStyle: "italic",
     letterSpacing: -0.3,
-    fontSize: 30,
+    fontSize: 36,
+ 
   },
   actions: {
     flexDirection: "row",

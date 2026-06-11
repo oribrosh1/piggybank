@@ -80,7 +80,7 @@ export default function MyEventTab() {
           <PartyPlannerEmptyContent
             onCreateEvent={() =>
               router.push({
-                pathname: routes.createEvent.eventDetails,
+                pathname: routes.createEvent.posterStyle,
                 params: { eventType: "birthday" },
               })
             }

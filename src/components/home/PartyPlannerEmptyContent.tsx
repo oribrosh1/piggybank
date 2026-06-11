@@ -1,4 +1,14 @@
-import { View, Text, Image, useWindowDimensions, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  useWindowDimensions,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { CalendarPlus, ChevronRight } from "lucide-react-native";
 import AppTabHeader from "@/src/components/AppTabHeader";
 import {
   colors,
@@ -7,30 +17,67 @@ import {
   typography,
   fontFamily,
   ambientShadow,
+  primaryGradient,
 } from "@/src/theme";
+import { Ionicons } from "@expo/vector-icons";
 
-const FEATURE_MODERN_WALLET = require("../../../assets/images/create-event/modern-gift-wallet-feature.png");
-const FEATURE_PAY_EVERYWHERE = require("../../../assets/images/create-event/pay-everywhere-feature.png");
-const FEATURE_SAFE_SPENDING = require("../../../assets/images/create-event/Safe-spending-feature.png");
-const CREATE_EVENT_BTN = require("../../../assets/images/create-event/c-btn.jpg");
-const HERO_IMAGE = require("../../../assets/images/home-page/lets-plan-your-party.png");
+const FEATURE_MODERN_GIFTS_BG = require("../../../assets/images/create-event/giftwallet.png");
+const FEATURE_PAY_EVERYWHERE_BG = require("../../../assets/images/create-event/apay.png");
+const FEATURE_SAFE_SPENDING = require("../../../assets/images/create-event/safe-spending-parents.png");
+const HERO_IMAGE = require("../../../assets/images/create-event/page-header.png");
 const TOOLS_IMAGE = require("../../../assets/images/home-page/create-event-tools.png");
 
-/** `c-btn.jpg` intrinsic aspect (width / height) — keeps CTA height consistent across phones. */
-const CREATE_EVENT_BTN_ASPECT = 1419 / 306;
-/** Corner radius on feature PNGs (clip + overflow hidden for clean masks). */
+const CREATE_EVENT_SUBTITLE =
+"Start Receiving Gifts and Blessings Directly to your CreditKid Wallet";/** Corner radius on feature PNGs (clip + overflow hidden for clean masks). */
 const FEATURE_IMAGE_RADIUS = radius.md;
 /** Horizontal gap between the two tiles in the top feature row. */
 const FEATURE_PAIR_GAP = spacing[2];
 
-/** Source image is 1337 × 1176 px (≈1.137 width/height). */
-const HERO_ASPECT_RATIO = 1337 / 1176;
+/** Source image is 1774 × 887 px (2:1). */
+const HERO_ASPECT_RATIO = 1774 / 887;
 /** Source tools image is 1536 × 1024 px (3:2). */
 const TOOLS_ASPECT_RATIO = 1536 / 1024;
 /** Matches the lavender background sampled from the source image (≈ rgb(225,223,252)). */
 const HERO_BG_COLOR = "#E1DFFC";
-/** Framed marketing blocks: brand-tinted edge so full-bleed rows don’t look “floating”. */
-const MARKETING_FRAME_BORDER = "rgba(107, 56, 212, 0.38)";
+type CreateEventCtaProps = {
+  onPress: () => void;
+};
+
+
+
+function CreateEventBanner({ onPress }: CreateEventCtaProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.92}
+      accessibilityRole="button"
+      accessibilityLabel="Create event"
+      accessibilityHint={CREATE_EVENT_SUBTITLE}
+      style={styles.bannerOuter}
+    >
+      <LinearGradient
+        colors={["#4f2db8", colors.primary, colors.primaryContainer]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.bannerGradient}
+      >
+        <View style={styles.bannerIconWrap}>
+          <CalendarPlus size={28} color={colors.onPrimary} strokeWidth={2} />
+        </View>
+        <View style={styles.bannerCopy}>
+          <Text style={styles.bannerTitle}>Create Event</Text>
+          <Text style={styles.bannerSubtitle} numberOfLines={2}>
+            {CREATE_EVENT_SUBTITLE}
+          </Text>
+        </View>
+        <View style={styles.bannerPill}>
+          <Text style={styles.bannerPillText}>Create</Text>
+          <ChevronRight size={16} color={colors.primary} strokeWidth={2.8} />
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
 
 export type PartyPlannerEmptyContentProps = {
   onCreateEvent: () => void;
@@ -103,16 +150,15 @@ export default function PartyPlannerEmptyContent({
           width: screenWidth,
           marginLeft: -leftInset,
           marginRight: -rightInset,
-          marginTop: -(topInset + topContentPadding),
-          marginBottom: spacing[3],
-          paddingTop: topInset + spacing[1],
-          backgroundColor: HERO_BG_COLOR,
+          marginTop: -(topInset + topContentPadding+5),
+          paddingTop: topInset,
+          backgroundColor: "#EBE9FE",
           zIndex: 2,
         }}
       >
         <View
           style={{
-            paddingLeft: leftInset,
+            paddingLeft: leftInset - 10,
             paddingRight: rightInset,
             marginBottom: -spacing[20],
             zIndex: 1,
@@ -121,12 +167,15 @@ export default function PartyPlannerEmptyContent({
           <AppTabHeader
             onPressNotifications={onPressNotifications}
             showNotificationDot={showNotificationDot}
-            style={{ marginBottom: spacing[2] }}
+            // style={{ marginTop: -spacing[4], marginBottom: spacing[4] }}
           />
           <Text
             style={[
               typography.headlineLg,
               {
+            // marginLeft: 5,
+            marginTop: 5,
+
                 color: colors.onSurface,
                 fontSize: 28,
                 lineHeight: 34,
@@ -142,20 +191,68 @@ export default function PartyPlannerEmptyContent({
           >
             Hey {greetingName}!
           </Text>
+        
         </View>
 
-        <Image
-          source={HERO_IMAGE}
-          resizeMode="cover"
-          style={{
-            width: screenWidth,
-            height: heroHeight,
-          }}
-        />
+        <View style={{ position: "relative", width: "100%", height: heroHeight }}>
+          <Image
+            source={HERO_IMAGE}
+            resizeMode="cover"
+            style={{
+              width: "100%",
+              height: heroHeight,
+            }}
+          />
+          <TouchableOpacity
+            onPress={onCreateEvent}
+            activeOpacity={0.9}
+            accessibilityRole="button"
+            accessibilityLabel="Create event"
+            accessibilityHint="Start planning your child's special day"
+            style={{
+              position: "absolute",
+              left: leftInset - 15,
+              top: heroHeight * 0.67,
+              borderRadius: radius.full,
+              overflow: "hidden",
+              maxWidth: Math.min(screenWidth * 0.46, 196),
+            }}
+          >
+            <LinearGradient
+              colors={primaryGradient.colors}
+              start={primaryGradient.start}
+              end={primaryGradient.end}
+              style={{
+                paddingVertical: spacing[2],
+                paddingHorizontal: spacing[4],
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <Text style={{ fontFamily: fontFamily.title, fontSize: 14, fontWeight: "800", color: colors.onPrimary }}>Create Event</Text>
+                <View style={{ marginLeft:-5}}>
+                <Ionicons name="chevron-forward" size={16} color={colors.onPrimary} />
+              </View>
+                            <View style={{ marginLeft:-15}}>
+                <Ionicons name="chevron-forward" size={16} color={colors.onPrimary} />
+              </View>
+                 <View style={{ marginLeft:-15}}>
+                <Ionicons name="chevron-forward" size={16} color={colors.onPrimary} />
+              </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
         <View
           style={{
-            marginTop: -featureStackOverlap,
-            backgroundColor: colors.surfaceContainerLowest,
+            marginTop: -spacing[6],
+            backgroundColor: "#EBE9FE",
             marginBottom: spacing[4],
             gap: spacing[3],
             paddingHorizontal: spacing[2],
@@ -170,6 +267,8 @@ export default function PartyPlannerEmptyContent({
               alignItems: "stretch",
               height: featureRowHeight,
               gap: FEATURE_PAIR_GAP,
+              marginTop: spacing[2],
+
             }}
           >
             <View
@@ -179,88 +278,133 @@ export default function PartyPlannerEmptyContent({
                 height: featureRowHeight,
                 borderRadius: FEATURE_IMAGE_RADIUS,
                 overflow: "hidden",
-                backgroundColor: colors.surfaceContainerLowest,
+                backgroundColor: colors.secondaryCard,
               }}
             >
               <Image
-                source={FEATURE_MODERN_WALLET}
+                source={FEATURE_MODERN_GIFTS_BG}
                 resizeMode="cover"
-                accessibilityLabel="The modern gift wallet"
-                style={{ width: "100%", height: "100%" }}
-              />
+                accessibilityLabel="The Modern Gift Wallet"
+                style={{
+                  position: "absolute",
+                  left: 5,
+                  top: 5,
+                  width: "100%",
+                  height: "100%",
+                }}        
+                />
             </View>
             <View
+              accessibilityRole="text"
+              accessibilityLabel="Pay Everywhere. Spend birthday gifts with Apple Pay."
               style={{
                 flex: 1,
                 minWidth: 0,
                 height: featureRowHeight,
                 borderRadius: FEATURE_IMAGE_RADIUS,
                 overflow: "hidden",
-                backgroundColor: colors.surfaceContainerLowest,
+                backgroundColor: "#EBE9FE",
               }}
             >
               <Image
-                source={FEATURE_PAY_EVERYWHERE}
+                source={FEATURE_PAY_EVERYWHERE_BG}
                 resizeMode="cover"
-                accessibilityLabel="Pay everywhere with Apple Pay"
-                style={{ width: "100%", height: "100%" }}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
               />
+              <View
+                style={{
+                  flex: 1,
+                  // paddingHorizontal: spacing[2],
+                  paddingLeft: spacing[2],
+                  paddingTop: spacing[3],
+                  paddingBottom: spacing[2],
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                  maxWidth: "42%",
+                }}
+              >
+                <Text
+                  style={[
+                    typography.headlineSm,
+                    {
+                      color: colors.onSurface,
+                      marginBottom: spacing[1],
+                      fontSize: 13,
+                      lineHeight: 18,
+
+                    },
+                  ]}
+                >
+                  Pay Everywhere
+                </Text>
+                <Text
+                  style={[
+                    typography.bodyMd,
+                    {
+                      color: colors.onSurface,
+                      fontSize: 9,
+                      lineHeight: 16,
+                    },
+                  ]}
+                  numberOfLines={4}
+                >
+                  Spend birthday gifts with Apple Pay
+                </Text>
+              </View>
             </View>
           </View>
 
           <View
             style={{
+              marginTop: spacing[1],
               borderRadius: FEATURE_IMAGE_RADIUS,
               overflow: "hidden",
               height: featureSafeRowHeight,
-              backgroundColor: colors.surfaceContainerLowest,
+              backgroundColor: "#EBE9FE",
             }}
           >
             <Image
               source={FEATURE_SAFE_SPENDING}
               resizeMode="cover"
               accessibilityLabel="Safe spending for kids"
-              style={{ width: "100%", height: "100%" }}
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
             />
           </View>
         </View>
 
-        <View
+    
+      </View>
+      <View
           style={{
-            marginTop: spacing[1],
+            marginTop: spacing[2],
             marginBottom: spacing[1],
+            width: screenWidth - 15,
+            marginLeft: -leftInset + 5,
+            // paddingHorizontal: spacing[2],
           }}
         >
-          <TouchableOpacity
-            onPress={onCreateEvent}
-            activeOpacity={0.9}
-            accessibilityRole="button"
-            accessibilityLabel="Create event"
-            accessibilityHint="Start planning your child's special day"
-            style={{
-              borderWidth: 2,
-              borderColor: MARKETING_FRAME_BORDER,
-              borderRadius: 45,
-              overflow: "hidden",
-              backgroundColor: colors.surfaceContainerLowest,
-            }}
-          >
-            <Image
-              source={CREATE_EVENT_BTN}
-              style={{ width: "100%", height: screenHeight * 0.099 }}
-              accessibilityIgnoresInvertColors
-            />
-          </TouchableOpacity>
+          <CreateEventBanner onPress={onCreateEvent} />
         </View>
-      </View>
-
       <Text
         style={[
           typography.labelMd,
           {
             fontSize: 12,
-            color: colors.onSurfaceVariant,
-            marginBottom: spacing[4],
+            color: colors.onSurface,
+            marginBottom: spacing[2],
+            width: screenWidth - 15,
+            marginLeft: -leftInset + 10,
             letterSpacing: 1,
             fontWeight: "700",
           },
@@ -339,3 +483,126 @@ export default function PartyPlannerEmptyContent({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  heroCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radius.md,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    gap: spacing[3],
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.onSurface,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+      },
+      android: { elevation: 4 },
+    }),
+  },
+  heroCardIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  heroCardCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroCardTitle: {
+    fontFamily: fontFamily.title,
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.onSurface,
+    marginBottom: 2,
+  },
+  heroCardSubtitle: {
+    fontFamily: fontFamily.body,
+    fontSize: 11,
+    lineHeight: 15,
+    color: colors.onSurfaceVariant,
+  },
+  heroCardArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surfaceContainerLowest,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.12)",
+    flexShrink: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.onSurface,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: { elevation: 2 },
+    }),
+  },
+  bannerOuter: {
+    borderRadius: radius.md,
+    overflow: "hidden",
+    marginBottom: spacing[2],
+  },
+  bannerGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[4],
+    gap: spacing[3],
+  },
+  bannerIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  bannerCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  bannerTitle: {
+    fontFamily: fontFamily.title,
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.onPrimary,
+    marginBottom: 2,
+  },
+  bannerSubtitle: {
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    lineHeight: 15,
+    color: "rgba(255, 255, 255, 0.88)",
+  },
+  bannerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: radius.full,
+    paddingVertical: spacing[2],
+    paddingLeft: spacing[4],
+    paddingRight: spacing[3],
+    flexShrink: 0,
+  },
+  bannerPillText: {
+    fontFamily: fontFamily.title,
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+});

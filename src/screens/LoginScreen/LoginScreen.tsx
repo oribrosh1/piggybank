@@ -43,8 +43,8 @@ import LottieView from "lottie-react-native";
 const PAY_EVERYWHERE_LOTTIE = require("../../../assets/lotties/pay-everywhere-creditkid.json");
 const STRIPE_TICKER_WORDMARK = require("../../../assets/images/stripe-icon.png") as ImageSourcePropType;
 
-const TERMS_URL = "https://creditkid.vercel.app/terms";
-const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
+const TERMS_URL = "https://credit-kid.com/terms";
+const PRIVACY_URL = "https://credit-kid.com/privacy";
 
 const LOGIN_SPLASH_MS = 2000;
 

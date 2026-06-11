@@ -20,7 +20,7 @@ export default function TermsOfService() {
                     <Section title="1. Acceptance of Terms">
                         <p>
                             By accessing or using the CreditKid application (&quot;App&quot;), the CreditKid website at
-                            creditkid.vercel.app (&quot;Website&quot;), or any related services (collectively, the &quot;Service&quot;),
+                            credit-kid.com (&quot;Website&quot;), or any related services (collectively, the &quot;Service&quot;),
                             you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms,
                             do not use the Service.
                         </p>
@@ -197,8 +197,8 @@ export default function TermsOfService() {
                         </p>
                         <p>
                             <strong>CreditKid</strong><br />
-                            Email: <a href="mailto:support@creditkid.com" className="text-purple-700 underline">support@creditkid.com</a><br />
-                            Website: <a href="https://creditkid.vercel.app" className="text-purple-700 underline">creditkid.vercel.app</a>
+                            Email: <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a><br />
+                            Website: <a href="https://credit-kid.com" className="text-purple-700 underline">credit-kid.com</a>
                         </p>
                     </Section>
                 </div>

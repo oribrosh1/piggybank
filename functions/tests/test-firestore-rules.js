@@ -51,9 +51,9 @@ let dbA, dbB, dbChild;
 let USER_A_UID, USER_B_UID, CHILD_UID;
 
 const testEmails = {
-    userA: `rules-testa-${RUN_ID}@test-creditkid.com`,
-    userB: `rules-testb-${RUN_ID}@test-creditkid.com`,
-    child: `rules-testchild-${RUN_ID}@test-creditkid.com`,
+    userA: `rules-testa-${RUN_ID}@test-credit-kid.com`,
+    userB: `rules-testb-${RUN_ID}@test-credit-kid.com`,
+    child: `rules-testchild-${RUN_ID}@test-credit-kid.com`,
 };
 
 function assert(label, condition) {

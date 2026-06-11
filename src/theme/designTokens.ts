@@ -20,6 +20,8 @@ export const colors = {
   /** Gradient endpoints — primary CTA */
   primary: "#6b38d4",
   primaryContainer: "#8455ef",
+  primaryCard: "#D2B9FA",
+  secondaryCard: "#0F0445",
   /** Text — never pure black */
   onSurface: "#121c2a",
   onSurfaceVariant: "#5c6470",

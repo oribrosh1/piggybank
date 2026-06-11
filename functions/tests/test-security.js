@@ -60,8 +60,8 @@ async function testCors() {
     console.log("\n═══ 1. CORS ═══");
 
     const ALLOWED_ORIGINS = [
-        "https://creditkid.vercel.app",
-        "https://www.creditkid.vercel.app",
+        "https://credit-kid.com",
+        "https://www.credit-kid.com",
         /^https:\/\/creditkid-.*\.vercel\.app$/,
         /^creditkid:\/\//,
         /^exp:\/\//,
@@ -86,9 +86,9 @@ async function testCors() {
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
 
     // Allowed origins
-    const r1 = await request(server, "GET", "/test", { Origin: "https://creditkid.vercel.app" });
-    assert("creditkid.vercel.app → allowed (200)", r1.status === 200);
-    assert("  has Access-Control-Allow-Origin header", r1.headers["access-control-allow-origin"] === "https://creditkid.vercel.app");
+    const r1 = await request(server, "GET", "/test", { Origin: "https://credit-kid.com" });
+    assert("credit-kid.com → allowed (200)", r1.status === 200);
+    assert("  has Access-Control-Allow-Origin header", r1.headers["access-control-allow-origin"] === "https://credit-kid.com");
 
     const r2 = await request(server, "GET", "/test", { Origin: "https://creditkid-abc123.vercel.app" });
     assert("Vercel preview deploy → allowed (200)", r2.status === 200);
@@ -110,8 +110,8 @@ async function testCors() {
     const r7 = await request(server, "GET", "/test", { Origin: "https://evil-site.com" });
     assert("evil-site.com → blocked (500)", r7.status === 500);
 
-    const r8 = await request(server, "GET", "/test", { Origin: "https://fakecreditkid.vercel.app" });
-    assert("fakecreditkid.vercel.app → blocked (500)", r8.status === 500);
+    const r8 = await request(server, "GET", "/test", { Origin: "https://fakecredit-kid.com" });
+    assert("fakecredit-kid.com → blocked (500)", r8.status === 500);
 
     const r9 = await request(server, "GET", "/test", { Origin: "http://localhost:9999" });
     assert("localhost:9999 → blocked (500)", r9.status === 500);

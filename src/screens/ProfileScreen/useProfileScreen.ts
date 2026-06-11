@@ -11,9 +11,9 @@ import type { UserProfile } from "@/types/user";
 import { routes } from "@/types/routes";
 import { navigateToStripeConnectOrPersonalInfo } from "@/src/lib/stripeHostedOnboarding";
 
-const TERMS_URL = "https://creditkid.vercel.app/terms";
-const FAQ_URL = "https://creditkid.vercel.app/terms";
-const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
+const TERMS_URL = "https://credit-kid.com/terms";
+const FAQ_URL = "https://credit-kid.com/terms";
+const PRIVACY_URL = "https://credit-kid.com/privacy";
 
 export function useProfileScreen() {
   const router = useRouter();

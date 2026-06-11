@@ -1,0 +1,253 @@
+[debug] [2026-06-10T10:39:40.528Z] ----------------------------------------------------------------------
+[debug] [2026-06-10T10:39:40.544Z] Command:       /opt/homebrew/Cellar/node/25.5.0/bin/node /opt/homebrew/bin/firebase emulators:start --only functions --project dev
+[debug] [2026-06-10T10:39:40.544Z] CLI Version:   15.17.0
+[debug] [2026-06-10T10:39:40.544Z] Platform:      darwin
+[debug] [2026-06-10T10:39:40.544Z] Node Version:  v25.5.0
+[debug] [2026-06-10T10:39:40.544Z] Time:          Wed Jun 10 2026 13:39:40 GMT+0300 (Israel Daylight Time)
+[debug] [2026-06-10T10:39:40.544Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-10T10:39:40.549Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-06-10T10:39:45.059Z] Object "/firestore" in "firebase.json" has unknown property: {"additionalProperty":"region"}
+[debug] [2026-06-10T10:39:45.060Z] Field "/firestore" in "firebase.json" is possibly invalid: must be array
+[debug] [2026-06-10T10:39:45.060Z] Field "/firestore" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-06-10T10:39:45.075Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-10T10:39:45.075Z] > authorizing via signed-in user (brosh1999@gmail.com)
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2026-06-10T10:39:47.125Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-06-10T10:39:47.126Z] assigned listening specs for emulators {"user":{"ui":[{"address":"127.0.0.1","family":"IPv4","port":4010}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4410},{"address":"::1","family":"IPv6","port":4410}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4510}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-06-10T10:39:47.133Z] Write emulator hub locator at /var/folders/2h/zfsr7dgd4t706079h6nq4jtc0000gn/T/hub-piggybank-a0011.json
+[debug] [2026-06-10T10:39:51.327Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-06-10T10:39:51.327Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-06-10T10:39:51.328Z] late-assigned ports for functions and eventarc emulators {"user":{"ui":[{"address":"127.0.0.1","family":"IPv4","port":4010}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4410},{"address":"::1","family":"IPv6","port":4410}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4510}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5101}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
+[debug] [2026-06-10T10:39:51.584Z] defaultcredentials: writing to file /Users/oribrosh1/.config/firebase/brosh1999_gmail_com_application_default_credentials.json
+[debug] [2026-06-10T10:39:51.641Z] Setting GAC to /Users/oribrosh1/.config/firebase/brosh1999_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/oribrosh1/.config/firebase/brosh1999_gmail_com_application_default_credentials.json"}}
+[debug] [2026-06-10T10:39:51.664Z] Checked if tokens are valid: false, expires at: 1779887421568
+[debug] [2026-06-10T10:39:51.668Z] Checked if tokens are valid: false, expires at: 1779887421568
+[debug] [2026-06-10T10:39:51.674Z] > refreshing access token with scopes: []
+[debug] [2026-06-10T10:39:51.676Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-10T10:39:51.677Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-10T10:39:52.126Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-06-10T10:39:52.127Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-06-10T10:39:52.329Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-06-10T10:39:52.329Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-10T10:39:52.361Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/piggybank-a0011/adminSdkConfig [none]
+[debug] [2026-06-10T10:39:53.692Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/piggybank-a0011/adminSdkConfig 200
+[debug] [2026-06-10T10:39:53.692Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/piggybank-a0011/adminSdkConfig {"projectId":"piggybank-a0011","storageBucket":"piggybank-a0011.firebasestorage.app"}
+[info] i  functions: Watching "/Users/oribrosh1/Documents/creditkid/piggybank/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/oribrosh1/Documents/creditkid/piggybank/functions\" for Cloud Functions..."}}
+[debug] [2026-06-10T10:39:53.775Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-10T10:40:02.994Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-10T10:40:02.997Z] Building nodejs source
+[debug] [2026-06-10T10:40:02.998Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-10T10:40:03.050Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-10T10:40:03.122Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8404
+
+[info] [dotenv@17.2.3] injecting env (15) from ../.env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  override existing env vars with { override: true }
+
+[error] (node:119) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: User code failed to load. Cannot determine backend specification. Timeout after 10000. See https://firebase.google.com/docs/functions/tips#avoid_deployment_timeouts_during_initialization' {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: User code failed to load. Cannot determine backend specification. Timeout after 10000. See https://firebase.google.com/docs/functions/tips#avoid_deployment_timeouts_during_initialization'"}}
+[debug] [2026-06-10T10:40:20.966Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4010/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5101 │ http://127.0.0.1:4010/functions │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4410
+  Other reserved ports: 4510
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-06-11T11:49:14.310Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-firestore-rules.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-firestore-rules.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:49:16.765Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-11T11:49:20.795Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-11T11:49:20.796Z] Building nodejs source
+[debug] [2026-06-11T11:49:20.796Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-11T11:49:20.807Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-11T11:49:20.818Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8703
+
+[info] [dotenv@17.2.3] injecting env (15) from ../.env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+[error] (node:57645) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-11T11:49:22.144Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[info] ✔  functions[us-central1-api]: http function initialized (http://127.0.0.1:5101/piggybank-a0011/us-central1/api). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5101/piggybank-a0011/us-central1/api)."}}
+[info] i  functions[us-central1-onEventCreated]: function ignored because the firestore emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the firestore emulator does not exist or is not running."}}
+[info] i  functions[us-central1-onTransactionCreated]: function ignored because the firestore emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the firestore emulator does not exist or is not running."}}
+[info] i  functions[us-central1-sendEventReminderSMS]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[info] i  functions[us-central1-provisioningWatchdog]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[debug] [2026-06-11T11:52:51.955Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:52.001Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/schedulerTriggers.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/schedulerTriggers.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:52.121Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/services/stripeConnectService.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/services/stripeConnectService.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:52.226Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-security-scenarios.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-security-scenarios.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:52.231Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/services/stripeConnectService.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/services/stripeConnectService.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:52.325Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-security.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/tests/test-security.js changed, reloading triggers"}}
+[debug] [2026-06-11T11:52:53.343Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-11T11:52:55.885Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-11T11:52:55.887Z] Building nodejs source
+[debug] [2026-06-11T11:52:55.888Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-11T11:52:55.911Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-11T11:52:55.934Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8100
+
+[info] [dotenv@17.2.3] injecting env (15) from ../.env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+[error] (node:63337) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-11T11:53:03.747Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}

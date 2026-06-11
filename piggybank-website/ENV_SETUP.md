@@ -24,7 +24,7 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Base URL for Open Graph images (for SMS previews)
-NEXT_PUBLIC_BASE_URL=https://creditkid.vercel.app
+NEXT_PUBLIC_BASE_URL=https://credit-kid.com
 
 # App deep link scheme (must match Expo app.json "scheme") – used by /banking/setup/* redirect pages
 # Default: creditkidapp → redirects to creditkidapp://banking/setup/success etc.

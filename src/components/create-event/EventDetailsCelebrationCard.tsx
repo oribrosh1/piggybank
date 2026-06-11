@@ -79,6 +79,8 @@ type EventDetailsCelebrationCardProps = {
   honoreeGender?: HonoreeGender;
   honoreeGenderError?: string;
   onHonoreeGenderChange: (gender: "boy" | "girl") => void;
+  /** Quick poster flow skips AI photo upload. @default true */
+  showHonoreePhotoSection?: boolean;
 };
 
 export default function EventDetailsCelebrationCard({
@@ -102,6 +104,7 @@ export default function EventDetailsCelebrationCard({
   honoreeGender,
   honoreeGenderError,
   onHonoreeGenderChange,
+  showHonoreePhotoSection = true,
 }: EventDetailsCelebrationCardProps) {
   const nameUnderline = nameError ? "#EF4444" : nameFocused ? colors.primary : "transparent";
   const ageUnderline = ageError ? "#EF4444" : ageFocused ? colors.primary : "transparent";
@@ -275,7 +278,7 @@ export default function EventDetailsCelebrationCard({
         This name and age appear on your poster and invitations.
       </Text> */}
 
-      {/* Section 2 — photo hero + AI poster copy */}
+      {showHonoreePhotoSection ? (
       <LinearGradient
         colors={["rgba(107, 56, 212, 0.1)", colors.surfaceContainerLowest]}
         start={{ x: 0, y: 0 }}
@@ -391,6 +394,7 @@ export default function EventDetailsCelebrationCard({
           </View>
         </View>
       </LinearGradient>
+      ) : null}
 
     </View>
   );

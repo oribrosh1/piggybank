@@ -213,7 +213,7 @@ export function useHomeScreen() {
 
   const goToCreateEvent = () => {
     router.push({
-      pathname: routes.createEvent.eventDetails,
+      pathname: routes.createEvent.posterStyle,
       params: { eventType: "birthday" },
     });
   };

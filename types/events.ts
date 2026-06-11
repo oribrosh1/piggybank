@@ -28,6 +28,9 @@ export type KosherCateringPartnerChoice = KosherCateringPartnerId | "later";
 /** Preset visual themes for AI poster generation (step 3) */
 export type PosterThemeId = "space_explorer" | "neon_disco" | "magical_forest";
 
+/** Step 0 — quick template vs AI cinematic poster. */
+export type PosterStyleChoice = "quick" | "premium";
+
 /** Millisecond timings for last `generatePoster` run (stored on `events/{id}`). */
 export interface PosterGenerationTimingMs {
   /** Reading honoree reference photo from Storage (if attempted). */

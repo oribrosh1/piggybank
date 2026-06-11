@@ -1,9 +1,10 @@
 import { create } from "zustand";
-import type { EventFormData, EventType } from "@/types/events";
+import type { EventFormData, EventType, PosterStyleChoice } from "@/types/events";
 
 export type CreateEventDraftPayload = {
   formData: EventFormData;
   resolvedEventType: EventType;
+  posterStyle: PosterStyleChoice;
 };
 
 type CreateEventDraftState = {

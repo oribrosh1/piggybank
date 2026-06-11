@@ -2,12 +2,12 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CreditKid - The End of Gift Cards | Smart Gifting for Kids',
-  description: 'Give your child a virtual debit card they can use anywhere. No more unused gift cards sitting in drawers. Track spending, set limits, and teach financial responsibility.',
-  keywords: 'creditkid, kids debit card, virtual card, gift cards alternative, children finance, Apple Pay kids',
+  title: 'The New Standard for Birthday Gifts',
+  description: 'Give your child a virtual debit card for his gifts they can use anywhere. No more unused gift cards sitting in drawers. Just real freedom.',
+  keywords: 'creditkid, birthday gift wallet, kids events, SMS invites, gift registry, parent controls, Apple Pay kids',
   openGraph: {
-    title: 'CreditKid - The End of Gift Cards',
-    description: 'Give your child a virtual debit card they can use anywhere. No more unused gift cards.',
+    title: 'The New Standard for Birthday Gifts',
+    description: 'Give your child a virtual debit card for his gifts they can use anywhere. No more unused gift cards sitting in drawers. Just real freedom.',
     type: 'website',
   },
 }

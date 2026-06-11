@@ -21,6 +21,7 @@ export type AppRoute =
     | "/(tabs)/profile"
     // Create Event flow
     | "/create-event/event-type"
+    | "/create-event/poster-style"
     | "/create-event/event-details"
     | "/create-event/select-guests"
     | "/create-event/event-poster"
@@ -47,7 +48,8 @@ export type AppRoute =
 
 // Helper type for routes with parameters
 export type RouteParams = {
-    "/create-event/event-details": { eventType: string };
+    "/create-event/poster-style": { eventType?: string };
+    "/create-event/event-details": { eventType: string; posterStyle?: string };
     "/create-event/select-guests": { eventType: string; eventDetails: string };
     "/create-event/review-invitation": {
         eventType: string;
@@ -88,8 +90,9 @@ export const routes = {
         profile: route("/(tabs)/profile"),
     },
     createEvent: {
-        /** @deprecated Legacy route — redirects to event-details. Use `eventDetails` with `eventType`. */
+        /** @deprecated Legacy route — redirects to poster-style. */
         eventType: route("/create-event/event-type"),
+        posterStyle: route("/create-event/poster-style"),
         eventDetails: route("/create-event/event-details"),
         selectGuests: route("/create-event/select-guests"),
         eventPoster: route("/create-event/event-poster"),

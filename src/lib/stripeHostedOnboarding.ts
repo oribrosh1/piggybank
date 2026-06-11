@@ -5,7 +5,7 @@ import { routes } from "@/types/routes";
 
 /** Must match backend HTTPS return URL — Stripe + ASWebAuthenticationSession require HTTPS, not custom schemes. */
 const STRIPE_ONBOARDING_RETURN_REDIRECT =
-  process.env.EXPO_PUBLIC_BANKING_RETURN_URL || "https://creditkid.vercel.app/banking/setup/success";
+  process.env.EXPO_PUBLIC_BANKING_RETURN_URL || "https://credit-kid.com/banking/setup/success";
 
 /**
  * Opens Stripe Connect hosted KYC (Account Link in browser).

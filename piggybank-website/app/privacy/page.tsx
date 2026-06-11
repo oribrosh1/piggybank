@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
                         <p>
                             CreditKid (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is committed to protecting your privacy. This Privacy
                             Policy explains how we collect, use, disclose, and safeguard your information when you use the
-                            CreditKid mobile application (&quot;App&quot;), the CreditKid website at creditkid.vercel.app (&quot;Website&quot;),
+                            CreditKid mobile application (&quot;App&quot;), the CreditKid website at credit-kid.com (&quot;Website&quot;),
                             and related services (collectively, the &quot;Service&quot;).
                         </p>
                         <p>
@@ -198,7 +198,7 @@ export default function PrivacyPolicy() {
                             <li><strong>Opt-out:</strong> Opt out of non-essential communications</li>
                         </ul>
                         <p>
-                            To exercise any of these rights, contact us at <a href="mailto:support@creditkid.com" className="text-purple-700 underline">support@creditkid.com</a>.
+                            To exercise any of these rights, contact us at <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a>.
                             We will respond to your request within 30 days.
                         </p>
                     </Section>
@@ -248,8 +248,8 @@ export default function PrivacyPolicy() {
                         </p>
                         <p>
                             <strong>CreditKid</strong><br />
-                            Email: <a href="mailto:support@creditkid.com" className="text-purple-700 underline">support@creditkid.com</a><br />
-                            Website: <a href="https://creditkid.vercel.app" className="text-purple-700 underline">creditkid.vercel.app</a>
+                            Email: <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a><br />
+                            Website: <a href="https://credit-kid.com" className="text-purple-700 underline">credit-kid.com</a>
                         </p>
                     </Section>
                 </div>

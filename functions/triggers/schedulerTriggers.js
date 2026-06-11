@@ -26,7 +26,7 @@ function toYYYYMMDD(d) {
 exports.sendEventReminderSMS = onSchedule(
     { schedule: "0 9 * * *", timeZone: "America/Los_Angeles" },
     async () => {
-        const baseUrl = process.env.EVENT_BASE_URL || "https://creditkid.vercel.app";
+        const baseUrl = process.env.EVENT_BASE_URL || "https://credit-kid.com";
         const accountSid = process.env.TWILIO_ACCOUNT_SID;
         const authToken = process.env.TWILIO_AUTH_TOKEN;
         const fromNumber = process.env.TWILIO_FROM_NUMBER;

@@ -944,6 +944,7 @@ export default function EventDetailsScreen2() {
     setOptionalDetailsLater,
     pickHonoreePhoto,
     clearHonoreePhoto,
+    isQuickPoster,
   } = useEventDetailsScreen({ scrollToTopOnError });
 
   const themeInputRef = useRef<TextInput>(null);
@@ -1066,68 +1067,67 @@ export default function EventDetailsScreen2() {
                   </Text>
                 </View>
 
-                {/*
-                  "See examples" sticker is absolutely positioned over the right
-                  side so it can overlap the title vertically without stealing
-                  horizontal space from the big script word.
-                */}
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={() => setExamplesOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="See invitation examples"
-                  style={styles.seeExamplesWrap}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={styles.seeExamplesText}>{`See\nexamples`}</Text>
-                </TouchableOpacity>
+                {!isQuickPoster ? (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setExamplesOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="See invitation examples"
+                    style={styles.seeExamplesWrap}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.seeExamplesText}>{`See\nexamples`}</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </GlassCardDark>
 
-            <TouchableOpacity
-              activeOpacity={0.92}
-              onPress={() => setExamplesOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Open invitation examples gallery"
-              style={styles.fanHit}
-            >
-              <View style={styles.fan} pointerEvents="box-none">
-                {FAN_DRAW.map((card, i) => {
-                  const translateY = cardFlyIn[i].interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [40 + card.dy, card.dy],
-                  });
-                  return (
-                    <Animated.View
-                      key={`fan-${i}`}
-                      style={[
-                        styles.fanCardShadow,
-                        {
-                          zIndex: card.z,
-                          elevation:
-                            Platform.OS === "android" ? 6 + card.z * 2 : undefined,
-                          opacity: cardFlyIn[i],
-                          transform: [
-                            { translateX: card.dx },
-                            { translateY },
-                            { rotate: `${card.rotate}deg` },
-                            { scale: card.scale },
-                          ],
-                        },
-                      ]}
-                    >
-                      <View style={styles.fanCardClip}>
-                        <Image
-                          source={card.src}
-                          style={styles.fanImage}
-                          resizeMode="cover"
-                        />
-                      </View>
-                    </Animated.View>
-                  );
-                })}
-              </View>
-            </TouchableOpacity>
+            {!isQuickPoster ? (
+              <TouchableOpacity
+                activeOpacity={0.92}
+                onPress={() => setExamplesOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open invitation examples gallery"
+                style={styles.fanHit}
+              >
+                <View style={styles.fan} pointerEvents="box-none">
+                  {FAN_DRAW.map((card, i) => {
+                    const translateY = cardFlyIn[i].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [40 + card.dy, card.dy],
+                    });
+                    return (
+                      <Animated.View
+                        key={`fan-${i}`}
+                        style={[
+                          styles.fanCardShadow,
+                          {
+                            zIndex: card.z,
+                            elevation:
+                              Platform.OS === "android" ? 6 + card.z * 2 : undefined,
+                            opacity: cardFlyIn[i],
+                            transform: [
+                              { translateX: card.dx },
+                              { translateY },
+                              { rotate: `${card.rotate}deg` },
+                              { scale: card.scale },
+                            ],
+                          },
+                        ]}
+                      >
+                        <View style={styles.fanCardClip}>
+                          <Image
+                            source={card.src}
+                            style={styles.fanImage}
+                            resizeMode="cover"
+                          />
+                        </View>
+                      </Animated.View>
+                    );
+                  })}
+                </View>
+              </TouchableOpacity>
+            ) : null}
 
           {/* ─── Form cards ────────────────────────────────────── */}
           <View style={styles.formBlock}>
@@ -1151,6 +1151,7 @@ export default function EventDetailsScreen2() {
               honoreeGender={formData.honoreeGender}
               honoreeGenderError={genderError}
               onHonoreeGenderChange={(g) => handleInputChange("honoreeGender", g)}
+              showHonoreePhotoSection={!isQuickPoster}
             />
 
             {showCelebrationTypeSection ? (
@@ -1202,7 +1203,7 @@ export default function EventDetailsScreen2() {
               themeInputRef={themeInputRef}
             /> */}
 
-            {!!isPartyMode && (
+            {!!isPartyMode && !isQuickPoster && (
               <DescribeVibeSection
                 value={formData.partyVibe ?? ""}
                 focused={focusedField === "partyVibe"}
@@ -1233,10 +1234,12 @@ export default function EventDetailsScreen2() {
         />
       </View>
 
-      <InvitationExamplesModal
-        visible={examplesOpen}
-        onClose={() => setExamplesOpen(false)}
-      />
+      {!isQuickPoster ? (
+        <InvitationExamplesModal
+          visible={examplesOpen}
+          onClose={() => setExamplesOpen(false)}
+        />
+      ) : null}
 
       <EventDatePickerModal
         visible={showDatePicker}

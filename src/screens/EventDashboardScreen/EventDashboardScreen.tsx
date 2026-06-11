@@ -126,7 +126,7 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
         }
     };
 
-    const EVENT_WEB_BASE = process.env.EXPO_PUBLIC_WEBSITE_URL || "https://creditkid.vercel.app";
+    const EVENT_WEB_BASE = process.env.EXPO_PUBLIC_WEBSITE_URL || "https://credit-kid.com";
 
     const handleShare = () => {
         const appMessage =

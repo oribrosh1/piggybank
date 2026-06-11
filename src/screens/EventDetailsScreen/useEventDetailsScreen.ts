@@ -6,6 +6,7 @@ import {
   EventFormData,
   type CelebrationPickerType,
   type MitzvahCelebrationFocus,
+  type PosterStyleChoice,
 } from "@/types/events";
 import * as ImagePicker from "expo-image-picker";
 import { useCreateEventDraftStore } from "@/src/stores/createEventDraftStore";
@@ -103,7 +104,12 @@ export function useEventDetailsScreen(
     requestAnimationFrame(() => scrollToTopOnError());
   }, [scrollToTopOnError]);
   const router = useRouter();
-  const { eventType } = useLocalSearchParams<{ eventType?: string }>();
+  const { eventType, posterStyle: posterStyleParam } = useLocalSearchParams<{
+    eventType?: string;
+    posterStyle?: string;
+  }>();
+  const posterStyle: PosterStyleChoice =
+    posterStyleParam === "quick" ? "quick" : "premium";
   const setCreateDraft = useCreateEventDraftStore((s) => s.setDraft);
 
   const [formData, setFormData] = useState<EventFormData>(() => ({
@@ -167,6 +173,7 @@ export function useEventDetailsScreen(
     setCreateDraft({
       formData: { ...formData },
       resolvedEventType,
+      posterStyle,
     });
     router.push(routes.createEvent.reviewCreate);
   };
@@ -301,9 +308,12 @@ export function useEventDetailsScreen(
     formData.celebrationType === "batMitzvah";
   const isPartyMode = isBirthday || formData.eventCategory === "party";
   const showCelebrationTypeSection = isMitzvahTurningAge(formData.age);
+  const isQuickPoster = posterStyle === "quick";
 
   return {
     eventType,
+    posterStyle,
+    isQuickPoster,
     formData,
     errors,
     focusedField,

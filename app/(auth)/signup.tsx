@@ -40,8 +40,8 @@ import {
   borderGhostOutline,
 } from "@/src/theme";
 
-const TERMS_URL = "https://creditkid.vercel.app/terms";
-const PRIVACY_URL = "https://creditkid.vercel.app/privacy";
+const TERMS_URL = "https://credit-kid.com/terms";
+const PRIVACY_URL = "https://credit-kid.com/privacy";
 
 const STRIPE_WORDMARK = require("../../assets/images/stripe-icon.png") as ImageSourcePropType;
 

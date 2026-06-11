@@ -28,8 +28,8 @@ const stripeController = createStripeController(stripeConnectService);
 const stripeWebhookHandler = createStripeWebhookHandler(stripe, stripeConnectService, provisioningService);
 
 const ALLOWED_ORIGINS = [
-    "https://creditkid.vercel.app",
-    "https://www.creditkid.vercel.app",
+    "https://credit-kid.com",
+    "https://www.credit-kid.com",
     /^https:\/\/creditkid-.*\.vercel\.app$/, // Vercel preview deploys
     /^creditkid:\/\//,                       // React Native deep links
     /^exp:\/\//,                             // Expo dev client
@@ -72,7 +72,7 @@ app.post(
 
 app.use(express.json({ limit: "256kb" }));
 
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://creditkid.vercel.app";
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://credit-kid.com";
 
 require("./routes").registerRoutes(app, {
     verifyFirebaseToken,
