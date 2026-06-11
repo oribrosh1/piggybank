@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  Menu,
   X,
   LogIn,
   LogOut,
@@ -18,9 +17,9 @@ import { HOMEPAGE_FAQ_HIGHLIGHTS } from '@/lib/faqContent'
 const IMAGES = {
   logo: '/images/creditkid-logo.png',
   heroDesktop: '/homepage/headerbg-desktop.png',
-  heroMobile: '/homepage/headerbg-mobile2.png',
+  heroMobile: '/homepage/header-mobile.png',
   features: '/homepage/features.png',
-  cta: '/homepage/footer.png',
+  cta: '/homepage/safe-spending-parents.png',
 } as const
 
 const NAV_LINKS = [
@@ -41,20 +40,33 @@ const FOOTER_LINKS = {
   legal: [
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Service', href: '/terms' },
+    { label: 'Refund Policy', href: '/refunds' },
   ],
 } as const
 
-function AppStoreButtons({ className = '' }: { className?: string }) {
+function AppStoreButtons({
+  className = '',
+  compact = false,
+}: {
+  className?: string
+  compact?: boolean
+}) {
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>
       <Link
         href="/coming-soon"
-        className="inline-flex items-center gap-2.5 bg-[#111] text-white rounded-xl px-5 py-3 no-underline hover:bg-[#222] transition-colors"
+        className={`inline-flex items-center gap-2 bg-[#111] text-white rounded-xl no-underline hover:bg-[#222] transition-colors ${
+          compact ? 'px-3 py-1.5' : 'gap-2.5 px-5 py-3'
+        }`}
       >
-        <span className="text-xl leading-none">{'\uF8FF'}</span>
+        <span className={`leading-none ${compact ? 'text-base' : 'text-xl'}`}>{'\uF8FF'}</span>
         <span className="text-left leading-tight">
-          <span className="block text-[10px] opacity-80">Download on the</span>
-          <span className="block text-[15px] font-semibold">App Store</span>
+          <span className={`block opacity-80 ${compact ? 'text-[8px]' : 'text-[10px]'}`}>
+            Download on the
+          </span>
+          <span className={`block font-semibold ${compact ? 'text-[12px]' : 'text-[15px]'}`}>
+            App Store
+          </span>
         </span>
       </Link>
     </div>
@@ -64,11 +76,13 @@ function AppStoreButtons({ className = '' }: { className?: string }) {
 function HomepageFaqItem({
   question,
   answer,
+  imageSrc,
   isOpen,
   onToggle,
 }: {
   question: string
   answer: string
+  imageSrc?: string
   isOpen: boolean
   onToggle: () => void
 }) {
@@ -87,8 +101,21 @@ function HomepageFaqItem({
         />
       </button>
       {isOpen && (
-        <div className="px-5 pb-4 text-[15px] leading-relaxed text-[#5c6178]">
-          {answer}
+        <div className="px-5 pb-5">
+          {imageSrc ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <Image
+                src={imageSrc}
+                alt=""
+                width={480}
+                height={480}
+                className="w-full h-auto rounded-xl"
+              />
+              <p className="text-[15px] leading-relaxed text-[#5c6178] m-0">{answer}</p>
+            </div>
+          ) : (
+            <p className="text-[15px] leading-relaxed text-[#5c6178] m-0">{answer}</p>
+          )}
         </div>
       )}
     </div>
@@ -96,7 +123,6 @@ function HomepageFaqItem({
 }
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
   const [loginOpen, setLoginOpen] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
@@ -126,8 +152,8 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#EAE3FC] text-[#1a1d2e]">
       {/* Navigation */}
-      <header className="sticky top-0 z-50 px-[4%] pt-4 pb-2">
-        <nav className="relative w-full max-w-[1180px] mx-auto h-[64px] flex items-center justify-between gap-4 rounded-full bg-[#EAE3FC] border border-[#EAE3FC] px-4 sm:px-6">
+      <header className="sticky top-0 z-50 px-[4%]">
+        <nav className="relative w-full max-w-[1180px] mx-auto h-[50px] pt-4 flex items-center justify-between gap-4 rounded-full bg-[#EAE3FC] border border-[#EAE3FC] sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 no-underline flex-shrink-0">
             <span className="text-[30px] font-extrabold text-[#6b38d4] tracking-[-0.5px]">
               CreditKid
@@ -179,65 +205,8 @@ export default function Home() {
             </Link>
           </div>
 
-          <button
-            className="lg:hidden p-2 rounded-full text-[#3d4258] hover:bg-[#EAE3FC] transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <AppStoreButtons className="lg:hidden flex-shrink-0" compact />
         </nav>
-
-        {mobileMenuOpen && (
-          <div className="lg:hidden w-full max-w-[1180px] mx-auto mt-2 rounded-[24px] bg-[#EAE3FC] border border-[#ddd6f5] px-5 py-4">
-            <div className="flex flex-col gap-0.5">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-[#3d4258] font-semibold py-3 no-underline border-b border-[#ddd6f5] last:border-0"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="flex flex-col gap-2 pt-3 mt-1">
-                <Link
-                  href="/coming-soon"
-                  className="inline-flex items-center justify-center bg-[#6b38d4] text-white font-bold py-3 rounded-full no-underline"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Get the App
-                </Link>
-                {!authLoading && (
-                  user ? (
-                    <div className="flex items-center justify-between py-2">
-                      <span className="flex items-center gap-2 text-[#3d4258] font-medium text-sm truncate">
-                        <User size={16} />
-                        {user.email}
-                      </span>
-                      <button
-                        onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                        className="flex items-center gap-1.5 text-[#697084] font-semibold text-sm"
-                      >
-                        <LogOut size={16} />
-                        Log out
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setLoginOpen(true); setMobileMenuOpen(false); }}
-                      className="flex items-center justify-center gap-2 text-[#6b38d4] font-semibold py-2"
-                    >
-                      <LogIn size={18} />
-                      Log in
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Hero */}
@@ -263,9 +232,9 @@ export default function Home() {
           />
         </div>
 
-        <div className="relative z-10 w-[min(1200px,92%)] mx-auto pt-2 pb-[360px] sm:pb-[480px] lg:pt-16 lg:pb-20 min-h-[640px] lg:min-h-[720px] flex items-start lg:items-center">
-          <div className="max-w-[560px] mb-[7rem] lg:mb-[28rem]">
-            <div className="inline-flex items-center bg-[#ede9fe] text-[#6b38d4] text-[13px] font-bold px-4 py-2 rounded-full mb-2">
+        <div className="relative z-10 w-full px-[4%] pb-[360px] sm:pb-[480px] lg:pt-16 lg:pb-20 min-h-[640px] lg:min-h-[720px] flex justify-start items-start lg:items-center">
+          <div className="max-w-[560px] mb-[7rem] lg:mb-[28rem] text-left">
+            <div className="bg-[#ede9fe] w-fit text-[#6b38d4] text-[13px] font-bold px-1 pt-4 rounded-full mb-2">
               For Kids. For Parents. For the Future.
             </div>
 
@@ -274,17 +243,34 @@ export default function Home() {
               <span className="text-[#6b38d4]">Birthday Gifts</span>
             </h1>
 
-            <p className="text-[17px] leading-[1.65] text-[#5c6178] m-0 mb-6 max-w-[500px]">
+            <p className="text-[17px] leading-[1.65] text-[#5c6178] m-0 mb-[13rem] max-w-[500px]">
               Give your child a virtual debit card for his gifts they can use anywhere. No more unused gift cards sitting in drawers. Just real freedom.
             </p>
 
-            <AppStoreButtons />
+            <AppStoreButtons className="hidden lg:flex" />
           </div>
         </div>
       </section>
+      {/* safe-spending-parents — overlaps hero background */}
+
+      <section id="safe-spending-parents" className="relative z-20 w-[min(1200px,92%)] mx-auto -mt-[180px] sm:-mt-[180px] lg:-mt-0 mb-4">
+          <Link
+            href="/coming-soon"
+            className="block relative w-full rounded-[28px] overflow-hidden bg-white shadow-[0_20px_60px_#31205d10] no-underline hover:opacity-95 transition-opacity cursor-pointer"
+            aria-label="Coming soon — subscribe to get notified at launch"
+          >
+            <Image
+              src={IMAGES.cta}
+              alt="Start their financial journey the smart way — Create Event"
+              width={1672}
+              height={941}
+              className="w-full h-auto"
+            />
+          </Link>
+        </section>
 
       {/* Features — overlaps hero background */}
-      <section id="features" className="relative z-20 w-[min(1200px,92%)] mx-auto -mt-24 sm:-mt-24 lg:-mt-0">
+      <section id="features" className="px-3">
         <div className="relative w-full rounded-[28px] overflow-hidden shadow-[0_20px_60px_#31205d10]">
           <Image
             src={IMAGES.features}
@@ -315,33 +301,20 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="max-w-[720px] mx-auto flex flex-col gap-3 mb-8">
+        <div className="max-w-[960px] mx-auto flex flex-col gap-3 mb-8">
           {HOMEPAGE_FAQ_HIGHLIGHTS.map((item, index) => (
             <HomepageFaqItem
               key={item.question}
               question={item.question}
               answer={item.answer}
+              imageSrc={item.imageSrc}
               isOpen={openFaqIndex === index}
               onToggle={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
             />
           ))}
         </div>
 
-        <section id="start" className="mb-8">
-          <Link
-            href="/coming-soon"
-            className="block relative w-full rounded-[28px] overflow-hidden bg-white shadow-[0_20px_60px_#31205d10] no-underline hover:opacity-95 transition-opacity cursor-pointer"
-            aria-label="Coming soon — subscribe to get notified at launch"
-          >
-            <Image
-              src={IMAGES.cta}
-              alt="Start their financial journey the smart way — Create Event"
-              width={1672}
-              height={941}
-              className="w-full h-auto scale-x-[1.05] scale-y-[1.1] origin-center"
-            />
-          </Link>
-        </section>
+  
 
         <div className="max-w-[720px] mx-auto rounded-[24px] border border-[#ddd6f5] bg-[#EAE3FC] p-6 sm:p-8">
           <h3 className="text-lg font-extrabold text-[#1a1d2e] m-0 mb-2">Fees at a glance</h3>

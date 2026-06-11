@@ -1,4 +1,13 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import {
+  LEGAL_ADDRESS_LINE1,
+  LEGAL_ADDRESS_LINE2,
+  LEGAL_ENTITY,
+  SUPPORT_EMAIL,
+  WEBSITE_LABEL,
+  WEBSITE_URL,
+} from '@/lib/legal'
 
 export const metadata: Metadata = {
     title: 'Privacy Policy | CreditKid',
@@ -14,15 +23,16 @@ export default function PrivacyPolicy() {
                 </a>
 
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Privacy Policy</h1>
-                <p className="text-gray-500 text-sm mb-10">Last updated: February 19, 2026</p>
+                <p className="text-gray-500 text-sm mb-10">Last updated: June 10, 2026</p>
 
                 <div className="prose prose-gray max-w-none space-y-8 text-[15px] leading-relaxed">
                     <Section title="1. Introduction">
                         <p>
-                            CreditKid (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is committed to protecting your privacy. This Privacy
-                            Policy explains how we collect, use, disclose, and safeguard your information when you use the
-                            CreditKid mobile application (&quot;App&quot;), the CreditKid website at credit-kid.com (&quot;Website&quot;),
-                            and related services (collectively, the &quot;Service&quot;).
+                            {LEGAL_ENTITY}, doing business as CreditKid (&quot;CreditKid,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;),
+                            is committed to protecting your privacy. This Privacy Policy explains how we collect, use,
+                            disclose, and safeguard your information when you use the CreditKid mobile application
+                            (&quot;App&quot;), the CreditKid website at {WEBSITE_LABEL} (&quot;Website&quot;), and related services
+                            (collectively, the &quot;Service&quot;).
                         </p>
                         <p>
                             By using the Service, you consent to the practices described in this Privacy Policy. If you do
@@ -132,7 +142,7 @@ export default function PrivacyPolicy() {
 
                         <h3 className="font-bold text-gray-900 text-base mt-4 mb-2">4.3 Business Transfers</h3>
                         <p>
-                            If CreditKid is involved in a merger, acquisition, or sale of assets, your information may be
+                            If {LEGAL_ENTITY} is involved in a merger, acquisition, or sale of assets, your information may be
                             transferred as part of that transaction. We will notify you of any such change.
                         </p>
                     </Section>
@@ -198,7 +208,7 @@ export default function PrivacyPolicy() {
                             <li><strong>Opt-out:</strong> Opt out of non-essential communications</li>
                         </ul>
                         <p>
-                            To exercise any of these rights, contact us at <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a>.
+                            To exercise any of these rights, contact us at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-purple-700 underline">{SUPPORT_EMAIL}</a>.
                             We will respond to your request within 30 days.
                         </p>
                     </Section>
@@ -247,16 +257,19 @@ export default function PrivacyPolicy() {
                             contact us at:
                         </p>
                         <p>
-                            <strong>CreditKid</strong><br />
-                            Email: <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a><br />
-                            Website: <a href="https://credit-kid.com" className="text-purple-700 underline">credit-kid.com</a>
+                            <strong>{LEGAL_ENTITY}</strong><br />
+                            {LEGAL_ADDRESS_LINE1}<br />
+                            {LEGAL_ADDRESS_LINE2}<br />
+                            Email: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-purple-700 underline">{SUPPORT_EMAIL}</a><br />
+                            Website: <a href={WEBSITE_URL} className="text-purple-700 underline">{WEBSITE_LABEL}</a>
                         </p>
                     </Section>
                 </div>
 
-                <div className="mt-16 pt-8 border-t border-gray-200 flex gap-6 text-sm text-gray-500">
-                    <a href="/terms" className="hover:text-purple-700 hover:underline">Terms of Service</a>
-                    <a href="/" className="hover:text-purple-700 hover:underline">Home</a>
+                <div className="mt-16 pt-8 border-t border-gray-200 flex flex-wrap gap-6 text-sm text-gray-500">
+                    <Link href="/terms" className="hover:text-purple-700 hover:underline">Terms of Service</Link>
+                    <Link href="/refunds" className="hover:text-purple-700 hover:underline">Refund Policy</Link>
+                    <Link href="/" className="hover:text-purple-700 hover:underline">Home</Link>
                 </div>
             </div>
         </div>

@@ -1,6 +1,7 @@
 export type FaqItem = {
   question: string
   answer: string
+  imageSrc?: string
 }
 
 export const FAQ_ITEMS: FaqItem[] = [
@@ -18,6 +19,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     question: 'How do we get a credit card?',
     answer:
       'After you create a birthday event and set up your account, CreditKid issues a virtual debit card for your child through Stripe. You complete a quick parent verification, then add the card to Apple Pay on your child\'s phone. No physical card is required — the digital card is ready to use in stores and online.',
+    imageSrc: '/homepage/secure-app.png',
   },
   {
     question: 'Where will my digital gifts be stored?',

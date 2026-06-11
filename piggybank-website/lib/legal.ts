@@ -1,0 +1,6 @@
+export const LEGAL_ENTITY = 'CREDIT KID LLC'
+export const LEGAL_ADDRESS_LINE1 = '2653 NE 213 STREET'
+export const LEGAL_ADDRESS_LINE2 = 'MIAMI, FL 33180'
+export const SUPPORT_EMAIL = 'support@credit-kid.com'
+export const WEBSITE_URL = 'https://credit-kid.com'
+export const WEBSITE_LABEL = 'credit-kid.com'

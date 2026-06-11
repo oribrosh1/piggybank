@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { FAQ_ITEMS } from '@/lib/faqContent'
@@ -8,11 +9,13 @@ import { FAQ_ITEMS } from '@/lib/faqContent'
 function FaqItem({
   question,
   answer,
+  imageSrc,
   isOpen,
   onToggle,
 }: {
   question: string
   answer: string
+  imageSrc?: string
   isOpen: boolean
   onToggle: () => void
 }) {
@@ -31,8 +34,21 @@ function FaqItem({
         />
       </button>
       {isOpen && (
-        <div className="px-5 pb-4 text-[15px] leading-relaxed text-[#5c6178]">
-          {answer}
+        <div className="px-5 pb-5">
+          {imageSrc ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <Image
+                src={imageSrc}
+                alt=""
+                width={480}
+                height={480}
+                className="w-full h-auto rounded-xl"
+              />
+              <p className="text-[15px] leading-relaxed text-[#5c6178] m-0">{answer}</p>
+            </div>
+          ) : (
+            <p className="text-[15px] leading-relaxed text-[#5c6178] m-0">{answer}</p>
+          )}
         </div>
       )}
     </div>
@@ -54,7 +70,7 @@ export default function FaqPage() {
         </Link>
       </header>
 
-      <div className="w-[min(720px,92%)] mx-auto px-0 pb-16">
+      <div className="w-[min(960px,92%)] mx-auto px-0 pb-16">
         <div className="text-center mb-10">
           <span className="text-[24px] font-extrabold text-[#6b38d4] tracking-[-0.5px]">
             CreditKid
@@ -73,6 +89,7 @@ export default function FaqPage() {
               key={item.question}
               question={item.question}
               answer={item.answer}
+              imageSrc={item.imageSrc}
               isOpen={openIndex === index}
               onToggle={() => setOpenIndex(openIndex === index ? null : index)}
             />

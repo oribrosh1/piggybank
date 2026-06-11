@@ -1,4 +1,13 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import {
+  LEGAL_ADDRESS_LINE1,
+  LEGAL_ADDRESS_LINE2,
+  LEGAL_ENTITY,
+  SUPPORT_EMAIL,
+  WEBSITE_LABEL,
+  WEBSITE_URL,
+} from '@/lib/legal'
 
 export const metadata: Metadata = {
     title: 'Terms of Service | CreditKid',
@@ -14,7 +23,7 @@ export default function TermsOfService() {
                 </a>
 
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Terms of Service</h1>
-                <p className="text-gray-500 text-sm mb-10">Last updated: February 19, 2026</p>
+                <p className="text-gray-500 text-sm mb-10">Last updated: June 10, 2026</p>
 
                 <div className="prose prose-gray max-w-none space-y-8 text-[15px] leading-relaxed">
                     <Section title="1. Acceptance of Terms">
@@ -25,8 +34,8 @@ export default function TermsOfService() {
                             do not use the Service.
                         </p>
                         <p>
-                            CreditKid is operated by CreditKid (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;). These Terms
-                            constitute a legally binding agreement between you and CreditKid.
+                            The Service is operated by {LEGAL_ENTITY} (&quot;CreditKid,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
+                            These Terms constitute a legally binding agreement between you and {LEGAL_ENTITY}.
                         </p>
                     </Section>
 
@@ -133,7 +142,7 @@ export default function TermsOfService() {
 
                     <Section title="9. Intellectual Property">
                         <p>
-                            All content, branding, software, designs, and features of the Service are owned by CreditKid or
+                            All content, branding, software, designs, and features of the Service are owned by {LEGAL_ENTITY} or
                             its licensors and are protected by copyright, trademark, and other intellectual property laws.
                             You may not copy, reproduce, distribute, or create derivative works from any part of the Service
                             without our written permission.
@@ -154,10 +163,10 @@ export default function TermsOfService() {
 
                     <Section title="11. Limitation of Liability">
                         <p>
-                            TO THE MAXIMUM EXTENT PERMITTED BY LAW, CREDITKID SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+                            TO THE MAXIMUM EXTENT PERMITTED BY LAW, {LEGAL_ENTITY} SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
                             SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING
                             FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT OF FEES PAID BY YOU
-                            TO CREDITKID IN THE 12 MONTHS PRECEDING THE CLAIM.
+                            TO {LEGAL_ENTITY} IN THE 12 MONTHS PRECEDING THE CLAIM.
                         </p>
                     </Section>
 
@@ -191,21 +200,31 @@ export default function TermsOfService() {
                         </p>
                     </Section>
 
-                    <Section title="15. Contact">
+                    <Section title="15. Refunds">
+                        <p>
+                            Refunds for gift payments are handled in accordance with our{' '}
+                            <Link href="/refunds" className="text-purple-700 underline">Refund Policy</Link>.
+                        </p>
+                    </Section>
+
+                    <Section title="16. Contact">
                         <p>
                             If you have questions about these Terms, please contact us at:
                         </p>
                         <p>
-                            <strong>CreditKid</strong><br />
-                            Email: <a href="mailto:support@credit-kid.com" className="text-purple-700 underline">support@credit-kid.com</a><br />
-                            Website: <a href="https://credit-kid.com" className="text-purple-700 underline">credit-kid.com</a>
+                            <strong>{LEGAL_ENTITY}</strong><br />
+                            {LEGAL_ADDRESS_LINE1}<br />
+                            {LEGAL_ADDRESS_LINE2}<br />
+                            Email: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-purple-700 underline">{SUPPORT_EMAIL}</a><br />
+                            Website: <a href={WEBSITE_URL} className="text-purple-700 underline">{WEBSITE_LABEL}</a>
                         </p>
                     </Section>
                 </div>
 
-                <div className="mt-16 pt-8 border-t border-gray-200 flex gap-6 text-sm text-gray-500">
-                    <a href="/privacy" className="hover:text-purple-700 hover:underline">Privacy Policy</a>
-                    <a href="/" className="hover:text-purple-700 hover:underline">Home</a>
+                <div className="mt-16 pt-8 border-t border-gray-200 flex flex-wrap gap-6 text-sm text-gray-500">
+                    <Link href="/privacy" className="hover:text-purple-700 hover:underline">Privacy Policy</Link>
+                    <Link href="/refunds" className="hover:text-purple-700 hover:underline">Refund Policy</Link>
+                    <Link href="/" className="hover:text-purple-700 hover:underline">Home</Link>
                 </div>
             </div>
         </div>
