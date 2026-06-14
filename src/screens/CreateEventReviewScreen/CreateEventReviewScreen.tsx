@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
+import type { TextInput as TextInputType } from "react-native";
 import {
   View,
   Text,
@@ -9,16 +10,29 @@ import {
   Platform,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from "react-native";
-import * as MediaLibrary from "expo-media-library";
-import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Download, Eye } from "lucide-react-native";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Images,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react-native";
+import { useCreateEventDraftStore } from "@/src/stores/createEventDraftStore";
+import type { QuickPosterCover } from "@/src/stores/createEventDraftStore";
+import { routes } from "@/types/routes";
+import { AppMeshBackground } from "@/src/components/AppMeshBackground";
+import { GlassCardDark } from "@/src/components/common/GlassCardDark";
+import CreateEventReviewDetailsSection from "@/src/components/create-event/CreateEventReviewDetailsSection";
 import EventDetailsScreenFooter from "@/src/components/create-event/EventDetailsScreenFooter";
 import PosterSkeletonPreviewSection from "@/src/components/create-event/PosterSkeletonPreviewSection";
 import PosterSummarySkeletonPreview from "@/src/components/create-event/PosterSummarySkeletonPreview";
+import QuickPosterMessageSection, {
+  MESSAGE_CHAR_LIMIT,
+} from "@/src/components/create-event/QuickPosterMessageSection";
+import QuickPosterPreview from "@/src/components/create-event/QuickPosterPreview";
 import { colors, spacing, fontFamily, radius } from "@/src/theme";
 import { useCreateEventReviewScreen } from "./useCreateEventReviewScreen";
 
@@ -58,55 +72,80 @@ const POSTER_PIPELINE_TIERS = [
 export default function CreateEventReviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const posterCaptureRef = useRef<View>(null);
-  const [savingPosterImage, setSavingPosterImage] = useState(false);
+  const setDraft = useCreateEventDraftStore((s) => s.setDraft);
+  const eventWordsInputRef = useRef<TextInputType>(null);
+  const quickPosterCaptureRef = useRef<View>(null);
   const { draft, isSubmitting, posterGenLive, handleConfirmCreate } =
-    useCreateEventReviewScreen();
+    useCreateEventReviewScreen(quickPosterCaptureRef);
 
-  const handleSavePosterImage = useCallback(async () => {
-    const node = posterCaptureRef.current;
-    if (!node) return;
-    try {
-      setSavingPosterImage(true);
-      if (Platform.OS === "web") {
-        Alert.alert(
-          "Not available",
-          "Saving poster images is only supported in the mobile app.",
-        );
-        return;
-      }
-      const perm = await MediaLibrary.requestPermissionsAsync(true);
-      if (!perm.granted) {
-        Alert.alert(
-          "Photos access needed",
-          "Allow photo library access so we can save your poster image.",
-        );
-        return;
-      }
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const uri = await captureRef(node, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
+  const handleChoosePosterCover = useCallback(() => {
+    if (!draft) return;
+
+    if (draft.posterStyle !== "quick") {
+      router.push({
+        pathname: routes.createEvent.posterStyle,
+        params: { eventType: draft.resolvedEventType },
       });
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert("Saved", "Poster image was saved to your photo library.");
-    } catch (e) {
-      console.warn("Save poster image failed", e);
-      Alert.alert(
-        "Could not save",
-        "Something went wrong saving the image. Please try again.",
-      );
-    } finally {
-      setSavingPosterImage(false);
+      return;
     }
-  }, []);
+
+    const applyCover = (cover: QuickPosterCover) => {
+      setDraft({ ...draft, quickPosterCover: cover });
+    };
+
+    Alert.alert("Choose another poster cover", "Pick a design for your poster.", [
+      {
+        text: "Boys",
+        onPress: () => applyCover("boy"),
+      },
+      {
+        text: "Girls",
+        onPress: () => applyCover("girl"),
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  }, [draft, router, setDraft]);
+
+  const handleEventWordsChange = useCallback(
+    (text: string) => {
+      if (!draft) return;
+      setDraft({
+        ...draft,
+        quickPosterEventWords: text.slice(0, MESSAGE_CHAR_LIMIT),
+      });
+    },
+    [draft, setDraft],
+  );
+
+  const handleShowMessageChange = useCallback(
+    (show: boolean) => {
+      if (!draft) return;
+      setDraft({
+        ...draft,
+        quickPosterShowMessage: show,
+        ...(show ? {} : { quickPosterEventWords: "" }),
+      });
+    },
+    [draft, setDraft],
+  );
 
   if (!draft) {
     return null;
   }
 
-  const { formData } = draft;
+  const {
+    formData,
+    posterStyle,
+    quickPosterCover,
+    quickPosterEventWords,
+    quickPosterShowMessage,
+  } = draft;
+  const isQuickPoster = posterStyle === "quick";
+  const activePosterCover =
+    quickPosterCover ??
+    (formData.honoreeGender === "girl" ? "girl" : "boy");
+  const showPosterMessage = quickPosterShowMessage !== false;
+  const posterMessage = showPosterMessage ? (quickPosterEventWords ?? "") : "";
 
   return (
     <KeyboardAvoidingView
@@ -114,25 +153,22 @@ export default function CreateEventReviewScreen() {
       style={styles.screen}
     >
       <View style={styles.screen}>
-        <View
-          style={[
-            styles.topBar,
-            { paddingTop: insets.top + spacing[1] },
-          ]}
-        >
+        <AppMeshBackground />
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing[4] }]}>
           <TouchableOpacity
             onPress={() => router.back()}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             style={styles.backHit}
             accessibilityRole="button"
             accessibilityLabel="Back to edit details"
           >
-            <ArrowLeft size={22} color={colors.onSurface} strokeWidth={2.2} />
+            <ArrowLeft size={20} color={colors.onSurface} strokeWidth={2.2} />
           </TouchableOpacity>
-          <Text style={styles.topTitle}>Review your event</Text>
+          <Text style={[styles.heroTitle, styles.topBarTitle]}>
+            Looks great!
+          </Text>
           <View style={styles.topBarSpacer} />
         </View>
-
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[
@@ -142,101 +178,185 @@ export default function CreateEventReviewScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.lead}>
-            Double-check your details. The sketch below shows how your invitation
-            will be composed from what you entered — final AI art arrives after you
-            create the event.
-          </Text>
-
-          <View
-            style={styles.previewHeaderRow}
-            accessibilityRole="header"
-            accessibilityLabel="Preview"
-          >
-            <Eye size={20} color={colors.primary} strokeWidth={2.25} />
-            <Text style={styles.previewHeaderText}>Preview</Text>
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.savePosterButton,
-              savingPosterImage && styles.savePosterButtonDisabled,
-            ]}
-            onPress={handleSavePosterImage}
-            disabled={savingPosterImage}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel="Save poster image to photo library"
-          >
-            {savingPosterImage ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+          <View style={styles.heroIntro}>
+            {isQuickPoster ? (
+              <Text style={styles.heroTitle}>
+                <Text style={styles.heroTitleAccent}>We're Almost Ready!</Text> 
+              </Text>
             ) : (
-              <Download size={20} color={colors.primary} strokeWidth={2.25} />
+              <Text style={styles.heroTitle}>Looking good</Text>
             )}
-            <Text style={styles.savePosterButtonText}>
-              {savingPosterImage ? "Saving…" : "Save to Photos"}
+            <Text style={styles.heroSubtitle}>
+              {isQuickPoster
+                ? "Review your poster and add a message for your guests we'll place it in the center of your poster."
+                : "Confirm your details below. Your AI poster generates right after you create the event."}
             </Text>
-          </TouchableOpacity>
-
-          <View
-            ref={posterCaptureRef}
-            collapsable={false}
-            style={styles.inlinePreviewWrap}
-          >
-            <PosterSummarySkeletonPreview
-              formData={formData}
-              showSectionHeader={false}
-              showPartyVibeAnimation={false}
-              showAvatar={false}
-              elevated={false}
-              horizontalInset={spacing[5]}
-              style={styles.inlinePreviewPoster}
-            />
           </View>
 
-          <PosterSummarySkeletonPreview formData={formData} />
-    
-          <View style={styles.pipelineSection}>
-            <Text style={styles.pipelineTitle}>Your poster over time</Text>
-            <Text style={styles.pipelineSubtitle}>
-              Example invitations — yours will match your theme and photo. Times
-              vary with traffic and detail.
-            </Text>
-
-            {POSTER_PIPELINE_TIERS.map((tier) => (
-              <View key={tier.key} style={styles.tierCard}>
-                <Image
-                  source={tier.image}
-                  style={styles.tierImage}
-                  resizeMode="cover"
-                  accessibilityIgnoresInvertColors
-                />
-                <View style={styles.tierCopy}>
-                  <View style={styles.tierTitleRow}>
-                    <Text style={styles.tierTitle}>{tier.title}</Text>
-                    <View style={styles.timePill}>
-                      <Text style={styles.timePillText}>{tier.timeRange}</Text>
-                    </View>
+          {isQuickPoster ? (
+            <>
+              <View style={styles.posterMessageGroup}>
+                <View style={styles.posterPreviewCard}>
+                  <View style={styles.posterPreviewCardHeader}>
+                    <Text style={styles.posterPreviewLabel}>Poster preview</Text>
+                    <TouchableOpacity
+                      style={styles.switchCoverButton}
+                      onPress={handleChoosePosterCover}
+                      activeOpacity={0.88}
+                      accessibilityRole="button"
+                      accessibilityLabel="Switch poster cover"
+                    >
+                      <RefreshCw
+                        size={13}
+                        color={colors.primary}
+                        strokeWidth={2.4}
+                      />
+                      <Text style={styles.switchCoverText}>Switch cover</Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.qualityBadge}>{tier.qualityLabel}</Text>
-                  <Text style={styles.tierBody}>{tier.body}</Text>
+                  <View
+                    ref={quickPosterCaptureRef}
+                    collapsable={false}
+                    style={styles.posterCaptureWrap}
+                  >
+                    <QuickPosterPreview
+                      formData={formData}
+                      posterCover={activePosterCover}
+                      eventWords={posterMessage}
+                      showCenterMessage={showPosterMessage}
+                      horizontalInset={spacing[8]}
+                      style={styles.inlinePreviewPoster}
+                    />
+                  </View>
+                </View>
+
+                <GlassCardDark
+                  style={styles.messageGlassCard}
+                  padding={spacing[4]}
+                  borderRadius={radius.md}
+                  borderColor="rgba(107, 56, 212, 0.14)"
+                >
+                  <QuickPosterMessageSection
+                    showMessage={showPosterMessage}
+                    message={posterMessage}
+                    onShowMessageChange={handleShowMessageChange}
+                    onMessageChange={handleEventWordsChange}
+                    inputRef={eventWordsInputRef}
+                  />
+                </GlassCardDark>
+              </View>
+
+              <TouchableOpacity
+                style={styles.chooseCoverCard}
+                onPress={handleChoosePosterCover}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel="Change poster cover"
+              >
+                <View style={styles.chooseCoverIcon}>
+                  <Images size={20} color={colors.primary} strokeWidth={2.1} />
+                </View>
+                <View style={styles.chooseCoverCopy}>
+                  <Text style={styles.chooseCoverTitle}>
+                    Change poster cover
+                  </Text>
+                  <Text style={styles.chooseCoverSubtitle}>
+                    Choose a different design
+                  </Text>
+                </View>
+                <ChevronRight
+                  size={20}
+                  color={colors.onSurfaceVariant}
+                  strokeWidth={2.2}
+                />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.posterSection}>
+              <View style={styles.posterSectionHeader}>
+                <Text style={styles.posterSectionTitle}>Poster preview</Text>
+                <View style={styles.posterTypeBadgePremium}>
+                  <Sparkles size={12} color={colors.primary} strokeWidth={2.5} />
+                  <Text style={styles.posterTypeBadgeText}>AI</Text>
                 </View>
               </View>
-            ))}
-          </View>
+              <GlassCardDark
+                style={styles.posterCard}
+                padding={spacing[3]}
+                borderRadius={radius.md}
+                borderColor="rgba(107, 56, 212, 0.12)"
+              >
+                <PosterSummarySkeletonPreview
+                  formData={formData}
+                  showSectionHeader={false}
+                  showPartyVibeAnimation={false}
+                  showAvatar={false}
+                  elevated={false}
+                  horizontalInset={spacing[8]}
+                  style={styles.inlinePreviewPoster}
+                />
+              </GlassCardDark>
+            </View>
+          )}
 
-          <PosterSkeletonPreviewSection
-            visible={!!posterGenLive}
-            posterUrl={posterGenLive?.posterUrl}
-            posterStreamingPreviewUrl={posterGenLive?.posterStreamingPreviewUrl}
-            skeletonPosterUrl={posterGenLive?.skeletonPosterUrl}
-          />
+          {!isQuickPoster ? (
+            <CreateEventReviewDetailsSection
+              formData={formData}
+              isQuickPoster={isQuickPoster}
+              onEdit={() => router.back()}
+            />
+          ) : null}
+
+          {!isQuickPoster ? (
+            <View style={styles.pipelineSection}>
+              <Text style={styles.pipelineTitle}>What happens next</Text>
+              <Text style={styles.pipelineSubtitle}>
+                Example stages — yours will match your theme and photo.
+              </Text>
+
+              {POSTER_PIPELINE_TIERS.map((tier) => (
+                <View key={tier.key} style={styles.tierCard}>
+                  <Image
+                    source={tier.image}
+                    style={styles.tierImage}
+                    resizeMode="cover"
+                    accessibilityIgnoresInvertColors
+                  />
+                  <View style={styles.tierCopy}>
+                    <View style={styles.tierTitleRow}>
+                      <Text style={styles.tierTitle}>{tier.title}</Text>
+                      <View style={styles.timePill}>
+                        <Text style={styles.timePillText}>{tier.timeRange}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.qualityBadge}>{tier.qualityLabel}</Text>
+                    <Text style={styles.tierBody}>{tier.body}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {!isQuickPoster ? (
+            <PosterSkeletonPreviewSection
+              visible={!!posterGenLive}
+              posterUrl={posterGenLive?.posterUrl}
+              posterStreamingPreviewUrl={posterGenLive?.posterStreamingPreviewUrl}
+              skeletonPosterUrl={posterGenLive?.skeletonPosterUrl}
+            />
+          ) : null}
         </ScrollView>
 
         <EventDetailsScreenFooter
           onContinue={handleConfirmCreate}
           loading={isSubmitting}
           disabled={isSubmitting}
+          ctaTitle={isQuickPoster ? "Create Event" : undefined}
+          footerHint={
+            isQuickPoster
+              ? "You can edit details anytime after creation."
+              : undefined
+          }
         />
       </View>
     </KeyboardAvoidingView>
@@ -246,17 +366,32 @@ export default function CreateEventReviewScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.surfaceContainerLowest,
+    backgroundColor: "transparent",
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing[4],
-    paddingBottom: spacing[2],
+    marginTop: -spacing[4],
   },
   backHit: {
-    padding: 8,
-    marginLeft: -4,
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceContainerLowest,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.10)",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#0c1c2a",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+      },
+      android: { elevation: 3 },
+    }),
   },
   topTitle: {
     flex: 1,
@@ -267,119 +402,185 @@ const styles = StyleSheet.create({
     color: colors.onSurface,
     letterSpacing: -0.3,
   },
+  topBarTitle: {
+    flex: 1,
+  },
   topBarSpacer: {
-    width: 38,
+    width: 40,
   },
   scroll: {
     flex: 1,
+    backgroundColor: "transparent",
   },
   scrollContent: {
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[3],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
+    gap: spacing[5],
   },
-  lead: {
+  heroIntro: {
+    gap: spacing[1],
+  },
+  heroTitle: {
+    fontFamily: fontFamily.title,
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.7,
+    lineHeight: 36,
+    textAlign: "center",
+  },
+  heroTitleAccent: {
+    color: colors.primary,
+  },
+  heroSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: "500",
-    color: colors.onSurfaceVariant,
-    marginBottom: spacing[3],
+    fontWeight: "800",
+    color: colors.onSurface,
+    marginTop: spacing[1],
+    textAlign: "center",
   },
-  previewHeaderRow: {
+  posterMessageGroup: {
+    gap: 0,
+  },
+  posterPreviewCard: {
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
+    borderColor: "rgba(107, 56, 212, 0.14)",
+    backgroundColor: colors.surfaceContainerLow,
+    padding: spacing[4],
+    gap: spacing[3],
+  },
+  messageGlassCard: {
+    marginTop: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
+  posterPreviewCardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    gap: spacing[2],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[4],
-    marginBottom: spacing[2],
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(107, 56, 212, 0.35)",
-    backgroundColor: "rgba(107, 56, 212, 0.06)",
+    justifyContent: "space-between",
+    gap: spacing[3],
   },
-  previewHeaderText: {
+  posterPreviewLabel: {
+    fontFamily: fontFamily.label,
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  switchCoverButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(107, 56, 212, 0.28)",
+    backgroundColor: colors.surfaceContainerLowest,
+  },
+  switchCoverText: {
+    fontFamily: fontFamily.label,
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: -0.1,
+  },
+  posterSection: {
+    gap: spacing[3],
+  },
+  posterSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[3],
+  },
+  posterSectionTitle: {
     fontFamily: fontFamily.title,
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.onSurface,
+    letterSpacing: -0.35,
+  },
+  posterTypeBadgePremium: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(107, 56, 212, 0.1)",
+    borderColor: "rgba(107, 56, 212, 0.22)",
+  },
+  posterTypeBadgeText: {
+    fontFamily: fontFamily.label,
+    fontSize: 11,
     fontWeight: "800",
     color: colors.primary,
-    letterSpacing: -0.2,
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
-  inlinePreviewWrap: {
-    marginBottom: spacing[4],
+  posterCard: {
+    alignSelf: "stretch",
+  },
+  posterCaptureWrap: {
     width: "100%",
-    maxWidth: "100%",
     alignSelf: "center",
   },
   inlinePreviewPoster: {
     marginBottom: 0,
     maxWidth: "100%",
   },
-  savePosterButton: {
+  chooseCoverCard: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    gap: spacing[2],
-    paddingVertical: spacing[2],
+    gap: spacing[3],
+    paddingVertical: spacing[4],
     paddingHorizontal: spacing[4],
-    marginBottom: spacing[4],
-    marginTop: spacing[1],
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(107, 56, 212, 0.35)",
+    borderColor: "rgba(107, 56, 212, 0.12)",
     backgroundColor: colors.surfaceContainerLow,
-    minWidth: 200,
   },
-  savePosterButtonDisabled: {
-    opacity: 0.72,
+  chooseCoverIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(107, 56, 212, 0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
-  savePosterButtonText: {
+  chooseCoverCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  chooseCoverTitle: {
     fontFamily: fontFamily.title,
     fontSize: 16,
     fontWeight: "800",
-    color: colors.primary,
-    letterSpacing: -0.2,
+    color: colors.onSurface,
+    letterSpacing: -0.3,
+    lineHeight: 21,
   },
-  afterSketchHint: {
+  chooseCoverSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    lineHeight: 19,
-    fontWeight: "600",
+    fontWeight: "500",
     color: colors.onSurfaceVariant,
-    marginBottom: spacing[4],
-    marginTop: -spacing[1],
-  },
-  cardHeading: {
-    fontFamily: fontFamily.headline,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.9,
-    textTransform: "uppercase",
-    color: colors.primary,
-    marginBottom: spacing[3],
-  },
-  summaryRow: {
-    marginBottom: spacing[2],
-  },
-  summaryLabel: {
-    fontFamily: fontFamily.label,
-    fontSize: 11,
-    fontWeight: "600",
-    color: colors.onSurfaceVariant,
-    marginBottom: 2,
-  },
-  summaryValue: {
-    fontFamily: fontFamily.body,
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.onSurface,
-    lineHeight: 22,
+    lineHeight: 18,
   },
   pipelineSection: {
-    marginTop: spacing[5],
-    marginBottom: spacing[2],
+    gap: spacing[3],
   },
   pipelineTitle: {
     fontFamily: fontFamily.title,
@@ -387,7 +588,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.4,
-    marginBottom: spacing[1],
   },
   pipelineSubtitle: {
     fontFamily: fontFamily.body,
@@ -395,12 +595,12 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: "500",
     color: colors.onSurfaceVariant,
-    marginBottom: spacing[3],
+    marginTop: -spacing[2],
+    marginBottom: spacing[1],
   },
   tierCard: {
     borderRadius: radius.md,
     overflow: "hidden",
-    marginBottom: spacing[3],
     backgroundColor: colors.surfaceContainerLow,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(107, 56, 212, 0.14)",

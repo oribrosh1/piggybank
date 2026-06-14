@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import { Suspense } from 'react';
 import {
     Calendar,
@@ -13,6 +15,7 @@ import { getAdminDb } from '@/lib/firebase-admin';
 import { EventData, getEventEmoji, getEventTypeLabel, formatDate } from '@/lib/types';
 import RSVPSection from '@/components/RSVPSection';
 import GiftCardSection from '@/components/GiftCardSection';
+import { LOGO_PATH, SITE_NAME, absoluteUrl, pageMetadata } from '@/lib/site';
 
 // Fetch event data
 async function getEvent(id: string): Promise<EventData | null> {
@@ -45,9 +48,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const event = await getEvent(params.id);
 
     if (!event) {
-        return {
-            title: 'Event Not Found | CreditKid',
-        };
+        return pageMetadata({
+            title: 'Event Not Found',
+            description: 'This event may have ended or the invitation link is incorrect.',
+            path: `/event/${params.id}`,
+        });
     }
 
     const emoji = getEventEmoji(event.eventType);
@@ -55,22 +60,19 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const title = `${emoji} You're Invited! ${event.eventName}`;
     const description = `Join us for ${event.creatorName}'s ${typeLabel}! ${formatDate(event.date)} at ${event.time}. RSVP now and send a gift directly to their CreditKid card!`;
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://credit-kid.com';
-    const eventUrl = `${baseUrl}/event/${event.id}`;
-    const ogImageUrl = `${baseUrl}/api/og?title=${encodeURIComponent(event.eventName)}&type=${event.eventType}&date=${encodeURIComponent(event.date)}&host=${encodeURIComponent(event.creatorName)}`;
+    const eventUrl = absoluteUrl(`/event/${event.id}`);
+    const ogImageUrl = `${absoluteUrl('/api/og')}?title=${encodeURIComponent(event.eventName)}&type=${event.eventType}&date=${encodeURIComponent(event.date)}&host=${encodeURIComponent(event.creatorName)}`;
 
     return {
-        title,
-        description,
-        openGraph: {
+        ...pageMetadata({
             title,
             description,
-            url: eventUrl,
-            siteName: 'CreditKid',
-            type: 'website',
-            images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${event.eventName} - ${typeLabel}` }],
-        },
-        twitter: { card: 'summary_large_image', title, description, images: [ogImageUrl] },
+            path: `/event/${event.id}`,
+            images: [
+                { url: ogImageUrl, width: 1200, height: 630, alt: `${event.eventName} - ${typeLabel}` },
+                { url: LOGO_PATH, width: 512, height: 512, alt: `${SITE_NAME} logo` },
+            ],
+        }),
         other: { 'apple-mobile-web-app-title': title },
     };
 }
@@ -302,8 +304,8 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                     {/* CreditKid Gift Section */}
                     <div className="bg-[#FAF5FF] rounded-3xl p-6 border-2 border-[#E9D5FF]">
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center">
-                                <span className="text-2xl"></span>
+                            <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center overflow-hidden">
+                                <Image src={LOGO_PATH} alt={SITE_NAME} width={32} height={32} className="object-contain" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-extrabold text-gray-900">Skip the Gift Card! 🎁</h3>
@@ -339,8 +341,8 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
                     {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
-                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                            <span className="text-3xl"></span>
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                            <Image src={LOGO_PATH} alt={SITE_NAME} width={40} height={40} className="object-contain" />
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
                             Powered by CreditKid
@@ -357,6 +359,9 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
             {/* Footer */}
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
+                <Link href="/" className="inline-flex justify-center mb-3">
+                    <Image src={LOGO_PATH} alt={SITE_NAME} width={28} height={28} className="object-contain" />
+                </Link>
                 <p>© 2026 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>

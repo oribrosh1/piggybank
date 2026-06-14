@@ -70,6 +70,15 @@ app.post(
     stripeController.createCustomConnectAccount
 );
 
+app.post(
+    "/saveQuickPoster",
+    express.json({ limit: "8mb" }),
+    generalLimiter,
+    ...appCheckMiddlewareForKyc(),
+    verifyFirebaseToken,
+    posterController.saveQuickPoster
+);
+
 app.use(express.json({ limit: "256kb" }));
 
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL || "https://credit-kid.com";

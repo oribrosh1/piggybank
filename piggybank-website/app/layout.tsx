@@ -1,16 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { defaultMetadata } from '@/lib/site'
 
-export const metadata: Metadata = {
-  title: 'The New Standard for Birthday Gifts',
-  description: 'Give your child a virtual debit card for his gifts they can use anywhere. No more unused gift cards sitting in drawers. Just real freedom.',
-  keywords: 'creditkid, birthday gift wallet, kids events, SMS invites, gift registry, parent controls, Apple Pay kids',
-  openGraph: {
-    title: 'The New Standard for Birthday Gifts',
-    description: 'Give your child a virtual debit card for his gifts they can use anywhere. No more unused gift cards sitting in drawers. Just real freedom.',
-    type: 'website',
-  },
-}
+export const metadata: Metadata = defaultMetadata
 
 export default function RootLayout({
   children,
@@ -25,4 +17,3 @@ export default function RootLayout({
     </html>
   )
 }
-

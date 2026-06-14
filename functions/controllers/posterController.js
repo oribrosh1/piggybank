@@ -1,5 +1,9 @@
+const admin = require("firebase-admin");
 const eventRepository = require("../repositories/eventRepository");
+const storageRepository = require("../repositories/storageRepository");
 const { AppError, handleError } = require("../utils/errors");
+
+const MAX_QUICK_POSTER_BYTES = 6 * 1024 * 1024;
 
 /** Lazy-load: avoids pulling Gemini + Vertex/aiplatform into cold start for every function. */
 function loadAiService() {
@@ -75,4 +79,50 @@ async function generatePoster(req, res) {
     }
 }
 
-module.exports = { generatePoster };
+/**
+ * Saves a client-captured quick poster PNG (no AI). Uses Admin SDK Storage + Firestore.
+ */
+async function saveQuickPoster(req, res) {
+    const { eventId, imageBase64 } = req.body;
+    const uid = req.user?.uid;
+    console.log(`[saveQuickPoster] uid=${uid} eventId=${eventId}`);
+
+    if (!eventId || typeof eventId !== "string") {
+        return res.status(400).json({ error: "Missing eventId" });
+    }
+    if (typeof imageBase64 !== "string" || !imageBase64.trim()) {
+        return res.status(400).json({ error: "Missing imageBase64" });
+    }
+
+    try {
+        const event = await eventRepository.getById(eventId);
+        if (!event) {
+            throw new AppError("Event not found", { statusCode: 404 });
+        }
+        if (event.creatorId !== uid) {
+            throw new AppError("Not authorized to modify this event", { statusCode: 403 });
+        }
+
+        const buffer = Buffer.from(imageBase64, "base64");
+        if (!buffer.length || buffer.length > MAX_QUICK_POSTER_BYTES) {
+            return res.status(400).json({ error: "Invalid image data" });
+        }
+
+        const posterUrl = await storageRepository.savePoster(eventId, buffer, "image/png");
+        await eventRepository.update(eventId, {
+            posterUrl,
+            posterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        console.log(`[saveQuickPoster] success uid=${uid} eventId=${eventId}`);
+        res.json({ success: true, posterUrl });
+    } catch (err) {
+        console.error(`[saveQuickPoster] error uid=${uid} eventId=${eventId} message=${err.message}`);
+        if (err instanceof AppError) {
+            return res.status(err.statusCode).json({ error: err.message, ...(err.code && { code: err.code }) });
+        }
+        handleError(err, res);
+    }
+}
+
+module.exports = { generatePoster, saveQuickPoster };

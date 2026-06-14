@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Bell, Check } from 'lucide-react'
+import { CreditKidLogo } from '@/components/CreditKidLogo'
 
 export default function ComingSoonPage() {
   const [email, setEmail] = useState('')
@@ -52,10 +53,8 @@ export default function ComingSoonPage() {
 
       <div className="flex-1 flex items-center justify-center px-[4%] py-12">
         <div className="w-full max-w-lg text-center">
-          <div className="flex items-center justify-center gap-2.5 mb-8">
-            <span className="text-[28px] font-extrabold text-[#6b38d4] tracking-[-0.5px]">
-              CreditKid
-            </span>
+          <div className="flex items-center justify-center mb-8">
+            <CreditKidLogo height={44} />
           </div>
 
           <div className="inline-flex items-center gap-2 bg-white/70 text-[#6b38d4] text-sm font-bold px-4 py-2 rounded-full mb-6">

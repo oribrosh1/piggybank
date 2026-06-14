@@ -174,6 +174,13 @@ export function useEventDetailsScreen(
       formData: { ...formData },
       resolvedEventType,
       posterStyle,
+      quickPosterCover:
+        posterStyle === "quick"
+          ? formData.honoreeGender === "girl"
+            ? "girl"
+            : "boy"
+          : undefined,
+      quickPosterShowMessage: posterStyle === "quick" ? true : undefined,
     });
     router.push(routes.createEvent.reviewCreate);
   };

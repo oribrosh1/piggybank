@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Sparkles } from "lucide-react-native";
+import { Lock, Sparkles } from "lucide-react-native";
 import { colors, spacing, fontFamily, primaryGradient } from "@/src/theme";
 
 interface EventDetailsScreenFooterProps {
@@ -18,6 +18,8 @@ interface EventDetailsScreenFooterProps {
   disabled?: boolean;
   /** Primary button label — defaults to “Create Event & AI Poster”. */
   ctaTitle?: string;
+  /** Small note below the CTA, e.g. review-screen edit reassurance. */
+  footerHint?: string;
 }
 
 export default function EventDetailsScreenFooter({
@@ -25,6 +27,7 @@ export default function EventDetailsScreenFooter({
   loading,
   disabled,
   ctaTitle = "Create Event & AI Poster",
+  footerHint,
 }: EventDetailsScreenFooterProps) {
   const insets = useSafeAreaInsets();
   const paddingBottom = Math.max(spacing[4], insets.bottom + spacing[2]);
@@ -70,6 +73,12 @@ export default function EventDetailsScreenFooter({
           )}
         </LinearGradient>
       </TouchableOpacity>
+      {footerHint ? (
+        <View style={styles.footerHintRow}>
+          <Lock size={13} color={colors.onSurfaceVariant} strokeWidth={2.2} />
+          <Text style={styles.footerHintText}>{footerHint}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -167,5 +176,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
     marginTop: 2,
+  },
+  footerHintRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: spacing[3],
+    paddingHorizontal: spacing[2],
+  },
+  footerHintText: {
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    fontWeight: "500",
+    color: colors.onSurfaceVariant,
+    lineHeight: 17,
+    textAlign: "center",
   },
 });

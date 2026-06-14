@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { FAQ_ITEMS } from '@/lib/faqContent'
+import { CreditKidLogo } from '@/components/CreditKidLogo'
 
 function FaqItem({
   question,
@@ -72,9 +73,9 @@ export default function FaqPage() {
 
       <div className="w-[min(960px,92%)] mx-auto px-0 pb-16">
         <div className="text-center mb-10">
-          <span className="text-[24px] font-extrabold text-[#6b38d4] tracking-[-0.5px]">
-            CreditKid
-          </span>
+          <div className="flex justify-center mb-6">
+            <CreditKidLogo height={40} />
+          </div>
           <h1 className="text-[clamp(32px,5vw,44px)] font-extrabold tracking-[-1px] m-0 mt-6 mb-3">
             Frequently Asked Questions
           </h1>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { CreditKidLogo } from '@/components/CreditKidLogo'
 import {
   LEGAL_ADDRESS_LINE1,
   LEGAL_ADDRESS_LINE2,
@@ -8,19 +9,24 @@ import {
   WEBSITE_LABEL,
   WEBSITE_URL,
 } from '@/lib/legal'
+import { pageMetadata } from '@/lib/site'
 
-export const metadata: Metadata = {
-    title: 'Privacy Policy | CreditKid',
-    description: 'CreditKid Privacy Policy — learn how we collect, use, and protect your personal information.',
-}
+export const metadata: Metadata = pageMetadata({
+  title: 'Privacy Policy',
+  description: 'CreditKid Privacy Policy — learn how we collect, use, and protect your personal information.',
+  path: '/privacy',
+})
 
 export default function PrivacyPolicy() {
     return (
         <div className="min-h-screen bg-white">
             <div className="max-w-3xl mx-auto px-6 py-16">
-                <a href="/" className="text-purple-700 font-semibold text-sm hover:underline mb-8 inline-block">
-                    ← Back to CreditKid
-                </a>
+                <div className="flex flex-col gap-6 mb-8">
+                    <CreditKidLogo height={40} />
+                    <a href="/" className="text-purple-700 font-semibold text-sm hover:underline">
+                        ← Back to CreditKid
+                    </a>
+                </div>
 
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Privacy Policy</h1>
                 <p className="text-gray-500 text-sm mb-10">Last updated: June 10, 2026</p>

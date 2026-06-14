@@ -1,10 +1,23 @@
 import { create } from "zustand";
-import type { EventFormData, EventType, PosterStyleChoice } from "@/types/events";
+import type {
+  EventFormData,
+  EventType,
+  HonoreeGender,
+  PosterStyleChoice,
+} from "@/types/events";
+
+export type QuickPosterCover = Extract<HonoreeGender, "boy" | "girl">;
 
 export type CreateEventDraftPayload = {
   formData: EventFormData;
   resolvedEventType: EventType;
   posterStyle: PosterStyleChoice;
+  /** Quick poster template — defaults from honoree gender when unset. */
+  quickPosterCover?: QuickPosterCover;
+  /** Optional short line shown in the center of the quick poster. */
+  quickPosterEventWords?: string;
+  /** When false, poster center stays empty (no placeholder). */
+  quickPosterShowMessage?: boolean;
 };
 
 type CreateEventDraftState = {

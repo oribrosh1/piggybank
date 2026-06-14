@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { useCallback, useEffect, useState, type RefObject } from "react";
+import { Alert, type View } from "react-native";
 import { useRouter } from "expo-router";
 import { routes } from "@/types/routes";
 import { useCreateEventDraftStore } from "@/src/stores/createEventDraftStore";
@@ -8,7 +8,9 @@ import {
   type PosterGenLiveState,
 } from "@/src/lib/createEventFlowSubmit";
 
-export function useCreateEventReviewScreen() {
+export function useCreateEventReviewScreen(
+  quickPosterCaptureRef?: RefObject<View | null>,
+) {
   const router = useRouter();
   const draft = useCreateEventDraftStore((s) => s.draft);
   const clearDraft = useCreateEventDraftStore((s) => s.clearDraft);
@@ -36,6 +38,9 @@ export function useCreateEventReviewScreen() {
       const res = await submitNewEventWithPosterFlow({
         formData: draft.formData,
         resolvedEventType: draft.resolvedEventType,
+        posterStyle: draft.posterStyle,
+        quickPosterCaptureRef:
+          draft.posterStyle === "quick" ? quickPosterCaptureRef : undefined,
         onPosterGenLiveChange: setPosterGenLive,
       });
       if (res.ok && res.eventId) {
@@ -51,7 +56,7 @@ export function useCreateEventReviewScreen() {
       setIsSubmitting(false);
       setPosterGenLive(null);
     }
-  }, [draft, clearDraft, router]);
+  }, [draft, clearDraft, router, quickPosterCaptureRef]);
 
   return {
     draft,

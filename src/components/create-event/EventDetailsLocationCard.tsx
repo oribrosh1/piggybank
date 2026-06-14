@@ -20,10 +20,12 @@ type EventDetailsLocationCardProps = {
   address2: string;
   locationNotes?: string;
   parking?: string;
+  /** Hide the “· preview” suffix on the review screen. */
+  reviewMode?: boolean;
 };
 
 export default function EventDetailsLocationCard(props: EventDetailsLocationCardProps) {
-  const { address1, address2, locationNotes, parking } = props;
+  const { address1, address2, locationNotes, parking, reviewMode } = props;
   const notesTrim = locationNotes?.trim();
   const parkingTrim = parking?.trim();
   const hasExtras = !!(notesTrim || parkingTrim);
@@ -42,7 +44,10 @@ export default function EventDetailsLocationCard(props: EventDetailsLocationCard
         </View>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>
-            Where you’ll meet<Text style={styles.headerHintInline}> · preview</Text>
+            Where you’ll meet
+            {!reviewMode ? (
+              <Text style={styles.headerHintInline}> · preview</Text>
+            ) : null}
           </Text>
         </View>
       </View>

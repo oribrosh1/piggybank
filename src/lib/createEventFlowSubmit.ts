@@ -7,7 +7,18 @@ import {
   type EventPosterGenerationSnapshot,
 } from "@/src/lib/eventService";
 import { uploadHonoreePhotoToEvent } from "@/src/lib/honoreePhotoUpload";
-import type { CreateEventData, EventFormData, EventType } from "@/types/events";
+import {
+  captureQuickPosterImage,
+  uploadQuickPosterToEvent,
+} from "@/src/lib/quickPosterUpload";
+import type {
+  CreateEventData,
+  EventFormData,
+  EventType,
+  PosterStyleChoice,
+} from "@/types/events";
+import type { RefObject } from "react";
+import type { View } from "react-native";
 
 function celebrationFromRoute(routeType: string | undefined) {
   if (routeType === "barMitzvah") return "barMitzvah" as const;
@@ -32,9 +43,17 @@ export function resolveCreateFlowEventType(
 export async function submitNewEventWithPosterFlow(params: {
   formData: EventFormData;
   resolvedEventType: EventType;
+  posterStyle?: PosterStyleChoice;
+  quickPosterCaptureRef?: RefObject<View | null>;
   onPosterGenLiveChange: (state: PosterGenLiveState | null) => void;
 }): Promise<{ ok: boolean; eventId?: string }> {
-  const { formData, resolvedEventType, onPosterGenLiveChange } = params;
+  const {
+    formData,
+    resolvedEventType,
+    posterStyle,
+    quickPosterCaptureRef,
+    onPosterGenLiveChange,
+  } = params;
 
   const eventData: CreateEventData = {
     eventType: resolvedEventType,
@@ -71,6 +90,23 @@ export async function submitNewEventWithPosterFlow(params: {
         "Your event was saved, but the honoree photo could not be uploaded. You can add one when editing the event; the AI poster may not match their face until then.",
       );
     }
+  }
+
+  if (posterStyle === "quick") {
+    try {
+      if (!quickPosterCaptureRef) {
+        throw new Error("Poster preview is not ready");
+      }
+      const localUri = await captureQuickPosterImage(quickPosterCaptureRef);
+      await uploadQuickPosterToEvent(eventId, localUri);
+    } catch (posterErr) {
+      console.error("Error saving quick poster:", posterErr);
+      Alert.alert(
+        "Poster save",
+        "Your event was created, but we couldn't save your poster image. Open your event dashboard to try again.",
+      );
+    }
+    return { ok: true, eventId };
   }
 
   const posterRes = await (async () => {
