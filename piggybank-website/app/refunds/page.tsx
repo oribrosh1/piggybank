@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CreditKidLogo } from '@/components/CreditKidLogo'
 import {
   LEGAL_ADDRESS_LINE1,
   LEGAL_ADDRESS_LINE2,
@@ -21,12 +20,9 @@ export default function RefundPolicy() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="flex flex-col gap-6 mb-8">
-          <CreditKidLogo height={40} />
-          <Link href="/" className="text-purple-700 font-semibold text-sm hover:underline">
-            ← Back to CreditKid
-          </Link>
-        </div>
+        <Link href="/" className="text-purple-700 font-semibold text-sm hover:underline mb-8 inline-block">
+          ← Back to CreditKid
+        </Link>
 
         <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Refund Policy</h1>
         <p className="text-gray-500 text-sm mb-10">Last updated: June 10, 2026</p>

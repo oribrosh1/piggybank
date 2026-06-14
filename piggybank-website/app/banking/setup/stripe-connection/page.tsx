@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CreditKidLogo } from '@/components/CreditKidLogo'
 
 const APP_SCHEME = process.env.NEXT_PUBLIC_APP_SCHEME || 'creditkidapp'
 
@@ -22,9 +21,7 @@ function RedirectContent() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="max-w-sm w-full text-center">
-        <div className="flex justify-center mb-6">
-          <CreditKidLogo href={null} height={48} />
-        </div>
+        <div className="text-6xl mb-4"></div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">
           {status === 'redirecting' ? 'Returning to CreditKid…' : 'Open the app'}
         </h1>

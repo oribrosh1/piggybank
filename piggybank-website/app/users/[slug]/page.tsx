@@ -1,11 +1,10 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { Calendar, Sparkles } from 'lucide-react';
 import { getEventEmoji, getEventTypeLabel, formatDate } from '@/lib/types';
-import { LOGO_PATH, SITE_NAME, pageMetadata } from '@/lib/site';
+import { pageMetadata } from '@/lib/site';
 
 type PublicProfile = {
     fullName: string;
@@ -269,8 +268,8 @@ export default async function UserProfilePage({
 
                     {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
-                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden">
-                            <Image src={LOGO_PATH} alt={SITE_NAME} width={40} height={40} className="object-contain" />
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                            <span className="text-3xl"></span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
                             Powered by CreditKid
@@ -283,9 +282,6 @@ export default async function UserProfilePage({
             </div>
 
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
-                <Link href="/" className="inline-flex justify-center mb-3">
-                    <Image src={LOGO_PATH} alt={SITE_NAME} width={28} height={28} className="object-contain" />
-                </Link>
                 <p>© 2026 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>

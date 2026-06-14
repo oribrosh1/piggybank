@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CreditKidLogo } from '@/components/CreditKidLogo'
 import { pageMetadata } from '@/lib/site'
 
 export const metadata: Metadata = pageMetadata({
@@ -12,9 +11,6 @@ export default function NotFound() {
     return (
         <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
             <div className="text-center max-w-md">
-                <div className="flex justify-center mb-6">
-                    <CreditKidLogo height={48} />
-                </div>
                 <div className="text-8xl mb-6">🎈</div>
                 <h1 className="text-3xl font-black text-gray-900 mb-4">
                     Event Not Found

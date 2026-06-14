@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/lib/useAuth'
 import { HOMEPAGE_FAQ_HIGHLIGHTS } from '@/lib/faqContent'
-import { CreditKidLogo } from '@/components/CreditKidLogo'
 
 const IMAGES = {
   heroDesktop: '/homepage/headerbg-desktop.png',
@@ -154,7 +153,11 @@ export default function Home() {
       {/* Navigation */}
       <header className="sticky top-0 z-50 px-[4%]">
         <nav className="relative w-full max-w-[1180px] mx-auto h-[50px] pt-4 flex items-center justify-between gap-4 rounded-full bg-[#EAE3FC] border border-[#EAE3FC] sm:px-6">
-          <CreditKidLogo href="/" height={36} priority className="flex-shrink-0" />
+          <Link href="/" className="flex items-center gap-2.5 no-underline flex-shrink-0">
+            <span className="text-[30px] font-extrabold text-[#6b38d4] tracking-[-0.5px]">
+              CreditKid
+            </span>
+          </Link>
 
           <div className="hidden lg:flex items-center justify-center gap-7 absolute left-1/2 -translate-x-1/2">
             {NAV_LINKS.map((link) => (
@@ -357,7 +360,9 @@ export default function Home() {
         <div className="w-full max-w-[1180px] mx-auto rounded-[32px] bg-[#EAE3FC] border border-[#ddd6f5] overflow-hidden">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-8 lg:p-10">
             <div className="sm:col-span-2 lg:col-span-1">
-              <CreditKidLogo href="/" height={32} className="mb-4" />
+              <Link href="/" className="inline-flex items-center gap-2.5 no-underline mb-4">
+                <span className="text-xl font-extrabold text-[#6b38d4]">CreditKid</span>
+              </Link>
               <p className="text-sm leading-relaxed text-[#697084] m-0 max-w-[260px]">
                 The new standard for birthday gifts. Built for kids. Loved by parents.
               </p>

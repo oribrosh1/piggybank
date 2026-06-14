@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Suspense } from 'react';
 import {
     Calendar,
@@ -304,8 +302,8 @@ export default async function EventPage({ params }: { params: { id: string } }) 
                     {/* CreditKid Gift Section */}
                     <div className="bg-[#FAF5FF] rounded-3xl p-6 border-2 border-[#E9D5FF]">
                         <div className="flex items-center gap-3 mb-5">
-                            <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center overflow-hidden">
-                                <Image src={LOGO_PATH} alt={SITE_NAME} width={32} height={32} className="object-contain" />
+                            <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6] flex items-center justify-center">
+                                <span className="text-2xl"></span>
                             </div>
                             <div>
                                 <h3 className="text-lg font-extrabold text-gray-900">Skip the Gift Card! 🎁</h3>
@@ -341,8 +339,8 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
                     {/* Powered by CreditKid */}
                     <div className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-3xl p-6 text-center">
-                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden">
-                            <Image src={LOGO_PATH} alt={SITE_NAME} width={40} height={40} className="object-contain" />
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                            <span className="text-3xl"></span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-2">
                             Powered by CreditKid
@@ -359,9 +357,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
 
             {/* Footer */}
             <footer className="py-6 px-4 text-center text-sm text-gray-500 border-t border-gray-200 bg-white">
-                <Link href="/" className="inline-flex justify-center mb-3">
-                    <Image src={LOGO_PATH} alt={SITE_NAME} width={28} height={28} className="object-contain" />
-                </Link>
                 <p>© 2026 CreditKid. The end of gift cards is here! 🎉</p>
             </footer>
         </main>

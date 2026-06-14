@@ -1,7 +1,5 @@
 'use client'
 
-import { CreditKidLogo } from '@/components/CreditKidLogo'
-
 const APP_SCHEME = process.env.NEXT_PUBLIC_APP_SCHEME || 'creditkidapp'
 
 /**
@@ -16,9 +14,6 @@ export default function BankingSetupSuccessPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="max-w-sm w-full text-center">
-        <div className="flex justify-center mb-6">
-          <CreditKidLogo href={null} height={48} />
-        </div>
         <h1 className="text-xl font-bold text-gray-900 mb-2">Banking setup complete</h1>
         <p className="text-gray-600 text-sm mb-6">
           Return to the CreditKid app. This window should close on its own.
