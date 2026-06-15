@@ -12,10 +12,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Users, X, ChevronRight, UserCheck, DollarSign, UserX, BellOff } from "lucide-react-native";
-import { getEvent } from "@/src/lib/eventService";
+import { Users, X, ChevronRight, UserCheck, DollarSign, UserX, BellOff, Trash2 } from "lucide-react-native";
+import { deleteEvent, getEvent } from "@/src/lib/eventService";
 import { honoreeNameFromEvent } from "@/src/lib/eventTitle";
-import { sendChildInvite } from "@/src/lib/api";
+import { sendChildInvite, getAccountStatus } from "@/src/lib/api";
+import { navigateToStripeConnectOrPersonalInfo } from "@/src/lib/stripeHostedOnboarding";
+import firebase from "@/src/firebase";
+import firestore from "@react-native-firebase/firestore";
 import { Event, Guest, GuestStatus } from "@/types/events";
 import { routes } from "@/types/routes";
 import {
@@ -29,10 +32,7 @@ import {
 } from "@/src/components/events";
 import AppTabHeader from "@/src/components/AppTabHeader";
 import {
-    EventPosterIntroLine,
-    PosterHeroCard,
     LiveStatusBanner,
-    QuickActionsGrid,
     InvolveChildCard,
     DetailsStack,
     GuestListSection,
@@ -41,12 +41,22 @@ import {
     WhatsNextTip,
     PAGE_BG,
 } from "@/src/components/events/eventDashboard/EventDashboardLayout";
+import {
+    EventDashboardTopSection,
+    type SetupStepId,
+} from "@/src/components/events/eventDashboard/EventDashboardTopSection";
 import CelebrationToolsModal from "@/src/components/events/eventDashboard/CelebrationToolsModal";
 import GuestStatsModal from "@/src/components/events/eventDashboard/GuestStatsModal";
 import ReminderScheduleModal from "@/src/components/events/eventDashboard/ReminderScheduleModal";
 import AppTabFooter from "@/src/components/AppTabFooter";
 
-export function EventDashboardScreen({ eventId }: { eventId: string }) {
+export function EventDashboardScreen({
+    eventId,
+    onEventDeleted,
+}: {
+    eventId: string;
+    onEventDeleted?: () => void;
+}) {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const id = eventId;
@@ -62,6 +72,9 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
     const [showGuestGuideModal, setShowGuestGuideModal] = useState(false);
     const [childLinkLoading, setChildLinkLoading] = useState(false);
     const [childLinkOpen, setChildLinkOpen] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [bankingReady, setBankingReady] = useState(false);
+    const [childLinked, setChildLinked] = useState(false);
     const posterRef = useRef<AIPosterGeneratorRef | null>(null);
     const previewRef = useRef<InvitationPreviewRef | null>(null);
 
@@ -105,6 +118,32 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
         setLoading(true);
         const eventData = await getEvent(eventId);
         setEvent(eventData);
+
+        const uid = firebase.auth().currentUser?.uid;
+        if (uid) {
+            try {
+                const [accountStatus, childSnap] = await Promise.all([
+                    getAccountStatus().catch(() => null),
+                    firestore()
+                        .collection("childAccounts")
+                        .where("creatorId", "==", uid)
+                        .limit(1)
+                        .get(),
+                ]);
+                setBankingReady(
+                    Boolean(
+                        accountStatus?.exists &&
+                            accountStatus.charges_enabled &&
+                            accountStatus.payouts_enabled,
+                    ),
+                );
+                setChildLinked(!childSnap.empty);
+            } catch {
+                setBankingReady(false);
+                setChildLinked(false);
+            }
+        }
+
         setLoading(false);
     };
 
@@ -116,15 +155,38 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
         );
     };
 
-    const handleManageGuests = () => {
+    const handleManageGuests = useCallback(() => {
         setShowGuestModal(true);
-    };
+    }, []);
 
-    const handleAddGuests = () => {
+    const handleAddGuests = useCallback(() => {
         if (id) {
             router.push(routes.addGuests(id));
         }
-    };
+    }, [id, router]);
+
+    const handleSetupStepPress = useCallback(
+        (stepId: SetupStepId) => {
+            switch (stepId) {
+                case "banking":
+                    navigateToStripeConnectOrPersonalInfo(router).catch(() => {});
+                    break;
+                case "invites":
+                    setShowReminderScheduleModal(true);
+                    break;
+                case "guests":
+                    handleAddGuests();
+                    break;
+                case "rsvps":
+                    setShowGuestStatsModal(true);
+                    break;
+                case "gifts":
+                    router.push(routes.tabs.gifts);
+                    break;
+            }
+        },
+        [router, handleAddGuests],
+    );
 
     const EVENT_WEB_BASE = process.env.EXPO_PUBLIC_WEBSITE_URL || "https://credit-kid.com";
 
@@ -158,6 +220,7 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                 );
             }
             setChildLinkOpen(false);
+            loadEvent();
         } catch (err: unknown) {
             const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
             const status = e?.response?.status;
@@ -176,6 +239,38 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
         if (id) {
             router.push(routes.editEvent(id));
         }
+    };
+
+    const handleDeleteEvent = () => {
+        if (!id) return;
+        Alert.alert(
+            "Delete this event?",
+            "This permanently removes the event and guest list. This can't be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        setDeleteLoading(true);
+                        const result = await deleteEvent(id);
+                        setDeleteLoading(false);
+                        if (result.success) {
+                            if (onEventDeleted) {
+                                onEventDeleted();
+                            } else {
+                                router.replace(routes.tabs.myEvent);
+                            }
+                            return;
+                        }
+                        Alert.alert(
+                            "Couldn't delete event",
+                            result.error || "Please try again.",
+                        );
+                    },
+                },
+            ],
+        );
     };
 
     if (loading) {
@@ -242,18 +337,15 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                     />
                 </View>
 
-                <EventPosterIntroLine event={event} />
-
-                <PosterHeroCard event={event} onGeneratePoster={() => posterRef.current?.open()} />
-
-                <QuickActionsGrid
-                    onSetReminderSchedule={() => setShowReminderScheduleModal(true)}
-                    onAddGuests={handleAddGuests}
-                    onShare={handleShare}
-                    onStats={() => setShowGuestStatsModal(true)}
-                    onFeatures={() => setShowFeaturesModal(true)}
-                    onAlerts={() => setShowNotificationsModal(true)}
-                    showAlertDot={notifications.length > 0}
+                <EventDashboardTopSection
+                    event={event}
+                    bankingReady={bankingReady}
+                    onGeneratePoster={() => posterRef.current?.open()}
+                    onGuests={handleManageGuests}
+                    onReminders={() => setShowReminderScheduleModal(true)}
+                    onAnalytics={() => setShowGuestStatsModal(true)}
+                    onMore={() => setShowFeaturesModal(true)}
+                    onSetupStepPress={handleSetupStepPress}
                 />
 
                 <LiveStatusBanner />
@@ -287,6 +379,44 @@ export function EventDashboardScreen({ eventId }: { eventId: string }) {
                 </View>
 
                 <WhatsNextTip />
+
+                <TouchableOpacity
+                    onPress={handleDeleteEvent}
+                    disabled={deleteLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete this event"
+                    style={{
+                        marginTop: 28,
+                        marginHorizontal: 20,
+                        paddingVertical: 14,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "row",
+                        borderRadius: 14,
+                        borderWidth: 1.5,
+                        borderColor: "#FECACA",
+                        backgroundColor: "#FEF2F2",
+                        opacity: deleteLoading ? 0.6 : 1,
+                    }}
+                >
+                    {deleteLoading ? (
+                        <ActivityIndicator color="#DC2626" />
+                    ) : (
+                        <>
+                            <Trash2 size={18} color="#DC2626" strokeWidth={2.2} />
+                            <Text
+                                style={{
+                                    fontSize: 15,
+                                    fontWeight: "700",
+                                    color: "#DC2626",
+                                    marginLeft: 8,
+                                }}
+                            >
+                                Delete this event
+                            </Text>
+                        </>
+                    )}
+                </TouchableOpacity>
 
                 <AIPosterGenerator
                     ref={posterRef}

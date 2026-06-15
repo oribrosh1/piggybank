@@ -7,6 +7,7 @@
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
 import { getCloudFunctionAuthHeaders } from "@/src/lib/api";
+import { getCloudApiBaseUrl } from "@/src/lib/backendConfig";
 import {
   Event,
   EventSummary,
@@ -49,10 +50,11 @@ export async function createEvent(
 
     console.log("📅 Creating event for user:", uid);
 
-    // Get user data (may not exist yet)
+    console.log("📅 Loading user profile from Firestore...");
     const userDoc = await firestore().collection("users").doc(uid).get();
     const userExists = userDoc.exists();
     const userData = userDoc.data() as UserProfile | undefined;
+    console.log("📅 User profile loaded, saving event...");
 
     // Generate unique event ID
     const eventId = firestore().collection("events").doc().id;
@@ -364,6 +366,48 @@ export async function updateEvent(
 }
 
 /**
+ * Permanently deletes an event owned by the current user.
+ */
+export async function deleteEvent(
+  eventId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = auth().currentUser;
+    if (!user) {
+      throw new Error("User must be authenticated");
+    }
+
+    const eventRef = firestore().collection("events").doc(eventId);
+    const eventDoc = await eventRef.get();
+    if (!eventDoc.exists) {
+      return { success: false, error: "Event not found" };
+    }
+
+    const eventData = eventDoc.data();
+    const ownerId = eventData?.creatorId ?? eventData?.hostId;
+    if (ownerId !== user.uid) {
+      return { success: false, error: "Not authorized to delete this event" };
+    }
+
+    await eventRef.delete();
+
+    const userRef = firestore().collection("users").doc(user.uid);
+    const userDoc = await userRef.get();
+    if (userDoc.exists()) {
+      await userRef.update({
+        eventsCreated: firestore.FieldValue.increment(-1),
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting event:", error);
+    return { success: false, error: error.message || "Failed to delete event" };
+  }
+}
+
+/**
  * Helper to convert Guest to Firestore-safe format (removes undefined values)
  */
 function guestToFirestoreData(guest: Guest): Record<string, any> {
@@ -446,9 +490,6 @@ export async function refreshEventGuestStats(
 const POSTER_VERSIONS_COLLECTION = "eventPosterVersions";
 
 /** Same base as `api.ts` — poster generation must hit the same Firebase project as auth/Firestore. */
-const CLOUD_API_BASE =
-  process.env.EXPO_PUBLIC_API_BASE_URL ||
-  "https://us-central1-piggybank-a0011.cloudfunctions.net/api";
 
 /** Snapshot fields: FLUX skeleton (`skeletonPosterUrl` / `skeletonProgress`), OpenAI-only streaming (`posterStreamingPreviewUrl`), final `posterUrl`. */
 export type EventPosterGenerationSnapshot = {
@@ -620,7 +661,7 @@ export async function generateEventPoster(
 
     let response: Response;
     try {
-      response = await fetch(`${CLOUD_API_BASE}/generatePoster`, {
+      response = await fetch(`${getCloudApiBaseUrl()}/generatePoster`, {
         method: "POST",
         headers: {
           ...headers,

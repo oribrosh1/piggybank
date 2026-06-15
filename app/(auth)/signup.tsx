@@ -29,6 +29,7 @@ import {
   handleAppleSignIn as appleSignIn,
   handleGoogleSignIn as googleSignIn,
 } from "@/src/utils/auth/socialAuth";
+import EmailDomainAutocompleteInput from "@/src/components/auth/EmailDomainAutocompleteInput";
 import {
   colors,
   primaryGradient,
@@ -365,15 +366,12 @@ export default function SignUpScreen() {
               />
 
               <Text style={labelStyle}>EMAIL ADDRESS</Text>
-              <TextInput
-                style={{ ...inputStyle, marginBottom: spacing[4] }}
+              <EmailDomainAutocompleteInput
+                style={inputStyle}
                 placeholder="alex@example.com"
                 placeholderTextColor={colors.muted}
                 value={email}
                 onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
                 editable={!loading}
               />
 

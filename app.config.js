@@ -1,3 +1,13 @@
+const path = require("path");
+const fs = require("fs");
+
+const envFile =
+    process.env.DOTENV_CONFIG_PATH || process.env.ENV_FILE || ".env";
+const envPath = path.resolve(__dirname, envFile);
+if (fs.existsSync(envPath)) {
+    require("dotenv").config({ path: envPath, override: true });
+}
+
 const { withEntitlementsPlist } = require("expo/config-plugins");
 
 const withAppleWalletEntitlement = (config) => {
@@ -113,7 +123,12 @@ module.exports = {
         extra: {
             eas: {
                 projectId: "16b30160-7840-4c17-b6af-590a56372bb7"
-            }
+            },
+            EXPO_PUBLIC_API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL,
+            EXPO_PUBLIC_USE_FIREBASE_EMULATORS:
+                process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATORS,
+            EXPO_PUBLIC_FIREBASE_EMULATOR_HOST:
+                process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST,
         },
         configureAndroidBackup: true,
         faceIDPermission: "Allow $(PRODUCT_NAME) to access your Face ID biometric data."

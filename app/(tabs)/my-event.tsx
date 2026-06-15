@@ -101,5 +101,13 @@ export default function MyEventTab() {
     );
   }
 
-  return <EventDashboardScreen eventId={eventId} />;
+  return (
+    <EventDashboardScreen
+      eventId={eventId}
+      onEventDeleted={() => {
+        setLoading(true);
+        load();
+      }}
+    />
+  );
 }

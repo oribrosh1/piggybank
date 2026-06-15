@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 const COLLECTION = "events";
 
@@ -20,7 +21,7 @@ async function update(eventId, data) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     const updateData = {
         ...data,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     };
     await ref.update(updateData);
 }
@@ -29,8 +30,8 @@ async function updatePoster(eventId, posterPrompt, posterUrl = null, visualTease
     const ref = getDb().collection(COLLECTION).doc(eventId);
     const data = {
         posterPrompt,
-        posterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        posterGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     };
     if (posterUrl != null) data.posterUrl = posterUrl;
     if (typeof visualTeaser === "string" && visualTeaser.trim().length > 0) {
@@ -49,8 +50,8 @@ async function updateSkeletonPoster(eventId, skeletonPosterUrl, patch = {}) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     const data = {
         skeletonPosterUrl,
-        skeletonPosterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        skeletonPosterGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     };
     if (Array.isArray(patch.skeletonProgress)) {
         data.skeletonProgress = patch.skeletonProgress;
@@ -67,8 +68,8 @@ async function updateSkeletonPosterWithText(eventId, skeletonPosterWithTextUrl) 
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
         skeletonPosterWithTextUrl,
-        skeletonPosterWithTextGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        skeletonPosterWithTextGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -81,8 +82,8 @@ async function updateAiPosterTitle(eventId, aiPosterTitle) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
         aiPosterTitle,
-        aiPosterTitleGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        aiPosterTitleGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -94,8 +95,8 @@ async function updateAiPosterTitle(eventId, aiPosterTitle) {
 async function appendSkeletonPartialPreviewUrl(eventId, previewUrl) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
-        skeletonPartialPreviewUrls: admin.firestore.FieldValue.arrayUnion(previewUrl),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        skeletonPartialPreviewUrls: FieldValue.arrayUnion(previewUrl),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -106,17 +107,17 @@ async function appendSkeletonPartialPreviewUrl(eventId, previewUrl) {
 async function clearSkeletonPoster(eventId) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
-        skeletonPosterUrl: admin.firestore.FieldValue.delete(),
-        skeletonPosterGeneratedAt: admin.firestore.FieldValue.delete(),
-        skeletonPartialPreviewUrls: admin.firestore.FieldValue.delete(),
-        skeletonProgress: admin.firestore.FieldValue.delete(),
-        skeletonPosterWithTextUrl: admin.firestore.FieldValue.delete(),
-        skeletonPosterWithTextGeneratedAt: admin.firestore.FieldValue.delete(),
-        aiPosterTitle: admin.firestore.FieldValue.delete(),
-        aiPosterTitleGeneratedAt: admin.firestore.FieldValue.delete(),
-        honoreeFaceCropUrl: admin.firestore.FieldValue.delete(),
-        honoreeFaceCropGeneratedAt: admin.firestore.FieldValue.delete(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        skeletonPosterUrl: FieldValue.delete(),
+        skeletonPosterGeneratedAt: FieldValue.delete(),
+        skeletonPartialPreviewUrls: FieldValue.delete(),
+        skeletonProgress: FieldValue.delete(),
+        skeletonPosterWithTextUrl: FieldValue.delete(),
+        skeletonPosterWithTextGeneratedAt: FieldValue.delete(),
+        aiPosterTitle: FieldValue.delete(),
+        aiPosterTitleGeneratedAt: FieldValue.delete(),
+        honoreeFaceCropUrl: FieldValue.delete(),
+        honoreeFaceCropGeneratedAt: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -130,8 +131,8 @@ async function updatePosterStreamingPreview(eventId, posterStreamingPreviewUrl) 
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
         posterStreamingPreviewUrl,
-        posterStreamingPreviewUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        posterStreamingPreviewUpdatedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -139,9 +140,9 @@ async function updatePosterStreamingPreview(eventId, posterStreamingPreviewUrl) 
 async function clearPosterStreamingPreview(eventId) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
-        posterStreamingPreviewUrl: admin.firestore.FieldValue.delete(),
-        posterStreamingPreviewUpdatedAt: admin.firestore.FieldValue.delete(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        posterStreamingPreviewUrl: FieldValue.delete(),
+        posterStreamingPreviewUpdatedAt: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -184,7 +185,7 @@ async function setPosterGenerationTiming(eventId, timing) {
     }
     await ref.update({
         posterGenTiming,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 
@@ -197,8 +198,8 @@ async function updateHonoreeFaceCropUrl(eventId, honoreeFaceCropUrl) {
     const ref = getDb().collection(COLLECTION).doc(eventId);
     await ref.update({
         honoreeFaceCropUrl,
-        honoreeFaceCropGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        honoreeFaceCropGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
     });
 }
 

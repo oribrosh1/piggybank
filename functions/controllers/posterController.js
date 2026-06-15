@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const eventRepository = require("../repositories/eventRepository");
 const storageRepository = require("../repositories/storageRepository");
 const { AppError, handleError } = require("../utils/errors");
@@ -111,7 +112,7 @@ async function saveQuickPoster(req, res) {
         const posterUrl = await storageRepository.savePoster(eventId, buffer, "image/png");
         await eventRepository.update(eventId, {
             posterUrl,
-            posterGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+            posterGeneratedAt: FieldValue.serverTimestamp(),
         });
 
         console.log(`[saveQuickPoster] success uid=${uid} eventId=${eventId}`);

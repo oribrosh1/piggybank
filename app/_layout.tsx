@@ -1,3 +1,4 @@
+import "@/src/firebase/emulators";
 import "@/src/firebase/appCheck";
 import { useAuth } from "@/src/utils/auth/useAuth";
 import { Stack, useRouter } from "expo-router";

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "cd .. && npx firebase-tools emulators:start --only functions --project dev",
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
     "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",

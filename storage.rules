@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Posters use public HTTPS URLs in the app, SMS, and guest views (makePublic in prod;
+    // emulator has no ACLs — rules must allow unauthenticated read).
+    match /posters/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Face reference PNGs are shared with image APIs via public URL.
+    match /events/{eventId}/honoree_face_reference.png {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /events/{eventId}/honoree_photo {
+      allow read, write: if request.auth != null;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

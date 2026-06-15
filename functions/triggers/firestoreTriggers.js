@@ -1,6 +1,11 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const axios = require("axios");
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 const db = admin.firestore();
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
@@ -22,13 +27,13 @@ exports.onEventCreated = onDocumentCreated("events/{eventId}", async (event) => 
         if (accountId) {
             await snapshot.ref.update({
                 stripeAccountId: accountId,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
             });
             return { success: true, accountId };
         }
         await snapshot.ref.update({
             needsBankingSetup: true,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
         });
         return null;
     } catch (error) {
@@ -36,7 +41,7 @@ exports.onEventCreated = onDocumentCreated("events/{eventId}", async (event) => 
         await snapshot.ref.update({
             stripeSetupFailed: true,
             stripeSetupError: error.message,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
         });
         return { success: false, error: error.message };
     }

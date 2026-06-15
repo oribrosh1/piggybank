@@ -3,10 +3,7 @@ import type { View } from "react-native";
 import { captureRef } from "react-native-view-shot";
 import { File } from "expo-file-system";
 import { getCloudFunctionAuthHeaders } from "@/src/lib/api";
-
-const CLOUD_API_BASE =
-  process.env.EXPO_PUBLIC_API_BASE_URL ||
-  "https://us-central1-piggybank-a0011.cloudfunctions.net/api";
+import { getCloudApiBaseUrl } from "@/src/lib/backendConfig";
 
 export async function captureQuickPosterImage(
   captureView: RefObject<View | null>,
@@ -57,7 +54,7 @@ export async function uploadQuickPosterToEvent(
   const imageBase64 = await readLocalImageAsBase64(localUri);
   const headers = await getCloudFunctionAuthHeaders();
 
-  const response = await fetch(`${CLOUD_API_BASE}/saveQuickPoster`, {
+  const response = await fetch(`${getCloudApiBaseUrl()}/saveQuickPoster`, {
     method: "POST",
     headers: {
       ...headers,

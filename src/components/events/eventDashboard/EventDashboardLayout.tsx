@@ -73,7 +73,13 @@ function getEventTypeTitle(eventType: Event["eventType"]): string {
   }
 }
 
-export function EventPosterIntroLine({ event }: { event: Event }) {
+export function EventPosterIntroLine({
+  event,
+  showCelebrationEmoji,
+}: {
+  event: Event;
+  showCelebrationEmoji?: boolean;
+}) {
   const childName = extractChildFirstName(event.eventName);
   const typeTitle = getEventTypeTitle(event.eventType);
   const age = event.age?.trim();
@@ -95,8 +101,18 @@ export function EventPosterIntroLine({ event }: { event: Event }) {
     <View style={styles.posterIntroWrap}>
       <Text style={styles.posterIntroHeadline} numberOfLines={2}>
         {headline}
+        {showCelebrationEmoji ? " 🎉" : ""}
       </Text>
-      {age ? <Text style={styles.posterIntroAge}>Turning {age}</Text> : null}
+      {age ? (
+        <Text
+          style={[
+            styles.posterIntroAge,
+            showCelebrationEmoji && styles.posterIntroAgeFriendly,
+          ]}
+        >
+          {showCelebrationEmoji ? `Turning ${age}` : `TURNING ${age}`}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -187,17 +203,38 @@ export function PosterHeroCard({
     : event.theme?.trim() || "Custom design";
   const overlayLabel = basicTemplateOnly ? "BASIC TEMPLATE" : "ACTIVE DESIGN";
 
+  const [posterAspect, setPosterAspect] = useState<number>(A4_ASPECT_RATIO);
+
+  useEffect(() => {
+    const url = event.posterUrl;
+    if (!url) {
+      setPosterAspect(A4_ASPECT_RATIO);
+      return;
+    }
+    Image.getSize(
+      url,
+      (width, height) => {
+        if (width > 0 && height > 0) {
+          setPosterAspect(width / height);
+        }
+      },
+      () => setPosterAspect(A4_ASPECT_RATIO),
+    );
+  }, [event.posterUrl]);
+
+  const frameAspect = event.posterUrl ? posterAspect : A4_ASPECT_RATIO;
+
   return (
     <View style={styles.posterCard}>
       <View
-        style={styles.posterA4}
-        accessibilityLabel="Event poster, A4 size preview"
+        style={[styles.posterFrame, { aspectRatio: frameAspect }]}
+        accessibilityLabel="Event poster preview"
       >
         {event.posterUrl ? (
           <Image
             source={{ uri: event.posterUrl }}
-            style={styles.posterImageFill}
-            resizeMode="cover"
+            style={styles.posterImageWidthFit}
+            resizeMode="contain"
           />
         ) : basicTemplateOnly ? (
           <LinearGradient
@@ -1019,14 +1056,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.onSurface,
     position: "relative",
   },
-  /** Full width; height follows ISO A4 portrait ratio */
-  posterA4: {
+  /** Full width; height from image aspect ratio (or A4 when no poster yet). */
+  posterFrame: {
     width: "100%",
-    aspectRatio: A4_ASPECT_RATIO,
     backgroundColor: colors.onSurface,
   },
-  posterImageFill: {
-    ...StyleSheet.absoluteFillObject,
+  posterImageWidthFit: {
     width: "100%",
     height: "100%",
   },
@@ -1201,6 +1236,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  posterIntroAgeFriendly: {
+    fontFamily: fontFamily.body,
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0,
+    textTransform: "none",
   },
   gridWrap: { paddingHorizontal: 20, marginTop: 40 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },

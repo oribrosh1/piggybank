@@ -4,6 +4,16 @@ function getBucket() {
     return admin.storage().bucket();
 }
 
+/** Public download URL — uses Storage emulator host when `FIREBASE_STORAGE_EMULATOR_HOST` is set. */
+function getPublicUrl(bucketName, fileName) {
+    const emulatorHost = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+    if (emulatorHost) {
+        const encoded = encodeURIComponent(fileName);
+        return `http://${emulatorHost}/v0/b/${bucketName}/o/${encoded}?alt=media`;
+    }
+    return `https://storage.googleapis.com/${bucketName}/${fileName}`;
+}
+
 /**
  * Save poster image buffer to posters/{eventId}/invitation_{timestamp}.png and make public.
  * @param {string} eventId
@@ -19,7 +29,7 @@ async function savePoster(eventId, buffer, contentType = "image/png") {
         metadata: { contentType },
     });
     await file.makePublic();
-    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    return getPublicUrl(bucket.name, fileName);
 }
 
 /**
@@ -37,7 +47,7 @@ async function saveSkeletonPoster(eventId, buffer, contentType = "image/png") {
         metadata: { contentType },
     });
     await file.makePublic();
-    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    return getPublicUrl(bucket.name, fileName);
 }
 
 /**
@@ -61,7 +71,7 @@ async function savePosterStreamingPreview(
         metadata: { contentType },
     });
     await file.makePublic();
-    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    return getPublicUrl(bucket.name, fileName);
 }
 
 /**
@@ -135,7 +145,7 @@ async function saveHonoreeFaceReference(eventId, pngBuffer) {
         metadata: { contentType: "image/png" },
     });
     await file.makePublic();
-    return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    return getPublicUrl(bucket.name, fileName);
 }
 
 /**

@@ -2,9 +2,13 @@
 import axios from 'axios';
 import firebase from "@/src/firebase";
 import { appCheckReady, isAppCheckEnabled } from "@/src/firebase/appCheck";
+import {
+    getCloudApiBaseUrl,
+    useFirebaseEmulators,
+} from "@/src/lib/backendConfig";
 
 // API base URL from environment variables
-const BASE = process.env.EXPO_PUBLIC_API_BASE_URL || "https://us-central1-piggybank-a0011.cloudfunctions.net/api";
+const apiBase = () => getCloudApiBaseUrl();
 
 // ============================================
 // Type Definitions
@@ -423,9 +427,26 @@ async function getAppCheckTokenForRequest(): Promise<string | undefined> {
 
 /** Auth + optional App Check headers for Cloud Function HTTP calls (including `fetch` from eventService). */
 export async function getCloudFunctionAuthHeaders(): Promise<Record<string, string>> {
-    const token = await firebase.auth().currentUser?.getIdToken(true);
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        throw new Error("No authentication token found");
+    }
+
+    const useEmulators = useFirebaseEmulators();
+    let token: string;
+    try {
+        token = await user.getIdToken(!useEmulators);
+    } catch (err) {
+        if (useEmulators) {
+            throw new Error(
+                "Auth emulator: sign out and sign in again. Your saved session is from production Firebase.",
+            );
+        }
+        throw err;
+    }
+
     if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
     }
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
     const appCheckToken = await getAppCheckTokenForRequest();
@@ -483,7 +504,7 @@ export interface ClaimChildInviteResponse {
 export async function claimChildInvite(token: string, pin: string): Promise<ClaimChildInviteResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<ClaimChildInviteResponse>(
-        `${BASE}/claimChildInvite`,
+        `${apiBase()}/claimChildInvite`,
         { token, pin },
         { headers }
     );
@@ -501,7 +522,7 @@ export interface PendingInviteResponse {
 export async function getPendingInvite(eventId: string): Promise<PendingInviteResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<PendingInviteResponse>(
-        `${BASE}/getPendingInvite`,
+        `${apiBase()}/getPendingInvite`,
         { headers, params: { eventId } }
     );
     return res.data;
@@ -511,7 +532,7 @@ export async function getPendingInvite(eventId: string): Promise<PendingInviteRe
 export async function revokeChildInvite(eventId: string): Promise<{ success: boolean; revokedCount: number }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean; revokedCount: number }>(
-        `${BASE}/revokeChildInvite`,
+        `${apiBase()}/revokeChildInvite`,
         { eventId },
         { headers }
     );
@@ -530,7 +551,7 @@ export async function createExpressAccount(
 ): Promise<CreateExpressAccountResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateExpressAccountResponse>(
-        `${BASE}/createExpressAccount`,
+        `${apiBase()}/createExpressAccount`,
         payload,
         { headers }
     );
@@ -546,7 +567,7 @@ export async function createCustomConnectAccount(
 ): Promise<CreateCustomConnectAccountResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateCustomConnectAccountResponse>(
-        `${BASE}/createCustomConnectAccount`,
+        `${apiBase()}/createCustomConnectAccount`,
         payload,
         { headers }
     );
@@ -559,7 +580,7 @@ export async function createCustomConnectAccount(
 export async function getAccountStatus(): Promise<AccountStatusResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<AccountStatusResponse>(
-        `${BASE}/getAccountStatus`,
+        `${apiBase()}/getAccountStatus`,
         { headers }
     );
     return res.data;
@@ -571,7 +592,7 @@ export async function getAccountStatus(): Promise<AccountStatusResponse> {
 export async function updateAccountCapabilities(): Promise<UpdateAccountCapabilitiesResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UpdateAccountCapabilitiesResponse>(
-        `${BASE}/updateAccountCapabilities`,
+        `${apiBase()}/updateAccountCapabilities`,
         {},
         { headers }
     );
@@ -586,7 +607,7 @@ export async function updateAccountCapabilities(): Promise<UpdateAccountCapabili
 export async function createOnboardingLink(): Promise<CreateOnboardingLinkResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateOnboardingLinkResponse>(
-        `${BASE}/createOnboardingLink`,
+        `${apiBase()}/createOnboardingLink`,
         {},
         { headers }
     );
@@ -599,7 +620,7 @@ export async function createOnboardingLink(): Promise<CreateOnboardingLinkRespon
 export async function getFinancialAccountBalance(): Promise<GetFinancialAccountBalanceResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetFinancialAccountBalanceResponse>(
-        `${BASE}/getFinancialAccountBalance`,
+        `${apiBase()}/getFinancialAccountBalance`,
         { headers }
     );
     return res.data;
@@ -611,7 +632,7 @@ export async function getFinancialAccountBalance(): Promise<GetFinancialAccountB
 export async function retryProvisioning(): Promise<RetryProvisioningResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<RetryProvisioningResponse>(
-        `${BASE}/retryProvisioning`,
+        `${apiBase()}/retryProvisioning`,
         {},
         { headers }
     );
@@ -626,7 +647,7 @@ export async function createIssuingCardholder(
 ): Promise<CreateIssuingCardholderResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateIssuingCardholderResponse>(
-        `${BASE}/createIssuingCardholder`,
+        `${apiBase()}/createIssuingCardholder`,
         payload,
         { headers }
     );
@@ -641,7 +662,7 @@ export async function createVirtualCard(
 ): Promise<CreateVirtualCardResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateVirtualCardResponse>(
-        `${BASE}/createVirtualCard`,
+        `${apiBase()}/createVirtualCard`,
         payload,
         { headers }
     );
@@ -654,7 +675,7 @@ export async function createVirtualCard(
 export async function getCardDetails(): Promise<GetCardDetailsResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetCardDetailsResponse>(
-        `${BASE}/getCardDetails`,
+        `${apiBase()}/getCardDetails`,
         { headers }
     );
     return res.data;
@@ -666,7 +687,7 @@ export async function getCardDetails(): Promise<GetCardDetailsResponse> {
 export async function getCardDetailsWithWallet(): Promise<GetCardDetailsWithWalletResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetCardDetailsWithWalletResponse>(
-        `${BASE}/getCardDetailsWithWallet`,
+        `${apiBase()}/getCardDetailsWithWallet`,
         { headers }
     );
     return res.data;
@@ -680,7 +701,7 @@ export async function createPushProvisioningEphemeralKey(
 ): Promise<CreatePushProvisioningEphemeralKeyResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePushProvisioningEphemeralKeyResponse>(
-        `${BASE}/createPushProvisioningEphemeralKey`,
+        `${apiBase()}/createPushProvisioningEphemeralKey`,
         payload,
         { headers }
     );
@@ -695,7 +716,7 @@ export async function createTestAuthorization(
 ): Promise<CreateTestAuthorizationResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreateTestAuthorizationResponse>(
-        `${BASE}/createTestAuthorization`,
+        `${apiBase()}/createTestAuthorization`,
         payload,
         { headers }
     );
@@ -710,7 +731,7 @@ export async function uploadVerificationFile(
 ): Promise<UploadVerificationFileResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UploadVerificationFileResponse>(
-        `${BASE}/uploadVerificationFile`,
+        `${apiBase()}/uploadVerificationFile`,
         payload,
         { headers }
     );
@@ -725,7 +746,7 @@ export async function createPaymentIntent(
 ): Promise<CreatePaymentIntentResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePaymentIntentResponse>(
-        `${BASE}/createPaymentIntent`,
+        `${apiBase()}/createPaymentIntent`,
         payload,
         { headers }
     );
@@ -738,7 +759,7 @@ export async function createPaymentIntent(
 export async function getBalance(): Promise<GetBalanceResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetBalanceResponse>(
-        `${BASE}/getBalance`,
+        `${apiBase()}/getBalance`,
         { headers }
     );
     return res.data;
@@ -752,7 +773,7 @@ export async function createPayout(
 ): Promise<CreatePayoutResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<CreatePayoutResponse>(
-        `${BASE}/createPayout`,
+        `${apiBase()}/createPayout`,
         payload,
         { headers }
     );
@@ -772,7 +793,7 @@ export async function getTransactions(
         params.append('starting_after', starting_after);
     }
     const res = await axios.get<GetTransactionsResponse>(
-        `${BASE}/getTransactions?${params.toString()}`,
+        `${apiBase()}/getTransactions?${params.toString()}`,
         { headers }
     );
     return res.data;
@@ -784,7 +805,7 @@ export async function getTransactions(
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<GetAccountDetailsResponse>(
-        `${BASE}/getAccountDetails`,
+        `${apiBase()}/getAccountDetails`,
         { headers }
     );
     return res.data;
@@ -803,7 +824,7 @@ export async function getPayouts(
         params.append('starting_after', starting_after);
     }
     const res = await axios.get<GetPayoutsResponse>(
-        `${BASE}/getPayouts?${params.toString()}`,
+        `${apiBase()}/getPayouts?${params.toString()}`,
         { headers }
     );
     return res.data;
@@ -817,7 +838,7 @@ export async function addBankAccount(
 ): Promise<AddBankAccountResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<AddBankAccountResponse>(
-        `${BASE}/addBankAccount`,
+        `${apiBase()}/addBankAccount`,
         payload,
         { headers }
     );
@@ -832,7 +853,7 @@ export async function updateAccountInfo(
 ): Promise<UpdateAccountInfoResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<UpdateAccountInfoResponse>(
-        `${BASE}/updateAccountInfo`,
+        `${apiBase()}/updateAccountInfo`,
         payload,
         { headers }
     );
@@ -847,7 +868,7 @@ export async function acceptTermsOfService(
 ): Promise<AcceptTermsOfServiceResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<AcceptTermsOfServiceResponse>(
-        `${BASE}/acceptTermsOfService`,
+        `${apiBase()}/acceptTermsOfService`,
         { ip },
         { headers }
     );
@@ -911,7 +932,7 @@ export interface ChildSpendingSummaryResponse {
 export async function getChildCard(childAccountId: string): Promise<ChildCardResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<ChildCardResponse>(
-        `${BASE}/getChildCard`,
+        `${apiBase()}/getChildCard`,
         { headers, params: { childAccountId } }
     );
     return res.data;
@@ -920,7 +941,7 @@ export async function getChildCard(childAccountId: string): Promise<ChildCardRes
 export async function freezeChildCard(childAccountId: string): Promise<{ success: boolean }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean }>(
-        `${BASE}/freezeChildCard`,
+        `${apiBase()}/freezeChildCard`,
         { childAccountId },
         { headers }
     );
@@ -930,7 +951,7 @@ export async function freezeChildCard(childAccountId: string): Promise<{ success
 export async function unfreezeChildCard(childAccountId: string): Promise<{ success: boolean }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean }>(
-        `${BASE}/unfreezeChildCard`,
+        `${apiBase()}/unfreezeChildCard`,
         { childAccountId },
         { headers }
     );
@@ -943,7 +964,7 @@ export async function updateChildSpendingLimits(
 ): Promise<{ success: boolean }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean }>(
-        `${BASE}/updateChildSpendingLimits`,
+        `${apiBase()}/updateChildSpendingLimits`,
         { childAccountId, ...limits },
         { headers }
     );
@@ -956,7 +977,7 @@ export async function updateChildBlockedCategories(
 ): Promise<{ success: boolean }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean }>(
-        `${BASE}/updateChildBlockedCategories`,
+        `${apiBase()}/updateChildBlockedCategories`,
         { childAccountId, blockedCategories },
         { headers }
     );
@@ -972,7 +993,7 @@ export async function getChildTransactions(
     const params: Record<string, string> = { childAccountId, limit: limit.toString() };
     if (startingAfter) params.startingAfter = startingAfter;
     const res = await axios.get<ChildTransactionsResponse>(
-        `${BASE}/getChildTransactions`,
+        `${apiBase()}/getChildTransactions`,
         { headers, params }
     );
     return res.data;
@@ -984,7 +1005,7 @@ export async function getChildSpendingSummary(
 ): Promise<ChildSpendingSummaryResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.get<ChildSpendingSummaryResponse>(
-        `${BASE}/getChildSpendingSummary`,
+        `${apiBase()}/getChildSpendingSummary`,
         { headers, params: { childAccountId, period } }
     );
     return res.data;
@@ -1008,7 +1029,7 @@ export async function sendChildInvite(
 ): Promise<SendChildInviteResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<SendChildInviteResponse>(
-        `${BASE}/sendChildInvite`,
+        `${apiBase()}/sendChildInvite`,
         { eventId, childPhone, childName },
         { headers }
     );
@@ -1018,7 +1039,7 @@ export async function sendChildInvite(
 export async function testLinkChildAccount(): Promise<{ success: boolean; childAccountId: string }> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<{ success: boolean; childAccountId: string }>(
-        `${BASE}/testLinkChildAccount`,
+        `${apiBase()}/testLinkChildAccount`,
         {},
         { headers }
     );
@@ -1043,7 +1064,7 @@ interface TestVerifyResponse {
 export async function testVerifyAccount(): Promise<TestVerifyResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestVerifyResponse>(
-        `${BASE}/testVerifyAccount`,
+        `${apiBase()}/testVerifyAccount`,
         {},
         { headers }
     );
@@ -1059,7 +1080,7 @@ export async function testCreateTransaction(
 ): Promise<TestTransactionResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestTransactionResponse>(
-        `${BASE}/testCreateTransaction`,
+        `${apiBase()}/testCreateTransaction`,
         { amount },
         { headers }
     );
@@ -1075,7 +1096,7 @@ export async function testAddBalance(
 ): Promise<TestTransactionResponse> {
     const headers = await getCloudFunctionAuthHeaders();
     const res = await axios.post<TestTransactionResponse>(
-        `${BASE}/testAddBalance`,
+        `${apiBase()}/testAddBalance`,
         { amount },
         { headers }
     );

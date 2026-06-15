@@ -86,7 +86,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | undefin
     try {
         const docSnap = await firestore().collection('users').doc(uid).get();
 
-        if (!docSnap.exists) {
+        if (!docSnap.exists()) {
             return undefined;
         }
 

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "start:dev": "ENV_FILE=.env.dev DOTENV_CONFIG_PATH=.env.dev EXPO_NO_DOTENV=1 node -r dotenv/config node_modules/.bin/expo start -c",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -11,7 +12,7 @@
     "test": "jest --watchAll",
     "test:poster": "node functions/tests/test-poster-generation-client-flow.js",
     "test:poster:mock": "node functions/tests/test-poster-generation-client-flow.js --mock",
-    "functions:emulate": "npx firebase-tools emulators:start --only functions --project dev",
+    "functions:emulate": "npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
     "lint": "expo lint"
   },
   "jest": {
