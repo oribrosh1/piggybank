@@ -13,13 +13,22 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import LottieView from "lottie-react-native";
 import {
-    Gift, Send, X, Shield, ArrowRight, Smartphone, CreditCard,
-    Phone, Search, User, Check, Lock, UserPlus, HelpCircle,
+    Gift, Send, X, ShieldCheck, ArrowRight, Smartphone,
+    Search, User, Check, Lock, UserPlus, HelpCircle, Users,
 } from "lucide-react-native";
 import * as Contacts from "expo-contacts";
-import { GlassCardDark } from "@/src/components/common/GlassCardDark";
-import { radius } from "@/src/theme";
+import { colors, fontFamily, primaryGradient, radius, spacing } from "@/src/theme";
+
+const PARENT_CHILD_LOTTIE = require("../../../assets/lotties/parent-child-creditkid.json");
+
+const HEADER_GRADIENT = {
+    colors: [colors.secondaryCard, "#1a0a52", "#2d1268"] as [string, string, string],
+    start: { x: 0, y: 0 },
+    end: { x: 1, y: 1 },
+};
 
 interface Contact {
     id: string;
@@ -37,9 +46,18 @@ interface ChildLinkCardProps {
 
 type Screen = "explainer" | "contacts" | "confirm" | "success";
 
-const LINK_GLASS_BORDER = "rgba(107, 56, 212, 0.12)";
-const LINK_GLASS_BLUR = 24;
-const STEP_CARD_MIN_H = 112;
+function GripDots({ color }: { color: string }) {
+    return (
+        <View style={{ width: 10, flexDirection: "row", flexWrap: "wrap", gap: 3, marginTop: 4 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+                <View
+                    key={i}
+                    style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: color, opacity: 0.35 }}
+                />
+            ))}
+        </View>
+    );
+}
 
 const STEPS = [
     {
@@ -157,97 +175,114 @@ export default function ChildLinkCard({
     // ── Screen A: Explainer ──
     const renderExplainer = () => (
         <View style={s.sheetRoot}>
-            <View style={s.header}>
-                <Text style={s.headerTitle}>Link Child Account</Text>
-                <TouchableOpacity hitSlop={12} onPress={closeAll} style={s.closeBtn}>
-                    <X size={20} color="#374151" strokeWidth={2} />
+            <LinearGradient {...HEADER_GRADIENT} style={[s.explainerHeader, { paddingTop: insets.top + 12 }]}>
+                <TouchableOpacity hitSlop={12} onPress={closeAll} style={s.explainerCloseBtn}>
+                    <X size={18} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
                 </TouchableOpacity>
-            </View>
-            <ScrollView style={s.scrollArea} contentContainerStyle={s.scrollContent}>
-                <View style={s.hero}>
-                    <View style={s.heroIconRow}>
-                        <View style={[s.heroIcon, { backgroundColor: "#F0FDFA" }]}>
-                            <Gift size={24} color="#0D9488" strokeWidth={1.8} />
-                        </View>
-                        <ArrowRight size={16} color="#CBD5E1" strokeWidth={2} />
-                        <View style={[s.heroIcon, { backgroundColor: "#F5F3FF" }]}>
-                            <CreditCard size={24} color="#7C3AED" strokeWidth={1.8} />
-                        </View>
-                    </View>
-                    <Text style={s.heroTitle}>{"Gifts go straight to\nyour child's card"}</Text>
-                    <Text style={s.heroSubtitle}>
-                        We'll send your child an SMS with everything they need to get started.
-                    </Text>
-                </View>
 
-                <View style={s.stepsContainer}>
-                    <Text style={s.stepsSectionLabel}>How it works</Text>
-                    {STEPS.map((step, idx) => {
-                        const Icon = step.icon;
-                        const isLast = idx === STEPS.length - 1;
-                        return (
-                            <View key={step.number} style={s.stepRow}>
-                                <View style={s.timeline}>
-                                    <View
-                                        style={[
-                                            s.stepDot,
-                                            {
-                                                backgroundColor: step.color,
-                                                shadowColor: step.color,
-                                            },
-                                        ]}
-                                    >
-                                        <Text style={s.stepDotText}>{step.number}</Text>
-                                    </View>
-                                    {!isLast && (
+                <View style={s.explainerHeaderRow}>
+                    <View style={s.explainerHeaderCopy}>
+                        <Text style={s.explainerTitleLine}>Link Child</Text>
+                        <Text style={s.explainerTitleAccent}>Account</Text>
+                        <Text style={s.explainerSubtitle}>
+                            Gifts go straight to your child's card
+                        </Text>
+                    </View>
+                    <View style={s.explainerLottieWrap}>
+                        <LottieView
+                            source={PARENT_CHILD_LOTTIE}
+                            style={s.explainerLottie}
+                            autoPlay
+                            loop
+                            resizeMode="contain"
+                        />
+                    </View>
+                </View>
+            </LinearGradient>
+
+            <View style={s.explainerSheet}>
+                <ScrollView
+                    style={s.scrollArea}
+                    contentContainerStyle={s.explainerScrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={s.infoBanner}>
+                        <View style={s.infoBannerIcon}>
+                            <ShieldCheck size={18} color={colors.primary} strokeWidth={2.2} />
+                        </View>
+                        <Text style={s.infoBannerText}>
+                            We'll send your child an SMS with everything they need to get started.
+                        </Text>
+                    </View>
+
+                    <View style={s.howItWorksHeader}>
+                        <View style={s.howItWorksLine} />
+                        <Text style={s.howItWorksLabel}>How it works</Text>
+                        <View style={s.howItWorksLine} />
+                    </View>
+
+                    <View style={s.stepsContainer}>
+                        {STEPS.map((step, idx) => {
+                            const Icon = step.icon;
+                            const isLast = idx === STEPS.length - 1;
+                            return (
+                                <View key={step.number} style={s.stepRow}>
+                                    <View style={s.timeline}>
                                         <View
                                             style={[
-                                                s.stepLine,
-                                                { backgroundColor: `${step.color}33` },
-                                            ]}
-                                        />
-                                    )}
-                                </View>
-                                <GlassCardDark
-                                    style={{
-                                        flex: 1,
-                                        marginLeft: 10,
-                                        marginBottom: 12,
-                                        minHeight: STEP_CARD_MIN_H,
-                                    }}
-                                    padding={14}
-                                    borderRadius={radius.md}
-                                    borderColor={LINK_GLASS_BORDER}
-                                    blurIntensity={LINK_GLASS_BLUR}
-                                >
-                                    <View style={s.stepCardInner}>
-                                        <View
-                                            style={[
-                                                s.stepIconWrap,
-                                                { backgroundColor: `${step.color}22` },
+                                                s.stepDot,
+                                                {
+                                                    backgroundColor: step.color,
+                                                    shadowColor: step.color,
+                                                },
                                             ]}
                                         >
-                                            <Icon size={18} color={step.color} strokeWidth={2} />
+                                            <Text style={s.stepDotText}>{step.number}</Text>
                                         </View>
-                                        <View style={s.stepTextWrap}>
-                                            <Text style={s.stepTitle}>{step.title}</Text>
-                                            <Text style={s.stepDesc}>{step.desc}</Text>
+                                        {!isLast && <View style={s.stepLineDashed} />}
+                                    </View>
+                                    <View style={s.stepCard}>
+                                        <View style={s.stepCardInner}>
+                                            <View
+                                                style={[
+                                                    s.stepIconWrap,
+                                                    { backgroundColor: `${step.color}18` },
+                                                ]}
+                                            >
+                                                <Icon size={18} color={step.color} strokeWidth={2} />
+                                            </View>
+                                            <View style={s.stepTextWrap}>
+                                                <Text style={s.stepTitle}>{step.title}</Text>
+                                                <Text style={s.stepDesc}>{step.desc}</Text>
+                                            </View>
+                                            <GripDots color={step.color} />
                                         </View>
                                     </View>
-                                </GlassCardDark>
-                            </View>
-                        );
-                    })}
-                </View>
-            </ScrollView>
+                                </View>
+                            );
+                        })}
+                    </View>
+                </ScrollView>
 
-            <View style={[s.actions, { paddingBottom: Math.max(16, insets.bottom) }]}>
-                <TouchableOpacity onPress={openContacts} style={[s.primaryBtnTeal]} activeOpacity={0.85}>
-                    <Text style={s.primaryBtnLabel}>Select a contact first</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={closeAll} style={s.secondaryBtn}>
-                    <Text style={s.secondaryBtnLabel}>Not now</Text>
-                </TouchableOpacity>
+                <View style={[s.explainerActions, { paddingBottom: Math.max(16, insets.bottom) }]}>
+                    <TouchableOpacity onPress={openContacts} activeOpacity={0.88}>
+                        <LinearGradient
+                            {...primaryGradient}
+                            start={{ x: 0, y: 0.5 }}
+                            end={{ x: 1, y: 0.5 }}
+                            style={s.explainerPrimaryBtn}
+                        >
+                            <View style={s.explainerPrimaryBtnIcon}>
+                                <Users size={18} color={colors.primary} strokeWidth={2.2} />
+                            </View>
+                            <Text style={s.explainerPrimaryBtnLabel}>Select a contact first</Text>
+                            <ArrowRight size={20} color={colors.onPrimary} strokeWidth={2.5} />
+                        </LinearGradient>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={closeAll} style={s.secondaryBtn}>
+                        <Text style={s.explainerSecondaryBtnLabel}>Not now</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     );
@@ -513,7 +548,7 @@ const s = StyleSheet.create({
     cardCtaLabel: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 
     // Shared modal layout
-    sheetRoot: { flex: 1, backgroundColor: "#F9FAFB" },
+    sheetRoot: { flex: 1, backgroundColor: colors.secondaryCard },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         backgroundColor: "#FFFFFF", paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16,
@@ -537,26 +572,124 @@ const s = StyleSheet.create({
     scrollArea: { flex: 1 },
     scrollContent: { paddingTop: 24, paddingHorizontal: 20 },
 
-    // Explainer hero
-    hero: { alignItems: "center", marginBottom: 28 },
-    heroIconRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 20 },
-    heroIcon: { width: 52, height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-    heroTitle: {
-        fontSize: 24, fontWeight: "900", color: "#0F172A", textAlign: "center",
-        lineHeight: 30, letterSpacing: -0.5, marginBottom: 12,
+    // Explainer — dark header + white sheet
+    explainerHeader: {
+        paddingHorizontal: spacing[5],
+        paddingBottom: spacing[8],
     },
-    heroSubtitle: { fontSize: 15, color: "#64748B", lineHeight: 22, textAlign: "center", paddingHorizontal: 8 },
-
-    stepsContainer: { marginBottom: 20 },
-    stepsSectionLabel: {
+    explainerCloseBtn: {
+        alignSelf: "flex-end",
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: spacing[2],
+    },
+    explainerHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing[2],
+    },
+    explainerHeaderCopy: {
+        flex: 1,
+        minWidth: 0,
+    },
+    explainerTitleLine: {
+        fontFamily: fontFamily.headline,
+        fontSize: 30,
+        fontWeight: "900",
+        color: colors.onPrimary,
+        letterSpacing: -0.8,
+        lineHeight: 34,
+    },
+    explainerTitleAccent: {
+        fontFamily: fontFamily.headline,
+        fontSize: 30,
+        fontWeight: "900",
+        color: colors.primaryCard,
+        letterSpacing: -0.8,
+        lineHeight: 34,
+        marginBottom: spacing[2],
+    },
+    explainerSubtitle: {
+        fontFamily: fontFamily.body,
+        fontSize: 14,
+        lineHeight: 20,
+        color: "rgba(255,255,255,0.88)",
+    },
+    explainerLottieWrap: {
+        width: 120,
+        height: 130,
+        flexShrink: 0,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    explainerLottie: {
+        width: 180,
+        height: 200,
+    },
+    explainerSheet: {
+        flex: 1,
+        backgroundColor: colors.surfaceContainerLowest,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        marginTop: -spacing[4],
+        overflow: "hidden",
+    },
+    explainerScrollContent: {
+        paddingTop: spacing[5],
+        paddingHorizontal: spacing[5],
+        paddingBottom: spacing[4],
+    },
+    infoBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing[3],
+        backgroundColor: "#F3EEFF",
+        borderRadius: radius.md,
+        paddingVertical: spacing[3],
+        paddingHorizontal: spacing[4],
+        marginBottom: spacing[5],
+    },
+    infoBannerIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        backgroundColor: "rgba(107, 56, 212, 0.12)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    infoBannerText: {
+        flex: 1,
+        fontFamily: fontFamily.body,
+        fontSize: 14,
+        lineHeight: 20,
+        color: colors.onSurface,
+        fontWeight: "500",
+    },
+    howItWorksHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing[3],
+        marginBottom: spacing[4],
+    },
+    howItWorksLine: {
+        flex: 1,
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: "rgba(107, 56, 212, 0.18)",
+    },
+    howItWorksLabel: {
+        fontFamily: fontFamily.headline,
         fontSize: 11,
         fontWeight: "800",
-        color: "#94A3B8",
-        letterSpacing: 1.2,
-        marginBottom: 14,
+        color: colors.primary,
+        letterSpacing: 1.4,
         textTransform: "uppercase",
     },
-    stepRow: { flexDirection: "row", alignItems: "stretch" },
+    stepsContainer: { marginBottom: spacing[2] },
+    stepRow: { flexDirection: "row", alignItems: "stretch", marginBottom: spacing[3] },
     timeline: { width: 32, alignItems: "center" },
     stepDot: {
         width: 30,
@@ -564,30 +697,102 @@ const s = StyleSheet.create({
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center",
-        marginTop: 20,
+        marginTop: 18,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
     },
     stepDotText: { fontSize: 13, fontWeight: "800", color: "#FFFFFF" },
-    stepLine: { width: 2, flex: 1, marginTop: 6, marginBottom: 2, borderRadius: 1, minHeight: 20 },
-    stepCardInner: {
+    stepLineDashed: {
+        width: 2,
         flex: 1,
+        marginTop: 6,
+        marginBottom: 2,
+        backgroundColor: "#E2E8F0",
+        borderRadius: 1,
+        minHeight: 24,
+        opacity: 0.8,
+    },
+    stepCard: {
+        flex: 1,
+        marginLeft: 10,
+        backgroundColor: colors.surfaceContainerLowest,
+        borderRadius: radius.md,
+        padding: spacing[4],
+        borderWidth: 1,
+        borderColor: "rgba(15, 23, 42, 0.05)",
+        shadowColor: colors.onSurface,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 2,
+    },
+    stepCardInner: {
         flexDirection: "row",
         alignItems: "flex-start",
-        justifyContent: "center",
     },
     stepIconWrap: {
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         borderRadius: 12,
         alignItems: "center",
         justifyContent: "center",
     },
-    stepTextWrap: { flex: 1, marginLeft: 12, paddingTop: 1 },
-    stepTitle: { fontSize: 15, fontWeight: "800", color: "#0F172A", marginBottom: 4, letterSpacing: -0.2 },
-    stepDesc: { fontSize: 13, color: "#64748B", lineHeight: 20 },
+    stepTextWrap: { flex: 1, marginLeft: 12, paddingTop: 2, paddingRight: 8 },
+    stepTitle: {
+        fontFamily: fontFamily.headline,
+        fontSize: 15,
+        fontWeight: "800",
+        color: colors.onSurface,
+        marginBottom: 4,
+        letterSpacing: -0.2,
+    },
+    stepDesc: {
+        fontFamily: fontFamily.body,
+        fontSize: 13,
+        color: colors.onSurfaceVariant,
+        lineHeight: 19,
+    },
+    explainerActions: {
+        paddingTop: spacing[3],
+        paddingHorizontal: spacing[5],
+        alignItems: "center",
+        backgroundColor: colors.surfaceContainerLowest,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: "rgba(15, 23, 42, 0.06)",
+    },
+    explainerPrimaryBtn: {
+        width: "100%",
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 16,
+        paddingHorizontal: spacing[4],
+        borderRadius: radius.md,
+        gap: spacing[3],
+    },
+    explainerPrimaryBtnIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: colors.onPrimary,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    explainerPrimaryBtnLabel: {
+        flex: 1,
+        fontFamily: fontFamily.headline,
+        fontSize: 16,
+        fontWeight: "800",
+        color: colors.onPrimary,
+        textAlign: "center",
+    },
+    explainerSecondaryBtnLabel: {
+        fontFamily: fontFamily.body,
+        fontSize: 15,
+        fontWeight: "600",
+        color: colors.onSurfaceVariant,
+    },
 
     // Confirmation / shared labels
     sectionLabel: { fontSize: 11, fontWeight: "800", color: "#94A3B8", letterSpacing: 1, marginLeft: 4 },

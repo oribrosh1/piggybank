@@ -187,6 +187,7 @@ export default function SignUpScreen() {
 
       router.replace(getPostLoginRoute());
     } catch (error: any) {
+      console.error("[signup] createUserWithEmailAndPassword failed:", error?.code, error?.message);
       let errorMessage = "Failed to create account";
       if (error.code === "auth/email-already-in-use") {
         errorMessage = "This email is already registered. Please sign in instead.";

@@ -45,7 +45,10 @@ export function useCreateEventReviewScreen(
       });
       if (res.ok && res.eventId) {
         clearDraft();
-        router.replace(routes.eventDashboard(res.eventId));
+        router.replace({
+          pathname: routes.tabs.myEvent,
+          params: { eventId: res.eventId },
+        });
       }
     } catch (e: unknown) {
       Alert.alert(

@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: spacing[2],
   },
   brand: {
     ...typography.headlineLg,

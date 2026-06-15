@@ -55,3 +55,19 @@ export function honoreeNameFromEvent(event: { childName?: string; eventName: str
   const legacy = legacyFirstNameFromEventTitle(event.eventName);
   return legacy || event.eventName;
 }
+
+/** Display name for My Child screens — prefers `childName`, else parses `eventName`. */
+export function childDisplayNameFromEvent(
+  event: { childName?: string; eventName?: string } | null | undefined,
+): string {
+  if (!event) return "";
+  const explicit = event.childName?.trim();
+  if (explicit) return explicit;
+  const title = event.eventName?.trim();
+  if (!title) return "";
+  return honoreeNameFromEvent({ childName: event.childName, eventName: title });
+}
+
+export function firstNameFromDisplayName(name: string): string {
+  return name.trim().split(/\s+/)[0] || name.trim();
+}

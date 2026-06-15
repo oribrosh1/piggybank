@@ -49,7 +49,7 @@ import {
   getMealTypeLabel,
   getVegetarianLabel,
 } from "../utils";
-import { colors, fontFamily } from "@/src/theme";
+import { colors, fontFamily, spacing } from "@/src/theme";
 import { getPartyTypeDisplayLabel } from "@/src/constants/partyTypeOptions";
 
 const VIOLET = colors.primary;
@@ -76,38 +76,48 @@ function getEventTypeTitle(eventType: Event["eventType"]): string {
 export function EventPosterIntroLine({
   event,
   showCelebrationEmoji,
+  embedded,
 }: {
   event: Event;
   showCelebrationEmoji?: boolean;
+  /** Inside hero poster `GlassCardDark` — centered, no extra horizontal padding. */
+  embedded?: boolean;
 }) {
   const childName = extractChildFirstName(event.eventName);
   const typeTitle = getEventTypeTitle(event.eventType);
   const age = event.age?.trim();
+  const emojiSuffix = showCelebrationEmoji ? " 🎉" : "";
 
-  const headline = (() => {
+  const headlineText = (() => {
     switch (event.eventType) {
       case "birthday":
-        return `${childName}'s Birthday`;
       case "barMitzvah":
-        return `${childName}'s Bar Mitzvah`;
       case "batMitzvah":
-        return `${childName}'s Bat Mitzvah`;
+        return `${childName}'s ${typeTitle}${emojiSuffix}`;
       default:
-        return `${typeTitle} · ${childName}`;
+        return `${typeTitle} · ${childName}${emojiSuffix}`;
     }
   })();
 
   return (
-    <View style={styles.posterIntroWrap}>
-      <Text style={styles.posterIntroHeadline} numberOfLines={2}>
-        {headline}
-        {showCelebrationEmoji ? " 🎉" : ""}
+    <View style={[styles.posterIntroWrap, embedded && styles.posterIntroWrapEmbedded]}>
+      <Text
+        style={[
+          styles.posterIntroHeadline,
+          embedded && styles.posterIntroHeadlineEmbedded,
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.65}
+      >
+        {headlineText}
       </Text>
       {age ? (
         <Text
           style={[
             styles.posterIntroAge,
             showCelebrationEmoji && styles.posterIntroAgeFriendly,
+            embedded && styles.posterIntroAgeEmbedded,
           ]}
         >
           {showCelebrationEmoji ? `Turning ${age}` : `TURNING ${age}`}
@@ -1220,13 +1230,25 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 8,
   },
+  posterIntroWrapEmbedded: {
+    paddingHorizontal: 0,
+    paddingTop: spacing[1],
+    paddingBottom: spacing[1],
+    flexShrink: 0,
+    alignItems: "center",
+    width: "100%",
+  },
   posterIntroHeadline: {
     fontFamily: fontFamily.display,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.6,
-    lineHeight: 30,
+    lineHeight: 24,
+  },
+  posterIntroHeadlineEmbedded: {
+    width: "100%",
+    textAlign: "center",
   },
   posterIntroAge: {
     marginTop: 6,
@@ -1236,6 +1258,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  posterIntroAgeEmbedded: {
+    textAlign: "center",
   },
   posterIntroAgeFriendly: {
     fontFamily: fontFamily.body,

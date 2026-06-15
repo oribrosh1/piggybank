@@ -16,6 +16,8 @@ export type GlassCardDarkProps = {
   style?: StyleProp<ViewStyle>;
   /** Inner content: padding + blur tint layer */
   contentStyle?: StyleProp<ViewStyle>;
+  /** Stretch through shell + blur layer to fill a flex parent */
+  fill?: boolean;
   padding?: number;
   borderRadius?: number;
   /** Default: white 30% — use `glassCardBorderLocked` from theme for locked tiles (`border-white/40`) */
@@ -31,6 +33,7 @@ export function GlassCardDark({
   children,
   style,
   contentStyle,
+  fill = false,
   padding = spacing[3],
   borderRadius = radius.md,
   borderColor = GLASS_CARD_DARK_BORDER_DEFAULT,
@@ -43,6 +46,10 @@ export function GlassCardDark({
     borderColor
   };
 
+  const fillStyle: ViewStyle | undefined = fill
+    ? { flex: 1, minHeight: 0, alignSelf: "stretch" }
+    : undefined;
+
   const innerBase: ViewStyle = {
     padding,
     position: "relative",
@@ -50,14 +57,14 @@ export function GlassCardDark({
   };
 
   return (
-    <View style={[styles.outer, { borderRadius }, style]}>
-      <View style={shellStyle}>
+    <View style={[styles.outer, { borderRadius }, fillStyle, style]}>
+      <View style={[shellStyle, fillStyle]}>
         {Platform.OS === "ios" ? (
-          <BlurView intensity={blurIntensity} tint="light" style={[innerBase, contentStyle]}>
+          <BlurView intensity={blurIntensity} tint="light" style={[innerBase, fillStyle, contentStyle]}>
             {children}
           </BlurView>
         ) : (
-          <View style={[innerBase, contentStyle]}>{children}</View>
+          <View style={[innerBase, fillStyle, contentStyle]}>{children}</View>
         )}
       </View>
     </View>

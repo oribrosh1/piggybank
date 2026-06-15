@@ -10,6 +10,7 @@ import {
   Platform,
   StyleSheet,
   Pressable,
+  Alert,
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +20,11 @@ import { BlurView } from "expo-blur";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Lock, Wallet, Sparkles, Calendar } from "lucide-react-native";
 import { getEvent, getUserEventsStats } from "@/src/lib/eventService";
+import { getAccountStatus } from "@/src/lib/api";
+import { navigateToStripeConnectOrPersonalInfo } from "@/src/lib/stripeHostedOnboarding";
 import { PayoutSetupBanner } from "@/src/components/events";
+import BankingSetupRequiredCard from "@/src/components/home/BankingSetupRequiredCard";
+import DigitalGiftsBlessingPreviewSection from "@/src/components/home/DigitalGiftsBlessingPreviewSection";
 import { getGiftTemplate } from "@/src/lib/giftCardTemplates";
 import type { Event, Guest } from "@/types/events";
 import { routes } from "@/types/routes";
@@ -48,6 +53,9 @@ export default function GiftsTabScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
+  const [bankingLoading, setBankingLoading] = useState(true);
+  const [bankingReady, setBankingReady] = useState(false);
+  const [openingBanking, setOpeningBanking] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -71,14 +79,50 @@ export default function GiftsTabScreen() {
     }
   }, []);
 
+  const loadBankingStatus = useCallback(async () => {
+    try {
+      const s = await getAccountStatus();
+      const ok =
+        Boolean(s.exists) &&
+        (s.charges_enabled ?? false) &&
+        (s.payouts_enabled ?? false);
+      setBankingReady(ok);
+    } catch {
+      setBankingReady(false);
+    } finally {
+      setBankingLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadBankingStatus();
+  }, [load, loadBankingStatus]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    setBankingLoading(true);
     load();
-  }, [load]);
+    loadBankingStatus();
+  }, [load, loadBankingStatus]);
+
+  const onCompleteBankingSetup = useCallback(async () => {
+    if (openingBanking) return;
+    setOpeningBanking(true);
+    try {
+      await navigateToStripeConnectOrPersonalInfo(router);
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
+          : err instanceof Error
+            ? err.message
+            : "Could not open Stripe. Try again.";
+      Alert.alert("Setup", String(msg || "Something went wrong"));
+    } finally {
+      setOpeningBanking(false);
+    }
+  }, [router, openingBanking]);
 
   const paidGuests: Guest[] = useMemo(
     () =>
@@ -145,7 +189,7 @@ export default function GiftsTabScreen() {
       >
         <AppTabHeader />
 
-        <PayoutSetupBanner event={event} />
+        {bankingReady || paidGuests.length > 0 ? <PayoutSetupBanner event={event} /> : null}
 
         <Text style={[typography.headlineLg, { fontSize: 24, marginBottom: 4 }]}>
           Gifts Received ({paidGuests.length})
@@ -259,33 +303,49 @@ export default function GiftsTabScreen() {
         </View>
 
         {paidGuests.length === 0 ? (
-          <View
-            style={{
-              alignItems: "center",
-              paddingVertical: 28,
-              paddingHorizontal: 16,
-              backgroundColor: colors.surfaceContainerLow,
-              borderRadius: radius.md,
-            }}
-          >
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>💌</Text>
-            <Text style={[typography.bodyLg, { fontFamily: fontFamily.title, color: colors.onSurfaceVariant, textAlign: "center" }]}>
-              No gifts yet
-            </Text>
-            <Text
-              style={[
-                typography.bodyMd,
-                {
-                  marginTop: 8,
-                  color: colors.muted,
-                  textAlign: "center",
-                  lineHeight: 20,
-                },
-              ]}
+          !bankingReady ? (
+            bankingLoading ? (
+              <View style={{ alignItems: "center", paddingVertical: 28 }}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : (
+              <View style={{ gap: spacing[3] }}>
+                <DigitalGiftsBlessingPreviewSection onVerifyPress={onCompleteBankingSetup} />
+                <BankingSetupRequiredCard
+                  onCompleteSetup={onCompleteBankingSetup}
+                  showBlessingPreview={false}
+                />
+              </View>
+            )
+          ) : (
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: 28,
+                paddingHorizontal: 16,
+                backgroundColor: colors.surfaceContainerLow,
+                borderRadius: radius.md,
+              }}
             >
-              Share your invite link — guest gift cards with blessings will appear here.
-            </Text>
-          </View>
+              <Text style={{ fontSize: 40, marginBottom: 12 }}>💌</Text>
+              <Text style={[typography.bodyLg, { fontFamily: fontFamily.title, color: colors.onSurfaceVariant, textAlign: "center" }]}>
+                No gifts yet
+              </Text>
+              <Text
+                style={[
+                  typography.bodyMd,
+                  {
+                    marginTop: 8,
+                    color: colors.muted,
+                    textAlign: "center",
+                    lineHeight: 20,
+                  },
+                ]}
+              >
+                Share your invite link — guest gift cards with blessings will appear here.
+              </Text>
+            </View>
+          )
         ) : filteredGuests.length === 0 ? (
           <Text style={[typography.bodyMd, { color: colors.muted, textAlign: "center", paddingVertical: 24 }]}>
             No senders match “{query.trim()}”.

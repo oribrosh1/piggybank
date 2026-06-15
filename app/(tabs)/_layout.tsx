@@ -43,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "HOME",
+          title: "Home",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "grid" : "grid-outline"}
@@ -56,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="my-event"
         options={{
-          title: "MY EVENT",
+          title: "My Event",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "calendar" : "calendar-outline"}
@@ -69,10 +69,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="kids"
         options={{
-          title: "MY CHILD",
+          title: "My Child",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
-              icon={focused ? "happy" : "happy-outline"}
+              icon={focused ? "people" : "people-outline"}
               color={color}
               focused={focused}
             />
@@ -82,7 +82,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="gifts"
         options={{
-          title: "GIFTS",
+          title: "Gifts",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "gift" : "gift-outline"}
@@ -95,7 +95,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "SETTINGS",
+          title: "Settings",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "settings" : "settings-outline"}

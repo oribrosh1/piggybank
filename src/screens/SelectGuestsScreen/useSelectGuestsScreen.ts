@@ -122,7 +122,10 @@ export function useSelectGuestsScreen() {
       const result = await updateEventGuests(eventId, list);
 
       if (result.success) {
-        router.replace(routes.eventDashboard(eventId));
+        router.replace({
+          pathname: routes.tabs.myEvent,
+          params: { eventId },
+        });
       } else {
         Alert.alert("Error", result.error || "Failed to save guests. Please try again.");
       }

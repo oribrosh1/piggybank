@@ -11,6 +11,7 @@ import {
   testLinkChildAccount,
   getPendingInvite,
   revokeChildInvite,
+  getAccountStatus,
   ChildCardResponse,
   ChildIssuingTransaction,
   ChildSpendingSummaryResponse,
@@ -37,9 +38,32 @@ export function useKidsScreen() {
   const [linkModalVisible, setLinkModalVisible] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [testLinking, setTestLinking] = useState(false);
-  const [latestEventId, setLatestEventId] = useState<string | null>(null);
   const [pendingInvite, setPendingInvite] = useState<PendingInviteResponse | null>(null);
   const [revokingInvite, setRevokingInvite] = useState(false);
+  const [bankingReady, setBankingReady] = useState(false);
+  const [bankingLoading, setBankingLoading] = useState(true);
+  const [latestEventMeta, setLatestEventMeta] = useState<{
+    id: string;
+    childName?: string;
+    eventName?: string;
+    age?: string;
+    honoreePhotoUrl?: string;
+  } | null>(null);
+
+  const loadBankingStatus = useCallback(async () => {
+    try {
+      const s = await getAccountStatus();
+      const ok =
+        Boolean(s.exists) &&
+        (s.charges_enabled ?? false) &&
+        (s.payouts_enabled ?? false);
+      setBankingReady(ok);
+    } catch {
+      setBankingReady(false);
+    } finally {
+      setBankingLoading(false);
+    }
+  }, []);
 
   const findChildAccount = useCallback(async (): Promise<string | null> => {
     const user = firebase.auth().currentUser;
@@ -74,7 +98,13 @@ export function useKidsScreen() {
     []
   );
 
-  const findLatestEvent = useCallback(async (): Promise<string | null> => {
+  const findLatestEvent = useCallback(async (): Promise<{
+    id: string;
+    childName?: string;
+    eventName?: string;
+    age?: string;
+    honoreePhotoUrl?: string;
+  } | null> => {
     const user = firebase.auth().currentUser;
     if (!user) return null;
     const snap = await firestore()
@@ -83,30 +113,41 @@ export function useKidsScreen() {
       .limit(5)
       .get();
     if (snap.empty) return null;
-    // Pick the most recently created event without requiring a composite index
     let best = snap.docs[0];
     for (const doc of snap.docs) {
       const ts = doc.data().createdAt?.toMillis?.() ?? 0;
       const bestTs = best.data().createdAt?.toMillis?.() ?? 0;
       if (ts > bestTs) best = doc;
     }
-    return best.id;
+    const data = best.data();
+    return {
+      id: best.id,
+      childName: typeof data.childName === "string" ? data.childName : undefined,
+      eventName: typeof data.eventName === "string" ? data.eventName : undefined,
+      age: typeof data.age === "string" ? data.age : data.age != null ? String(data.age) : undefined,
+      honoreePhotoUrl:
+        typeof data.honoreePhotoUrl === "string" && data.honoreePhotoUrl.trim()
+          ? data.honoreePhotoUrl.trim()
+          : undefined,
+    };
   }, []);
 
   const loadInitial = useCallback(async () => {
     setLoading(true);
+    setBankingLoading(true);
     try {
-      const [accountId, eventId] = await Promise.all([
+      const [accountId, eventMeta] = await Promise.all([
         findChildAccount(),
         findLatestEvent(),
+        loadBankingStatus(),
       ]);
       setChildAccountId(accountId);
-      setLatestEventId(eventId);
+      setLatestEventMeta(eventMeta);
       if (accountId) {
         await fetchAll(accountId);
-      } else if (eventId) {
+      } else if (eventMeta?.id) {
         try {
-          const invite = await getPendingInvite(eventId);
+          const invite = await getPendingInvite(eventMeta.id);
           setPendingInvite(invite);
         } catch {
           setPendingInvite(null);
@@ -117,7 +158,7 @@ export function useKidsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [findChildAccount, findLatestEvent, fetchAll]);
+  }, [findChildAccount, findLatestEvent, fetchAll, loadBankingStatus]);
 
   useEffect(() => {
     loadInitial();
@@ -125,16 +166,29 @@ export function useKidsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    setBankingLoading(true);
     try {
-      const accountId = childAccountId || (await findChildAccount());
+      const [accountId, eventMeta] = await Promise.all([
+        childAccountId ? Promise.resolve(childAccountId) : findChildAccount(),
+        findLatestEvent(),
+        loadBankingStatus(),
+      ]);
+      setLatestEventMeta(eventMeta);
       if (accountId) {
         setChildAccountId(accountId);
         await fetchAll(accountId);
+      } else if (eventMeta?.id) {
+        try {
+          const invite = await getPendingInvite(eventMeta.id);
+          setPendingInvite(invite);
+        } catch {
+          setPendingInvite(null);
+        }
       }
     } finally {
       setRefreshing(false);
     }
-  }, [childAccountId, findChildAccount, fetchAll]);
+  }, [childAccountId, findChildAccount, findLatestEvent, fetchAll, loadBankingStatus]);
 
   const handleToggleFreeze = useCallback(async () => {
     if (!childAccountId || !card) return;
@@ -211,13 +265,13 @@ export function useKidsScreen() {
 
   const handleSendInvite = useCallback(
     async (childPhone: string, childName: string) => {
-      if (!latestEventId) {
+      if (!latestEventMeta?.id) {
         Alert.alert("No Event", "Please create an event first before linking your child.");
         return;
       }
       setSendingInvite(true);
       try {
-        const res = await sendChildInvite(latestEventId, childPhone, childName);
+        const res = await sendChildInvite(latestEventMeta.id, childPhone, childName);
         if (res.smsSkipped && res.devInviteLink && res.devPin) {
           Alert.alert(
             "Invite created (test mode)",
@@ -232,14 +286,14 @@ export function useKidsScreen() {
         setSendingInvite(false);
       }
     },
-    [latestEventId, loadInitial]
+    [latestEventMeta?.id, loadInitial]
   );
 
   const handleRevokeInvite = useCallback(async () => {
-    if (!latestEventId) return;
+    if (!latestEventMeta?.id) return;
     setRevokingInvite(true);
     try {
-      await revokeChildInvite(latestEventId);
+      await revokeChildInvite(latestEventMeta.id);
       setPendingInvite(null);
       Alert.alert("Invite Cancelled", "The pending invite has been revoked.");
     } catch (err: any) {
@@ -247,7 +301,7 @@ export function useKidsScreen() {
     } finally {
       setRevokingInvite(false);
     }
-  }, [latestEventId]);
+  }, [latestEventMeta?.id]);
 
   const handleTestLink = useCallback(async () => {
     setTestLinking(true);
@@ -281,6 +335,9 @@ export function useKidsScreen() {
     testLinking,
     pendingInvite,
     revokingInvite,
+    bankingReady,
+    bankingLoading,
+    latestEventMeta,
     onRefresh,
     handleToggleFreeze,
     handleUpdateLimits,

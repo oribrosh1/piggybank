@@ -4,7 +4,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import LottieView from "lottie-react-native";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { AlertTriangle, Building2, Check, CreditCard, FileUp, ScanFace } from "lucide-react-native";
+import { AlertTriangle, Building2, Check, ChevronsRightIcon, CreditCard, FileUp, ScanFace } from "lucide-react-native";
 import Animated, {
   Easing,
   interpolate,
@@ -28,6 +28,7 @@ import {
   cardsHtmlCardGlowPulseMs,
   cardsHtmlRevealCheckDelayMs,
 } from "@/src/theme";
+import DigitalGiftsBlessingPreviewSection from "./DigitalGiftsBlessingPreviewSection";
 
 const VERIFY_CREDITKID_LOTTIE = require("../../../assets/lotties/verify-creditkid.json");
 
@@ -39,7 +40,7 @@ function canUseNativeLottie(): boolean {
   return true;
 }
 
-const SETUP_STEP_CIRCLE = 44;
+const SETUP_STEP_CIRCLE = 28;
 const SETUP_LINE_PULSE_MS = 1600;
 const SETUP_LINE_SHIMMER_MS = 2800;
 
@@ -87,31 +88,31 @@ function BankingSetupProgressBar() {
           <Animated.View style={[styles.setupLineShimmer, lineShimmerStyle]} />
         </View>
         <View style={styles.setupProgressRow}>
-          <View style={styles.setupColEqual}>
+          <View style={styles.setupColFirst}>
             <View style={styles.stepCircleDone}>
-              <FileUp size={20} color={colors.onPrimary} strokeWidth={2} />
+              <FileUp size={13} color={colors.onPrimary} strokeWidth={2} />
             </View>
           </View>
-          <View style={styles.setupColEqual}>
+          <View style={styles.setupColSecond}>
             <View style={styles.stepCircleDone}>
-              <ScanFace size={20} color={colors.onPrimary} strokeWidth={2} />
+              <ScanFace size={13} color={colors.onPrimary} strokeWidth={2} />
             </View>
           </View>
-          <View style={styles.setupColEqual}>
+          <View style={styles.setupColLast}>
             <View style={styles.stepCircleDone}>
-              <CreditCard size={20} color={colors.onPrimary} strokeWidth={2} />
+              <CreditCard size={13} color={colors.onPrimary} strokeWidth={2} />
             </View>
           </View>
         </View>
       </View>
       <View style={styles.setupProgressLabelsRow}>
-        <View style={styles.setupColEqual}>
-          <Text style={styles.setupLabelActive}>Upload Documents</Text>
+        <View style={styles.setupColFirst}>
+          <Text style={[styles.setupLabelActive, styles.setupLabelFirst]}>Upload Documents</Text>
         </View>
-        <View style={styles.setupColEqual}>
-          <Text style={styles.setupLabelActive}>Biometric Check</Text>
+        <View style={styles.setupColSecond}>
+          <Text style={[styles.setupLabelActive, styles.setupLabelSecond]}>Biometric Check</Text>
         </View>
-        <View style={styles.setupColEqual}>
+        <View style={styles.setupColLast}>
           <Text style={styles.setupLabelActive}>Get Credit Card</Text>
         </View>
       </View>
@@ -147,13 +148,18 @@ function useGoldSphereFloat() {
 
 interface Props {
   onCompleteSetup: () => void;
+  /** When false, omits the bundled blessing preview (e.g. when shown separately above). */
+  showBlessingPreview?: boolean;
 }
 
 /**
  * Action Required hero — matches dashboard HTML (`glass-card`, gradient halo, decorative graphic,
  * `animate-glow-pulse`, `animate-reveal-check` on verify badge).
  */
-export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
+export default function BankingSetupRequiredCard({
+  onCompleteSetup,
+  showBlessingPreview = true,
+}: Props) {
   const useNativeLottie = useMemo(() => canUseNativeLottie(), []);
   const goldMotion = useGoldSphereFloat();
 
@@ -218,43 +224,45 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
                   />
                 ) : (
                   <View style={styles.graphicIconFallback}>
-                    <CreditCard size={60} color={colors.onPrimary} strokeWidth={2} />
+                    <CreditCard size={42} color={colors.onPrimary} strokeWidth={2} />
                   </View>
                 )}
               </View>
             </LinearGradient>
             <Animated.View style={[styles.verifyBubble, checkBubbleStyle]}>
-              <Check size={22} color="#006c49" strokeWidth={3} />
+              <Check size={16} color="#006c49" strokeWidth={3} />
             </Animated.View>
           </View>
         </View>
       </View>
 
       <View style={styles.copyBlock}>
-        <View style={styles.actionBadge}>
+        {/* <View style={styles.actionBadge}>
           <AlertTriangle size={14} color={colors.primary} strokeWidth={2.4} />
           <Text style={styles.actionBadgeText}>Action Required</Text>
-        </View>
+        </View> */}
         <Text style={styles.title}>Verify & Get A CreditKid Card</Text>
       </View>
       <Text style={[styles.body, styles.bodyBelowCopy]}>
         To send SMS invitations and start collecting digital gifts, you need to verify your identity.
       </Text>
 
-      <BankingSetupProgressBar />
-
-      <View style={styles.ctaBlock}>
-        <TouchableOpacity onPress={onCompleteSetup} activeOpacity={0.92} style={styles.ctaTouch}>
+      <View style={styles.setupProgressWithCtaRow}>
+        <BankingSetupProgressBar />
+        <TouchableOpacity onPress={onCompleteSetup} activeOpacity={0.92} style={styles.verifyNowTouch}>
           <LinearGradient
             colors={primaryGradient.colors}
             start={primaryGradient.start}
             end={primaryGradient.end}
-            style={styles.ctaGradient}
+            style={styles.verifyNowGradient}
           >
-            <Text style={styles.ctaLabel}>Start Identity Verification</Text>
+            <Text style={styles.verifyNowLabel}>Verify Identity Now</Text>
+            <ChevronsRightIcon size={14} color={colors.onPrimary} strokeWidth={3} />
           </LinearGradient>
         </TouchableOpacity>
+      </View>
 
+      <View style={styles.ctaBlock}>
         <View style={styles.trustRow}>
           <Text style={styles.trustMuted}>Verified by</Text>
           {/* image of stripe icon */}
@@ -265,8 +273,9 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
   );
 
   return (
-    <View style={styles.sectionWrap}>
-      <View style={styles.haloBlur} pointerEvents="none">
+    <View style={styles.rootWrap}>
+      <View style={styles.sectionWrap}>
+        <View style={styles.haloBlur} pointerEvents="none">
         {Platform.OS === "ios" ? (
           <BlurView intensity={28} tint="light" style={StyleSheet.absoluteFill}>
             <LinearGradient colors={HALO_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
@@ -289,11 +298,19 @@ export default function BankingSetupRequiredCard({ onCompleteSetup }: Props) {
           </View>
         )}
       </Animated.View>
+      </View>
+      {showBlessingPreview ? (
+        <DigitalGiftsBlessingPreviewSection onVerifyPress={onCompleteSetup} />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rootWrap: {
+    gap: spacing[3],
+    overflow: "visible",
+  },
   sectionWrap: {
     position: "relative",
     borderRadius: radius.lg,
@@ -330,9 +347,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   cardPad: {
-    padding: spacing[6],
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[6],
+    paddingBottom: spacing[1],
     overflow: "visible",
-    minHeight: 280,
   },
   goldSphere: {
     position: "absolute",
@@ -345,18 +363,18 @@ const styles = StyleSheet.create({
   },
   graphicCluster: {
     position: "absolute",
-    top: -48,
-    right: -48,
-    width: 192,
-    height: 192,
+    top: -32,
+    right: -32,
+    width: 140,
+    height: 140,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
   },
   graphicCircle: {
-    width: 192,
-    height: 192,
-    borderRadius: 96,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: "rgba(107, 56, 212, 0.05)",
     alignItems: "center",
     justifyContent: "center",
@@ -366,9 +384,9 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   graphicCardFace: {
-    width: 128,
-    height: 128,
-    borderRadius: 16,
+    width: 90,
+    height: 90,
+    borderRadius: 12,
     position: "relative",
     overflow: "hidden",
     alignItems: "center",
@@ -398,11 +416,11 @@ const styles = StyleSheet.create({
   },
   verifyBubble: {
     position: "absolute",
-    bottom: -8,
-    right: -8,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    bottom: -6,
+    right: -6,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: colors.secondaryContainer,
     alignItems: "center",
     justifyContent: "center",
@@ -415,9 +433,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   copyBlock: {
-    width: "70%",
+    width: "80%",
+    marginTop: -spacing[3],
     zIndex: 3,
-    gap: spacing[3],
+    gap: spacing[1],
   },
   actionBadge: {
     flexDirection: "row",
@@ -439,30 +458,35 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fontFamily.headline,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: -0.4,
-    lineHeight: 30,
+    lineHeight: 24,
   },
   body: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "400",
     color: "rgba(18, 28, 42, 0.7)",
-    lineHeight: 22,
+    lineHeight: 16,
   },
   bodyBelowCopy: {
-    width: "100%",
+    width: "80%",
     alignSelf: "stretch",
-    marginTop: spacing[3],
+    marginTop: spacing[1],
+    marginBottom: -spacing[2],
   },
-  setupProgress: {
-    width: "100%",
-    alignSelf: "stretch",
+  setupProgressWithCtaRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: spacing[4],
     marginBottom: spacing[2],
     zIndex: 3,
+  },
+  setupProgress: {
+    flex: 1,
+    minWidth: 0,
   },
   setupProgressTrack: {
     position: "relative",
@@ -471,8 +495,8 @@ const styles = StyleSheet.create({
   },
   setupProgressLines: {
     position: "absolute",
-    left: "16.66%",
-    right: "16.66%",
+    left: SETUP_STEP_CIRCLE / 2,
+    right: "20%",
     top: SETUP_STEP_CIRCLE / 2 - 1,
     height: 4,
     overflow: "hidden",
@@ -528,8 +552,18 @@ const styles = StyleSheet.create({
     width: "100%",
     zIndex: 1,
   },
-  setupColEqual: {
+  setupColFirst: {
     flex: 1,
+    alignItems: "flex-start",
+    paddingRight: 2,
+  },
+  setupColSecond: {
+    flex: 0.75,
+    alignItems: "flex-start",
+    paddingRight: 2,
+  },
+  setupColLast: {
+    flex: 1.25,
     alignItems: "center",
     paddingHorizontal: 2,
   },
@@ -556,17 +590,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     width: "100%",
-    marginTop: spacing[3],
+    marginTop: spacing[1],
   },
   setupLabelActive: {
     fontFamily: fontFamily.headline,
-    fontSize: 13,
-    width:"80%",
-
+    fontSize: 9,
+    width: "90%",
     fontWeight: "700",
     color: colors.onSurface,
     textAlign: "center",
-    lineHeight: 14,
+    lineHeight: 11,
+  },
+  setupLabelFirst: {
+    textAlign: "center",
+    width: "100%",
+    marginLeft: -20,
+  },
+  setupLabelSecond: {
+    textAlign: "center",
+    width: "100%",
+    marginLeft: -10,
   },
   setupLabelPending: {
     fontFamily: fontFamily.body,
@@ -578,34 +621,36 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   ctaBlock: {
-    marginTop: spacing[3],
     gap: spacing[2],
     zIndex: 3,
   },
-  ctaTouch: {
+  verifyNowTouch: {
     borderRadius: radius.full,
     overflow: "hidden",
-    alignSelf: "stretch",
+    flexShrink: 0,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  ctaGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: spacing[6],
+  verifyNowGradient: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: spacing[3],
     justifyContent: "center",
   },
-  ctaLabel: {
+  verifyNowLabel: {
     fontFamily: fontFamily.headline,
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: "700",
     color: colors.onPrimary,
+    textAlign: "center",
+    marginRight: -4,
   },
   trustRow: {
-    marginBottom: -spacing[3],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -617,8 +662,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: colors.onSurfaceVariant,
     letterSpacing: 1.2,
-    marginTop: 2,
-    marginRight: -6,
+    marginTop: 1,
+    marginRight: -7,
     textTransform: "uppercase",
   },
   stripeChip: {

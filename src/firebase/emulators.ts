@@ -13,10 +13,21 @@ import { firebaseApp } from "./firebaseWeb";
 declare global {
   // eslint-disable-next-line no-var
   var __creditkidEmulatorsConfigured: boolean | undefined;
+  // eslint-disable-next-line no-var
+  var __creditkidEmulatorsSkippedLogged: boolean | undefined;
 }
 
 function configureFirebaseEmulators(): void {
-  if (!__DEV__ || !useFirebaseEmulators()) return;
+  if (!__DEV__) return;
+  if (!useFirebaseEmulators()) {
+    if (!globalThis.__creditkidEmulatorsSkippedLogged) {
+      console.warn(
+        "[dev] Firebase emulators off — use npm run start:dev and EXPO_PUBLIC_USE_FIREBASE_EMULATORS=true",
+      );
+      globalThis.__creditkidEmulatorsSkippedLogged = true;
+    }
+    return;
+  }
   if (globalThis.__creditkidEmulatorsConfigured) return;
 
   const host = resolveEmulatorHost();

@@ -19,6 +19,7 @@ import QuickActionsChildActive from "@/src/components/home/QuickActionsChildActi
 import ChildTransactionFeed from "@/src/components/home/ChildTransactionFeed";
 import ParentalControlsGrid from "@/src/components/home/ParentalControlsGrid";
 import PreEventBankingPendingState from "@/src/components/home/PreEventBankingPendingState";
+import MyEventTabContent from "@/src/screens/MyEventTab/MyEventTabContent";
 import { LoadingLogoLottie } from "@/src/components/LoadingLogoLottie";
 import { defaultTabBarStyle, hiddenTabBarStyle } from "@/src/navigation/defaultTabBarStyle";
 import AppTabFooter from "@/src/components/AppTabFooter";
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const {
     loading,
+    fullHomeUnlocked,
     homeState,
     userProfile,
     event,
@@ -69,6 +71,10 @@ export default function HomeScreen() {
         </View>
       </View>
     );
+  }
+
+  if (!fullHomeUnlocked) {
+    return <MyEventTabContent />;
   }
 
   return (

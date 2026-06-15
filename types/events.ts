@@ -329,6 +329,8 @@ export interface Event {
   needsBankingSetup?: boolean;
   /** When false, scheduled reminder SMS cron skips this event (default: reminders on) */
   reminderSmsEnabled?: boolean;
+  /** Parent-authored guest invite SMS body; falls back to the default template when unset */
+  customInviteSmsBody?: string;
 
   // Status
   status: "draft" | "active" | "completed" | "cancelled";
@@ -508,6 +510,8 @@ export const eventConverter: FirestoreDataConverter<Event> = {
     if (event.posterThemeId) data.posterThemeId = event.posterThemeId;
     if (event.needsBankingSetup === true) data.needsBankingSetup = true;
     if (event.reminderSmsEnabled === false) data.reminderSmsEnabled = false;
+    if (event.customInviteSmsBody?.trim())
+      data.customInviteSmsBody = event.customInviteSmsBody.trim();
 
     return data;
   },
@@ -597,6 +601,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
       stripeAccountId: data.stripeAccountId,
       needsBankingSetup: data.needsBankingSetup === true,
       reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
+      customInviteSmsBody: data.customInviteSmsBody?.trim() || undefined,
       status: data.status ?? "active",
       createdAt: data.createdAt?.toDate?.() ?? new Date(),
       updatedAt: data.updatedAt?.toDate?.() ?? new Date(),

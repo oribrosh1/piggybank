@@ -13,6 +13,7 @@ import {
   type ChildCardResponse,
   type ChildIssuingTransaction,
 } from "@/src/lib/api";
+import { isFullHomeDashboardUnlocked } from "@/src/lib/homeDashboardAccess";
 import type { EventSummary } from "@/types/events";
 import type { UserProfile } from "@/types/user";
 import firebase from "@/src/firebase";
@@ -38,6 +39,7 @@ export function useHomeScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [event, setEvent] = useState<EventSummary | null>(null);
   const [homeState, setHomeState] = useState<HomeState>("empty");
+  const [fullHomeUnlocked, setFullHomeUnlocked] = useState(false);
 
   const [childAccountId, setChildAccountId] = useState<string | null>(null);
   const [childName, setChildName] = useState<string>("Your Child");
@@ -69,6 +71,12 @@ export function useHomeScreen() {
     try {
       const user = firebase.auth().currentUser;
       if (!user) return;
+
+      const unlocked = await isFullHomeDashboardUnlocked();
+      setFullHomeUnlocked(unlocked);
+      if (!unlocked) {
+        return;
+      }
 
       const [profile, events] = await Promise.all([
         getUserProfile(user.uid),
@@ -270,6 +278,7 @@ export function useHomeScreen() {
 
   return {
     loading,
+    fullHomeUnlocked,
     homeState,
     userProfile,
     event,

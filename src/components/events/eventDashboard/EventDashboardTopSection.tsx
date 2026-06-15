@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
+  ScrollView,
   StyleSheet,
+  Platform,
+  type StyleProp,
   type ViewStyle,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,16 +21,58 @@ import {
   CreditCard,
   Ellipsis,
   Gift,
+  LayoutTemplate,
+  ArrowLeftRight,
+  Pencil,
   Sparkles,
   UserCheck,
   Users,
+  Wand2,
+  Zap,
 } from "lucide-react-native";
 import type { Event } from "@/types/events";
-import { colors, fontFamily, radius, spacing } from "@/src/theme";
+import {
+  GlassCardDark,
+  GLASS_CARD_DARK_BORDER_DEFAULT,
+} from "@/src/components/common/GlassCardDark";
+import { colors, fontFamily, glassCardBorder, glassCardFillDark, radius, spacing } from "@/src/theme";
 import { EventPosterIntroLine } from "./EventDashboardLayout";
 
 const VIOLET = colors.primary;
-const A4_ASPECT_RATIO = 210 / 250;
+/** Hero row cards — rounded corners aligned with `radius.md`. */
+const HERO_CARD_RADIUS = radius.md;
+
+/** Fixed height for poster + setup progress cards (always 320px). */
+const HERO_CARD_HEIGHT = 320;
+
+export function isQuickPosterEvent(event: Event): boolean {
+  if (!event.posterUrl?.trim()) return false;
+  return !(
+    event.posterPrompt?.trim() ||
+    event.skeletonPosterUrl ||
+    event.posterThemeId ||
+    event.visualTeaser?.trim()
+  );
+}
+
+function getPosterOptionDisplay(
+  event: Event,
+  isQuickPoster: boolean,
+  basicTemplateOnly: boolean,
+): { title: string; Icon: StepIcon } {
+  if (isQuickPoster) return { title: "Quick Poster", Icon: Zap };
+  if (basicTemplateOnly) {
+    return { title: "Standard Poster", Icon: LayoutTemplate };
+  }
+  if (
+    event.posterPrompt?.trim() ||
+    event.posterThemeId ||
+    event.skeletonPosterUrl
+  ) {
+    return { title: "AI Poster", Icon: Wand2 };
+  }
+  return { title: "Premium Poster", Icon: Sparkles };
+}
 
 type SetupStepId =
   | "banking"
@@ -52,10 +97,10 @@ type SetupStep = {
 };
 
 const SETUP_STEP_DEFS: { id: SetupStepId; label: string; Icon: StepIcon }[] = [
-  { id: "banking", label: "Verify & Get CreditKid Card", Icon: CreditCard },
+  { id: "banking", label: "Verify Identity & Link Bank Account to Get CreditKid Card", Icon: CreditCard },
   {
     id: "invites",
-    label: "Schedule Automatic SMS Invitation Times",
+    label: "Schedule Automatic SMS Invitation & Reminders",
     Icon: CalendarClock,
   },
   { id: "guests", label: "Add Guests From Phone Contacts", Icon: Contact },
@@ -106,8 +151,44 @@ function buildSetupSteps(
 type EventSetupProgressCardProps = {
   steps: SetupStep[];
   onStepPress?: (id: SetupStepId) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 };
+
+function renderProgressStepLabel(step: SetupStep) {
+  if (step.id === "banking") {
+    return (
+      <Text
+        style={[
+          styles.progressLabel,
+          step.state === "pending" && styles.progressLabelPending,
+        ]}
+      >
+        Verify Identity & Link Bank Account{" "}
+        <Text
+          style={[
+            styles.progressLabel,
+            styles.progressLabelBold,
+            step.state === "pending" && styles.progressLabelPending,
+          ]}
+        >
+          to Get a CreditKid Card
+        </Text>
+      </Text>
+    );
+  }
+
+  return (
+    <Text
+      style={[
+        styles.progressLabel,
+        step.state === "active" && styles.progressLabelActive,
+        step.state === "pending" && styles.progressLabelPending,
+      ]}
+    >
+      {step.label}
+    </Text>
+  );
+}
 
 function EventSetupProgressCard({
   steps,
@@ -117,7 +198,12 @@ function EventSetupProgressCard({
   return (
     <View style={[styles.progressCard, style]}>
       <Text style={styles.progressTitle}>Event Setup Progress</Text>
-      <View style={styles.progressList}>
+      <ScrollView
+        style={styles.progressListScroll}
+        contentContainerStyle={styles.progressListContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {steps.map((step, index) => {
           const isLast = index === steps.length - 1;
           return (
@@ -132,15 +218,7 @@ function EventSetupProgressCard({
               >
                 <View style={styles.progressRowLeft}>
                   <StepIndicator Icon={step.Icon} state={step.state} />
-                  <Text
-                    style={[
-                      styles.progressLabel,
-                      step.state === "active" && styles.progressLabelActive,
-                      step.state === "pending" && styles.progressLabelPending,
-                    ]}
-                  >
-                    {step.label}
-                  </Text>
+                  {renderProgressStepLabel(step)}
                 </View>
                 {step.state === "active" ? (
                   <ChevronRight size={18} color={VIOLET} strokeWidth={2.4} />
@@ -150,7 +228,7 @@ function EventSetupProgressCard({
             </View>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -187,85 +265,128 @@ function StepIndicator({
 type CompactPosterCardProps = {
   event: Event;
   onGeneratePoster: () => void;
-  style?: ViewStyle;
+  onEditEvent: () => void;
+  onPreviewPoster: () => void;
+  style?: StyleProp<ViewStyle>;
 };
 
 function CompactPosterCard({
   event,
   onGeneratePoster,
+  onEditEvent,
+  onPreviewPoster,
   style,
 }: CompactPosterCardProps) {
   const basicTemplateOnly =
     event.optionalDetailsLater === true && !event.posterUrl;
-  const themeLabel = basicTemplateOnly
-    ? "Standard invitation"
-    : event.theme?.trim() || "Custom design";
-  const overlayLabel = basicTemplateOnly ? "BASIC TEMPLATE" : "Active design";
-
-  const [posterAspect, setPosterAspect] = useState(A4_ASPECT_RATIO);
-
-  useEffect(() => {
-    const url = event.posterUrl;
-    if (!url) {
-      setPosterAspect(A4_ASPECT_RATIO);
-      return;
-    }
-    Image.getSize(
-      url,
-      (width, height) => {
-        if (width > 0 && height > 0) setPosterAspect(width / height);
-      },
-      () => setPosterAspect(A4_ASPECT_RATIO),
-    );
-  }, [event.posterUrl]);
-
-  const frameAspect = event.posterUrl ? posterAspect : A4_ASPECT_RATIO;
+  const isQuickPoster = isQuickPosterEvent(event);
+  const posterOption = getPosterOptionDisplay(
+    event,
+    isQuickPoster,
+    basicTemplateOnly,
+  );
+  const PosterOptionIcon = posterOption.Icon;
+  const overlayLabel = isQuickPoster
+    ? "Active Poster"
+    : basicTemplateOnly
+      ? "BASIC TEMPLATE"
+      : "Active design";
 
   return (
-    <View style={[styles.posterCompactCard, style]}>
-      <View
-        style={[styles.posterCompactFrame, { aspectRatio: frameAspect }]}
-        accessibilityLabel="Event poster preview"
-      >
-        {event.posterUrl ? (
-          <Image
-            source={{ uri: event.posterUrl }}
-            style={styles.posterCompactImage}
-            resizeMode="cover"
-          />
-        ) : basicTemplateOnly ? (
-          <LinearGradient
-            colors={["#F9A8D4", "#C084FC", "#6366F1"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : (
-          <View style={styles.posterCompactPlaceholder}>
-            <Text style={styles.posterCompactPlaceholderText}>No poster yet</Text>
+    <GlassCardDark
+      fill
+      style={style}
+      contentStyle={styles.posterCardContent}
+      padding={spacing[1]}
+      borderRadius={HERO_CARD_RADIUS}
+      borderColor={glassCardBorder}
+    >
+      <EventPosterIntroLine event={event} showCelebrationEmoji embedded />
+      <View style={styles.posterCardBody}>
+        <View style={styles.posterCompactFrameWrap}>
+          <TouchableOpacity
+            style={styles.posterCompactFrame}
+            onPress={onPreviewPoster}
+            activeOpacity={0.92}
+            accessibilityRole="button"
+            accessibilityLabel="Preview SMS invitation"
+          >
+          {event.posterUrl ? (
+            <Image
+              source={{ uri: event.posterUrl }}
+              style={styles.posterCompactImage}
+              resizeMode="cover"
+            />
+          ) : basicTemplateOnly ? (
+            <LinearGradient
+              colors={["#F9A8D4", "#C084FC", "#6366F1"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : (
+            <View style={styles.posterCompactPlaceholder}>
+              <Text style={styles.posterCompactPlaceholderText}>No poster yet</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <View style={styles.posterEditBtnOverlay}>
+          <TouchableOpacity
+            style={styles.posterSwitchBtn}
+            onPress={onEditEvent}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Edit event"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <Pencil size={8} color={VIOLET} strokeWidth={2} />
+            <Text style={styles.posterSwitchBtnText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+        {isQuickPoster ? (
+          <View style={styles.posterActivePillOverlay} pointerEvents="none">
+            <GlassCardDark
+              // padding={5}
+              borderRadius={radius.full}
+              borderColor={GLASS_CARD_DARK_BORDER_DEFAULT}
+              blurIntensity={100}
+              style={styles.posterOverlayGlassPill}
+              contentStyle={styles.posterOverlayGlassPillContent}
+            >
+              <View style={styles.activeDesignDot} />
+              <Text style={styles.activeDesignPillTextOnPoster}>{overlayLabel}</Text>
+            </GlassCardDark>
           </View>
-        )}
-        <View style={styles.posterCompactOverlay} pointerEvents="none">
-          <View style={styles.activeDesignPill}>
-            <View style={styles.activeDesignDot} />
-            <Text style={styles.activeDesignPillText}>{overlayLabel}</Text>
+        ) : null}
+        </View>
+        <View style={styles.posterOptionFooter}>
+          {/* <View style={styles.posterOptionDivider} /> */}
+          <View style={styles.posterOptionRow}>
+            <View style={styles.posterOptionRowLeft}>
+              <View style={styles.posterOptionIconBubble}>
+                <PosterOptionIcon size={10} color={VIOLET} strokeWidth={2} />
+              </View>
+              <Text style={styles.posterOptionTitle} numberOfLines={1}>
+                {posterOption.title} Option
+              </Text>
+            </View>
+            <View style={styles.posterOptionActions}>
+              <TouchableOpacity
+                style={styles.posterSwitchBtn}
+                onPress={onGeneratePoster}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Switch poster option"
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              >
+                <ArrowLeftRight size={8} color={VIOLET} strokeWidth={2} />
+                <Text style={styles.posterSwitchBtnText}>Switch</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.posterCompactTheme} numberOfLines={1}>
-            {themeLabel}
-          </Text>
         </View>
       </View>
-      <TouchableOpacity
-        style={styles.generatePosterBtn}
-        onPress={onGeneratePoster}
-        activeOpacity={0.88}
-        accessibilityRole="button"
-        accessibilityLabel="Generate poster"
-      >
-        <Sparkles size={16} color={VIOLET} strokeWidth={2.2} />
-        <Text style={styles.generatePosterBtnText}>Generate Poster</Text>
-      </TouchableOpacity>
-    </View>
+    </GlassCardDark>
   );
 }
 
@@ -323,6 +444,8 @@ export type EventDashboardTopSectionProps = {
   event: Event;
   bankingReady: boolean;
   onGeneratePoster: () => void;
+  onEditEvent: () => void;
+  onPreviewPoster: () => void;
   onGuests: () => void;
   onReminders: () => void;
   onAnalytics: () => void;
@@ -334,6 +457,8 @@ export function EventDashboardTopSection({
   event,
   bankingReady,
   onGeneratePoster,
+  onEditEvent,
+  onPreviewPoster,
   onGuests,
   onReminders,
   onAnalytics,
@@ -347,17 +472,20 @@ export function EventDashboardTopSection({
 
   return (
     <View style={styles.topSection}>
-      <EventPosterIntroLine event={event} showCelebrationEmoji />
       <View style={styles.heroRow}>
-        <CompactPosterCard
-          event={event}
-          onGeneratePoster={onGeneratePoster}
-          style={styles.heroColPoster}
-        />
+        <View style={[styles.heroCol, styles.heroColLeft]}>
+          <CompactPosterCard
+            event={event}
+            onGeneratePoster={onGeneratePoster}
+            onEditEvent={onEditEvent}
+            onPreviewPoster={onPreviewPoster}
+            style={styles.heroPosterCard}
+          />
+        </View>
         <EventSetupProgressCard
           steps={steps}
           onStepPress={onSetupStepPress}
-          style={styles.heroColProgress}
+          style={[styles.heroCol, styles.heroColProgress]}
         />
       </View>
       <DashboardIconNav
@@ -376,25 +504,43 @@ export type { SetupStepId };
 const styles = StyleSheet.create({
   topSection: {
     paddingBottom: spacing[2],
+    marginTop: spacing[2],
   },
   heroRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingHorizontal: spacing[3],
+    paddingHorizontal: spacing[2],
     gap: spacing[2],
-    marginTop: 4,
+  },
+  heroCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroColLeft: {
+    height: HERO_CARD_HEIGHT,
+  },
+  heroPosterCard: {
+    flex: 1,
+    minHeight: 0,
+    height: HERO_CARD_HEIGHT,
   },
   heroColProgress: {
-    flex: 1,
-    minWidth: 0,
+    height: HERO_CARD_HEIGHT,
   },
-  heroColPoster: {
+  posterCardContent: {
     flex: 1,
-    minWidth: 0,
+    minHeight: 0,
+    flexDirection: "column",
+  },
+  posterCardBody: {
+    flex: 1,
+    minHeight: 0,
   },
   progressCard: {
+    height: HERO_CARD_HEIGHT,
+    overflow: "hidden",
     backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: radius.lg,
+    borderRadius: HERO_CARD_RADIUS,
     padding: spacing[2],
     borderWidth: 1,
     borderColor: "rgba(107, 56, 212, 0.08)",
@@ -409,15 +555,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     color: colors.onSurface,
-    marginBottom: spacing[2],
+    marginBottom: spacing[3],
     letterSpacing: -0.2,
+    textAlign: "center",
   },
-  progressList: {},
+  progressListScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  progressListContent: {
+    paddingBottom: 2,
+  },
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     minHeight: 32,
+    marginTop: 3,
   },
   progressRowLeft: {
     flexDirection: "row",
@@ -446,6 +600,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.onSurface,
   },
+  progressLabelBold: {
+    fontFamily: fontFamily.headline,
+    fontWeight: "900",
+    fontSize: 13,
+    color: colors.primary,
+  },
   progressLabelPending: {
     color: colors.onSurfaceVariant,
     fontWeight: "500",
@@ -468,27 +628,55 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  posterCompactCard: {
-    backgroundColor: colors.surfaceContainerLowest,
-    borderRadius: radius.lg,
-    padding: spacing[1],
-    borderWidth: 1,
-    borderColor: "rgba(107, 56, 212, 0.08)",
-    shadowColor: "#0c1c2a",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+  posterCompactFrameWrap: {
+    position: "relative",
+    flex: 1,
+    minHeight: 0,
+    marginTop: spacing[2],
+    marginBottom: spacing[2],
+    overflow: "visible",
+    zIndex: 1,
   },
   posterCompactFrame: {
+    flex: 1,
     width: "100%",
-    borderRadius: radius.md,
+    minHeight: 0,
+    borderRadius: HERO_CARD_RADIUS,
     overflow: "hidden",
     backgroundColor: colors.onSurface,
   },
+  posterEditBtnOverlay: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 2,
+  },
+  posterActivePillOverlay: {
+    position: "absolute",
+    left: 8,
+    bottom: -8,
+    zIndex: 2,
+  },
+  posterOverlayGlassPill: {
+    alignSelf: "flex-start",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    padding:0
+  },
+  posterOverlayGlassPillContent: {
+    flexDirection: "row",
+    paddingHorizontal:3,
+    paddingVertical:4,
+
+    alignItems: "center",
+    gap: 5,
+    backgroundColor:
+      Platform.OS === "ios" ? glassCardFillDark : "rgba(239, 244, 255, 0.96)",
+  },
   posterCompactImage: {
-    width: "100%",
-    height: "100%",
+    ...StyleSheet.absoluteFillObject,
   },
   posterCompactPlaceholder: {
     ...StyleSheet.absoluteFillObject,
@@ -501,42 +689,122 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.muted,
   },
-  posterCompactOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 8,
-    backgroundColor: "rgba(0,0,0,0.42)",
+  posterCompactMeta: {
+    paddingTop: spacing[1],
+  },
+  posterOptionFooter: {
+    flexShrink: 0,
+    // paddingTop: spacing[1],
+  },
+  posterOptionDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(107, 56, 212, 0.12)",
+    marginBottom: spacing[2],
+  },
+  posterOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 4,
+    paddingHorizontal: spacing[1],
+  },
+  posterOptionRowLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    minWidth: 0,
+    paddingRight: spacing[1],
+  },
+  posterOptionActions: {
+    flexShrink: 0,
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  posterOptionIconBubble: {
+    width: 20,
+    height: 20,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.08)",
+  },
+  posterOptionTitle: {
+    flexShrink: 1,
+    fontFamily: fontFamily.title,
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.onSurface,
+    letterSpacing: -0.2,
+  },
+  posterOptionTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: "rgba(107, 56, 212, 0.08)",
+  },
+  posterOptionTagText: {
+    fontFamily: fontFamily.label,
+    fontSize: 9,
+    fontWeight: "700",
+    color: VIOLET,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  posterSwitchBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    flexShrink: 0,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: "rgba(107, 56, 212, 0.2)",
+  },
+  posterSwitchBtnText: {
+    fontFamily: fontFamily.label,
+    fontSize: 8,
+    fontWeight: "700",
+    color: VIOLET,
+    letterSpacing: 0.2,
   },
   activeDesignPill: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: colors.surfaceContainerLow,
     borderRadius: radius.full,
     paddingHorizontal: 8,
     paddingVertical: 3,
     gap: 5,
   },
   activeDesignDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    marginLeft:3,
+    width: 7,
+    height: 7,
+    borderRadius: 4.5,
     backgroundColor: "#10B981",
   },
   activeDesignPillText: {
+    marginRight:3,
     fontSize: 9,
     fontWeight: "800",
     color: colors.onSurface,
     letterSpacing: 0.3,
     textTransform: "capitalize",
   },
-  posterCompactTheme: {
-    marginTop: 4,
-    fontSize: 12,
-    fontWeight: "800",
-    color: colors.onPrimary,
+  activeDesignPillTextOnPoster: {
+    marginRight:3,
+
+    fontFamily: fontFamily.label,
+    fontSize: 10,
+    fontWeight: "900",
+    color: colors.onSurfaceVariant,
+    letterSpacing: 0.4,
   },
   generatePosterBtn: {
     marginTop: spacing[1],

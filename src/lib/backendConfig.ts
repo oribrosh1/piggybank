@@ -14,14 +14,22 @@ function readEnv(key: string): string | undefined {
   return extra?.[key];
 }
 
+/** Static read so Metro inlines `EXPO_PUBLIC_*` from `.env.dev` at bundle time. */
+const USE_FIREBASE_EMULATORS =
+  process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATORS === "true";
+
 /** True when `.env.dev` (or extra) enables local Firebase emulators in a dev build. */
 export function useFirebaseEmulators(): boolean {
-  return readEnv("EXPO_PUBLIC_USE_FIREBASE_EMULATORS") === "true" && __DEV__;
+  if (!__DEV__) return false;
+  return (
+    USE_FIREBASE_EMULATORS ||
+    readEnv("EXPO_PUBLIC_USE_FIREBASE_EMULATORS") === "true"
+  );
 }
 
 /**
  * Host for Auth / Firestore / Functions emulators.
- * Physical devices must use the Mac LAN IP from Metro (`hostUri`), not 127.0.0.1.
+ * iOS simulator + Android emulator use loopback; physical devices use Metro LAN IP.
  */
 export function resolveEmulatorHost(): string {
   const configured = readEnv("EXPO_PUBLIC_FIREBASE_EMULATOR_HOST");
@@ -36,6 +44,14 @@ export function resolveEmulatorHost(): string {
       return configured;
     }
     return "10.0.2.2";
+  }
+
+  // iOS simulator shares the Mac loopback; emulators bind to 127.0.0.1 only.
+  if (Platform.OS === "ios" && !Constants.isDevice) {
+    if (configured && configured !== "localhost") {
+      return configured;
+    }
+    return "127.0.0.1";
   }
 
   if (

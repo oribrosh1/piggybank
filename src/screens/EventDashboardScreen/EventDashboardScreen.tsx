@@ -27,8 +27,10 @@ import {
     ChildLinkCard,
     InvitationPreview,
     PayoutSetupBanner,
+    SmsInvitePreviewModal,
     type AIPosterGeneratorRef,
     type InvitationPreviewRef,
+    type SmsInvitePreviewModalRef,
 } from "@/src/components/events";
 import AppTabHeader from "@/src/components/AppTabHeader";
 import {
@@ -77,6 +79,7 @@ export function EventDashboardScreen({
     const [childLinked, setChildLinked] = useState(false);
     const posterRef = useRef<AIPosterGeneratorRef | null>(null);
     const previewRef = useRef<InvitationPreviewRef | null>(null);
+    const smsPreviewRef = useRef<SmsInvitePreviewModalRef | null>(null);
 
     const closeGuestStats = useCallback(() => {
         setShowGuestStatsModal(false);
@@ -325,12 +328,12 @@ export function EventDashboardScreen({
             <ScrollView
                 style={{ flex: 1, marginBottom: 20 }}
                 contentContainerStyle={{
-                    paddingTop: insets.top + 12,
+                    paddingTop: insets.top,
                     paddingBottom: insets.bottom + 100,
                 }}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={{ paddingHorizontal: 20 }}>
+                <View style={{ paddingHorizontal: 15 }}>
                     <AppTabHeader
                         onPressNotifications={() => setShowNotificationsModal(true)}
                         showNotificationDot={notifications.length > 0}
@@ -341,6 +344,8 @@ export function EventDashboardScreen({
                     event={event}
                     bankingReady={bankingReady}
                     onGeneratePoster={() => posterRef.current?.open()}
+                    onEditEvent={handleEditEvent}
+                    onPreviewPoster={() => smsPreviewRef.current?.open()}
                     onGuests={handleManageGuests}
                     onReminders={() => setShowReminderScheduleModal(true)}
                     onAnalytics={() => setShowGuestStatsModal(true)}
@@ -348,15 +353,15 @@ export function EventDashboardScreen({
                     onSetupStepPress={handleSetupStepPress}
                 />
 
-                <LiveStatusBanner />
+                {/* <LiveStatusBanner /> */}
 
                 <PayoutSetupBanner event={event} />
 
-                <InvolveChildCard
+                {/* <InvolveChildCard
                     name={childFirst}
                     onLinkAccount={() => setChildLinkOpen(true)}
                     loading={childLinkLoading}
-                />
+                /> */}
 
                 <ChildLinkCard
                     visible={childLinkOpen}
@@ -426,6 +431,11 @@ export function EventDashboardScreen({
                     onPosterGenerated={() => loadEvent()}
                 />
                 <InvitationPreview ref={previewRef} event={event} delay={0} hideTrigger />
+                <SmsInvitePreviewModal
+                    ref={smsPreviewRef}
+                    event={event}
+                    onSmsSaved={loadEvent}
+                />
 
                 <AppTabFooter />
             </ScrollView>
