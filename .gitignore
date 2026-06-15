@@ -35,3 +35,4 @@ firebaseserviceAccountKey.json
 firestore.rules
 
 google-services.json
+.env.dev
