@@ -70,7 +70,7 @@ export default function BankingNoAccountSection({
             🧪 TEST MODE (Dev Only)
           </Text>
           <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginBottom: 16, fontWeight: "500" }}>
-            {`1. Tap "SET UP CREDIT" to set up your Stripe account\n2. Tap "Verify for Testing" to enable transfers\n3. Then add test money!`}
+            {`1. Tap "SET UP CREDIT" to set up your banking account\n2. Tap "Verify for Testing" to enable transfers\n3. Then add test money!`}
           </Text>
           <View style={{ gap: 10 }}>
             <TouchableOpacity

@@ -1,11 +1,13 @@
 const { AppError, handleError } = require("../utils/errors");
 const stripeService = require("../stripeService");
+const { getBankingProvider } = require("../config/providerConfig");
+const bankingAccountRepository = require("../repositories/bankingAccountRepository");
+const { createUnitClient } = require("../providers/unit/unitClient");
 
 const CHILD_ACCOUNTS_COLLECTION = "childAccounts";
 
 /**
- * Look up the child account + parent's Stripe account/card, verifying ownership.
- * Returns { childDoc, accountId, cardId }.
+ * Look up the child account + parent's banking account/card, verifying ownership.
  */
 async function resolveChildCard(uid, childAccountId) {
     const admin = require("firebase-admin");
@@ -26,17 +28,24 @@ async function resolveChildCard(uid, childAccountId) {
 
     const userSnap = await db.collection("users").doc(uid).get();
     const userData = userSnap.exists ? userSnap.data() : {};
-    const accountId = userData.stripeAccountId;
+    const banking = await bankingAccountRepository.getByUid(uid);
+    const provider = getBankingProvider();
+
+    const accountId =
+        provider === "unit"
+            ? (banking?.customerId || banking?.accountId || userData.bankingAccountId)
+            : (userData.stripeAccountId || banking?.accountId);
+
     if (!accountId) {
-        throw new AppError("Parent has no Stripe account", { statusCode: 400 });
+        throw new AppError("Parent has no banking account", { statusCode: 400 });
     }
 
-    const cardId = childDoc.stripeCardId || userData.virtualCardId;
+    const cardId = childDoc.stripeCardId || childDoc.cardId || userData.virtualCardId || banking?.cardId;
     if (!cardId) {
         throw new AppError("No virtual card found for this child", { statusCode: 400 });
     }
 
-    return { childDoc, accountId, cardId };
+    return { childDoc, accountId, cardId, provider, banking };
 }
 
 /**
@@ -47,7 +56,34 @@ async function getChildCard(req, res) {
     const uid = req.user.uid;
     const { childAccountId } = req.query;
     try {
-        const { childDoc, accountId, cardId } = await resolveChildCard(uid, childAccountId);
+        const { childDoc, accountId, cardId, provider, banking } = await resolveChildCard(uid, childAccountId);
+
+        if (provider === "unit") {
+            const unit = createUnitClient();
+            const cardRes = await unit.getCard(cardId);
+            const attrs = cardRes?.data?.attributes || {};
+            let balance = 0;
+            if (banking?.depositAccountId) {
+                const accountRes = await unit.getAccount(banking.depositAccountId);
+                balance = accountRes?.data?.attributes?.available || accountRes?.data?.attributes?.balance || 0;
+            }
+            return res.json({
+                success: true,
+                provider: "unit",
+                childName: childDoc.childName || null,
+                card: {
+                    id: cardId,
+                    last4: attrs.last4,
+                    expMonth: attrs.expirationDate ? parseInt(attrs.expirationDate.split("/")[0], 10) : null,
+                    expYear: attrs.expirationDate ? parseInt(attrs.expirationDate.split("/")[1], 10) + 2000 : null,
+                    status: (attrs.status || "Active").toLowerCase(),
+                    brand: "Visa",
+                    spendingControls: {},
+                },
+                balance,
+            });
+        }
+
         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
         const card = await stripeService.getIssuingCard(stripe, { accountId, cardId });
 
@@ -88,7 +124,12 @@ async function freezeChildCard(req, res) {
     const uid = req.user.uid;
     const { childAccountId } = req.body;
     try {
-        const { accountId, cardId } = await resolveChildCard(uid, childAccountId);
+        const { accountId, cardId, provider } = await resolveChildCard(uid, childAccountId);
+        if (provider === "unit") {
+            const unit = createUnitClient();
+            await unit.updateCard(cardId, { status: "Frozen" });
+            return res.json({ success: true, provider: "unit" });
+        }
         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
         await stripeService.updateCardStatus(stripe, { accountId, cardId, status: "inactive" });
         res.json({ success: true });
@@ -104,7 +145,12 @@ async function unfreezeChildCard(req, res) {
     const uid = req.user.uid;
     const { childAccountId } = req.body;
     try {
-        const { accountId, cardId } = await resolveChildCard(uid, childAccountId);
+        const { accountId, cardId, provider } = await resolveChildCard(uid, childAccountId);
+        if (provider === "unit") {
+            const unit = createUnitClient();
+            await unit.updateCard(cardId, { status: "Active" });
+            return res.json({ success: true, provider: "unit" });
+        }
         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
         await stripeService.updateCardStatus(stripe, { accountId, cardId, status: "active" });
         res.json({ success: true });

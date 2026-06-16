@@ -21,7 +21,7 @@ export default function BankingVerifiedMessage() {
         </Text>
       </View>
       <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.95)", lineHeight: 18, fontWeight: "500" }}>
-        Your identity is verified by Stripe. You can now receive payments and use your card anywhere!
+        Your identity is verified. You can now receive gift payments and use your card anywhere!
       </Text>
     </View>
   );

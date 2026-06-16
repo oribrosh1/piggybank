@@ -9,30 +9,33 @@ const Stripe = require("stripe");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 require("dotenv").config({ path: path.join(__dirname, ".env"), override: true });
 
+const { isSandbox, getBankingProvider } = require("./config/providerConfig");
+const { getBankingProviderInstance } = require("./providers/bankingProviderFactory");
+const { createBankingController } = require("./controllers/bankingController");
+const { registerWebhookRoutes } = require("./controllers/webhookRouter");
+
 admin.initializeApp();
 const db = admin.firestore();
 const storage = admin.storage();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const stripeService = require("./stripeService");
 const { createStripeConnectService } = require("./services/stripeConnectService");
-const { createStripeController } = require("./controllers/stripeController");
 const posterController = require("./controllers/posterController");
 const { verifyFirebaseToken } = require("./middleware/auth");
-const { createStripeWebhookHandler } = require("./controllers/webhookController");
 
 const { createProvisioningService } = require("./services/provisioningService");
 const provisioningService = createProvisioningService(stripe, stripeService);
 
 const stripeConnectService = createStripeConnectService(stripe, stripeService, provisioningService);
-const stripeController = createStripeController(stripeConnectService);
-const stripeWebhookHandler = createStripeWebhookHandler(stripe, stripeConnectService, provisioningService);
+const bankingProvider = getBankingProviderInstance({ stripeConnectService });
+const bankingController = createBankingController(bankingProvider);
 
 const ALLOWED_ORIGINS = [
     "https://credit-kid.com",
     "https://www.credit-kid.com",
-    /^https:\/\/creditkid-.*\.vercel\.app$/, // Vercel preview deploys
-    /^creditkid:\/\//,                       // React Native deep links
-    /^exp:\/\//,                             // Expo dev client
+    /^https:\/\/creditkid-.*\.vercel\.app$/,
+    /^creditkid:\/\//,
+    /^exp:\/\//,
 ];
 if (process.env.NODE_ENV !== "production") {
     ALLOWED_ORIGINS.push("http://localhost:3000", "http://localhost:8081", "http://localhost:19006");
@@ -40,23 +43,26 @@ if (process.env.NODE_ENV !== "production") {
 const app = express();
 app.use(cors({
     origin(origin, callback) {
-        if (!origin) return callback(null, true); // server-to-server / mobile
+        if (!origin) return callback(null, true);
         const allowed = ALLOWED_ORIGINS.some((o) =>
             o instanceof RegExp ? o.test(origin) : o === origin
         );
         callback(allowed ? null : new Error("CORS not allowed"), allowed);
     },
 }));
-app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhookHandler);
+
+registerWebhookRoutes(app, {
+    stripe,
+    stripeConnectService,
+    provisioningService,
+    bankingProvider,
+});
 
 const { generalLimiter } = require("./middleware/rateLimit");
 const { verifyAppCheck, warnAppCheck } = require("./middleware/appCheck");
 
-const isStripeTestMode = () => (process.env.STRIPE_SECRET_KEY || "").startsWith("sk_test_");
-
-/** App Check for this route only; omitted in Stripe test mode (sk_test_). */
 function appCheckMiddlewareForKyc() {
-    if (isStripeTestMode()) return [];
+    if (isSandbox()) return [];
     if (process.env.APPCHECK_RELAXED === "1") return [warnAppCheck];
     return [verifyAppCheck];
 }
@@ -67,7 +73,7 @@ app.post(
     generalLimiter,
     ...appCheckMiddlewareForKyc(),
     verifyFirebaseToken,
-    stripeController.createCustomConnectAccount
+    bankingController.createCustomConnectAccount
 );
 
 app.post(
@@ -85,14 +91,17 @@ const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || process.env.APP_BASE_URL 
 
 require("./routes").registerRoutes(app, {
     verifyFirebaseToken,
-    stripeController,
+    bankingController,
     posterController,
     stripe,
     db,
     storage,
     admin,
     PUBLIC_BASE_URL,
+    bankingProvider,
 });
+
+console.log(`[api] bankingProvider=${getBankingProvider()} sandbox=${isSandbox()}`);
 
 exports.api = functions.https.onRequest({ timeoutSeconds: 180 }, app);
 exports.onEventCreated = require("./triggers/firestoreTriggers").onEventCreated;

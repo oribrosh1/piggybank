@@ -10,6 +10,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
+export type PaymentsProvider = "stripe" | "unit";
+
 export type EventType = "birthday" | "barMitzvah" | "batMitzvah" | "other";
 
 /** Create-flow picker: birthday vs bar/bat (no "other"). */
@@ -323,9 +325,12 @@ export interface Event {
   // Child phone (set when parent creates invite link)
   childPhone?: string;
 
-  // Stripe Connect Account (for payments)
+  // Payment / banking account ids for gift settlement
   stripeAccountId?: string;
-  /** Set by onEventCreated when host had no Connect account yet */
+  paymentProvider?: PaymentsProvider;
+  paymentAccountId?: string;
+  bankingAccountId?: string;
+  /** Set by onEventCreated when host had no banking account yet */
   needsBankingSetup?: boolean;
   /** When false, scheduled reminder SMS cron skips this event (default: reminders on) */
   reminderSmsEnabled?: boolean;
@@ -470,6 +475,9 @@ export const eventConverter: FirestoreDataConverter<Event> = {
       data.mitzvahCelebrationFocus = event.mitzvahCelebrationFocus;
     if (event.childPhone) data.childPhone = event.childPhone;
     if (event.stripeAccountId) data.stripeAccountId = event.stripeAccountId;
+    if (event.paymentProvider) data.paymentProvider = event.paymentProvider;
+    if (event.paymentAccountId) data.paymentAccountId = event.paymentAccountId;
+    if (event.bankingAccountId) data.bankingAccountId = event.bankingAccountId;
     if (event.posterUrl) data.posterUrl = event.posterUrl;
     if (event.skeletonPosterUrl) data.skeletonPosterUrl = event.skeletonPosterUrl;
     if (event.skeletonPosterGeneratedAt)
@@ -603,6 +611,9 @@ export const eventConverter: FirestoreDataConverter<Event> = {
         totalPaid: 0,
       },
       stripeAccountId: data.stripeAccountId,
+      paymentProvider: data.paymentProvider,
+      paymentAccountId: data.paymentAccountId,
+      bankingAccountId: data.bankingAccountId,
       needsBankingSetup: data.needsBankingSetup === true,
       reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
       reminderGiftNudgeEnabled: data.reminderGiftNudgeEnabled === true,
@@ -705,6 +716,9 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
         totalPaid: 0,
       },
       stripeAccountId: data.stripeAccountId,
+      paymentProvider: data.paymentProvider,
+      paymentAccountId: data.paymentAccountId,
+      bankingAccountId: data.bankingAccountId,
       needsBankingSetup: data.needsBankingSetup === true,
       reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
       reminderGiftNudgeEnabled: data.reminderGiftNudgeEnabled === true,

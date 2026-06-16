@@ -36,7 +36,7 @@ type BankingApprovedContentProps = {
   onTestAddBalance: (cents: number) => void;
   onTestCreateTransaction: () => void;
   hasVirtualCard?: boolean;
-  /** When false, virtual card / Issuing CTAs are disabled until Stripe activates card_issuing */
+  /** When false, virtual card CTAs are disabled until card issuing is active */
   cardIssuingActive?: boolean;
 };
 
@@ -282,7 +282,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
           <Text style={{ fontSize: 14, fontWeight: "700", color: "#FFFFFF", marginLeft: 10 }}>Account Verified! 🎉</Text>
         </View>
         <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.95)", lineHeight: 18, fontWeight: "500" }}>
-          Your identity is verified by Stripe. You can now receive payments and use your card anywhere!
+          Your identity is verified. You can now receive gift payments and use your card anywhere!
         </Text>
       </View>
 
@@ -301,8 +301,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
             Card issuing not active yet
           </Text>
           <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", lineHeight: 18 }}>
-            Stripe must activate the card_issuing capability on your account (and the platform must complete Issuing
-            onboarding). Pull to refresh after verification completes.
+            Your virtual card is still being set up. Pull to refresh after verification completes.
           </Text>
         </View>
       )}
@@ -380,7 +379,7 @@ export default function BankingApprovedContent(p: BankingApprovedContentProps) {
       <View style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 20, padding: 20, marginBottom: 20, borderWidth: 2, borderColor: "rgba(255,255,255,0.2)" }}>
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
           <Wallet size={22} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginLeft: 10 }}>Stripe Connected Account</Text>
+          <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginLeft: 10 }}>Banking Account</Text>
         </View>
         <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginBottom: 16, marginLeft: 32 }}>Balance and activity for your connected account</Text>
         <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 }}>

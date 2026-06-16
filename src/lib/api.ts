@@ -14,6 +14,22 @@ const apiBase = () => getCloudApiBaseUrl();
 // Type Definitions
 // ============================================
 
+export type BankingProvider = 'stripe' | 'unit';
+export type PaymentsProvider = 'stripe' | 'unit';
+
+export interface ProviderConfigResponse {
+    success: boolean;
+    bankingProvider: BankingProvider;
+    paymentsProvider: PaymentsProvider;
+    sandbox: boolean;
+    features: {
+        stripeTreasuryIssuing: boolean;
+        unitBanking: boolean;
+        stripePayments: boolean;
+        appleWalletProvisioning: boolean;
+    };
+}
+
 export interface CreateExpressAccountPayload {
     email?: string;
     country?: string;
@@ -57,12 +73,14 @@ export interface CreateCustomConnectAccountResponse {
     existing?: boolean;
 }
 
-/** Stripe Connect account capabilities (e.g. card_issuing, transfers) */
+/** Account capabilities (e.g. card_issuing, transfers) — normalized across Stripe and Unit */
 export type AccountCapabilities = Record<string, 'active' | 'inactive' | 'pending'>;
 
 export interface AccountStatusResponse {
     exists: boolean;
+    provider?: BankingProvider;
     accountId?: string;
+    bankingStatus?: string;
     charges_enabled?: boolean;
     payouts_enabled?: boolean;
     details_submitted?: boolean;
@@ -559,7 +577,19 @@ export async function createExpressAccount(
 }
 
 /**
- * Create Stripe Connect Custom account (in-app onboarding, no redirect).
+ * Active banking/payments provider configuration (from backend env).
+ */
+export async function getProviderConfig(): Promise<ProviderConfigResponse> {
+    const headers = await getCloudFunctionAuthHeaders();
+    const res = await axios.get<ProviderConfigResponse>(
+        `${apiBase()}/getProviderConfig`,
+        { headers }
+    );
+    return res.data;
+}
+
+/**
+ * Create banking account (Stripe Connect or Unit application).
  * Call this before updating individual/business info and adding bank account.
  */
 export async function createCustomConnectAccount(

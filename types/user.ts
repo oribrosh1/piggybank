@@ -22,14 +22,25 @@ export type KYCStatus = 'pending' | 'approved' | 'rejected' | 'not_started';
 export type VerificationStatus = 'pending' | 'verified' | 'failed' | 'not_started';
 
 /**
- * Stripe Connect account status
+ * Banking / payments provider identifiers.
  */
-export type StripeAccountStatus =
+export type BankingProvider = 'stripe' | 'unit';
+export type PaymentsProvider = 'stripe' | 'unit';
+
+/**
+ * Banking account status (provider-neutral)
+ */
+export type BankingAccountStatus =
     | 'onboarding_required'
     | 'pending'
     | 'approved'
     | 'rejected'
     | 'restricted';
+
+/**
+ * Stripe Connect account status (legacy; mirrors banking status for Stripe users)
+ */
+export type StripeAccountStatus = BankingAccountStatus;
 
 /**
  * Getting Started step (1-4)
@@ -68,7 +79,12 @@ export interface UserProfile {
     kycStatus: KYCStatus;
     verificationStatus: VerificationStatus;
 
-    // Stripe Connect Account
+    // Banking (provider-neutral)
+    bankingProvider?: BankingProvider;
+    bankingAccountId?: string;
+    bankingAccountStatus?: BankingAccountStatus;
+
+    // Stripe Connect Account (legacy fields; still written for Stripe banking users)
     stripeAccountId?: string;
     stripeAccountLink?: string;
     stripeAccountCreated?: boolean;
@@ -197,6 +213,11 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
             totalPaid: userProfile.totalPaid,
         };
 
+        // Banking (provider-neutral)
+        if (userProfile.bankingProvider) data.bankingProvider = userProfile.bankingProvider;
+        if (userProfile.bankingAccountId) data.bankingAccountId = userProfile.bankingAccountId;
+        if (userProfile.bankingAccountStatus) data.bankingAccountStatus = userProfile.bankingAccountStatus;
+
         // Add optional Stripe fields only if they have values
         if (userProfile.stripeAccountId) data.stripeAccountId = userProfile.stripeAccountId;
         if (userProfile.stripeAccountLink) data.stripeAccountLink = userProfile.stripeAccountLink;
@@ -241,6 +262,9 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
             updatedAt: data.updatedAt?.toDate() || new Date(),
             kycStatus: data.kycStatus,
             verificationStatus: data.verificationStatus,
+            bankingProvider: data.bankingProvider,
+            bankingAccountId: data.bankingAccountId,
+            bankingAccountStatus: data.bankingAccountStatus,
             stripeAccountId: data.stripeAccountId,
             stripeAccountLink: data.stripeAccountLink,
             stripeAccountCreated: data.stripeAccountCreated,

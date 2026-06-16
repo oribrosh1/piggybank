@@ -130,6 +130,22 @@ FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 
 # Environment
 NODE_ENV=development
+
+# Provider switch (banking vs payments)
+# Recommended: PAYMENTS_PROVIDER=stripe + BANKING_PROVIDER=unit
+BANKING_PROVIDER=stripe
+PAYMENTS_PROVIDER=stripe
+
+# Unit.co (when BANKING_PROVIDER=unit)
+UNIT_API_TOKEN=
+UNIT_BASE_URL=https://api.s.unit.sh
+UNIT_WEBHOOK_TOKEN=
+UNIT_DEPOSIT_PRODUCT=checking
+UNIT_ONBOARDING_URL=
+
+# Client (Expo)
+EXPO_PUBLIC_BANKING_PROVIDER=stripe
+EXPO_PUBLIC_PAYMENTS_PROVIDER=stripe
 ```
 
 ### Step 4: Access in Code (Already Implemented)

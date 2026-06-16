@@ -1,10 +1,14 @@
 /**
- * Guest gift checkout: resolves host `stripeAccountId` from `events/{eventId}` then `users/{creatorId}`,
- * matching Cloud Function `onEventCreated` + `syncStripeAccountToCreatorEvents` (functions).
+ * Guest gift checkout via Stripe Payments (PAYMENTS_PROVIDER=stripe).
+ * When BANKING_PROVIDER=unit, charges collect on the platform; Firebase webhook records
+ * giftSettlements for transfer into the host's Unit deposit account.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase-admin';
+
+const paymentsProvider = (process.env.PAYMENTS_PROVIDER || 'stripe').toLowerCase();
+const bankingProvider = (process.env.BANKING_PROVIDER || 'stripe').toLowerCase();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2023-10-16',
@@ -12,6 +16,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: NextRequest) {
     try {
+        if (paymentsProvider !== 'stripe') {
+            return NextResponse.json(
+                { error: `Gift payments are not configured for provider: ${paymentsProvider}` },
+                { status: 501 }
+            );
+        }
+
         const body = await request.json();
         const {
             amount,
@@ -23,7 +34,6 @@ export async function POST(request: NextRequest) {
             templateId
         } = body;
 
-        // Validate amount
         if (!amount || amount < 1) {
             return NextResponse.json(
                 { error: 'Invalid amount' },
@@ -31,8 +41,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get the event to find the creator's Stripe Connect account
         let connectedAccountId: string | null = null;
+        let creatorId: string | null = null;
 
         if (eventId) {
             try {
@@ -41,13 +51,15 @@ export async function POST(request: NextRequest) {
 
                 if (eventDoc.exists) {
                     const eventData = eventDoc.data();
-                    connectedAccountId = eventData?.stripeAccountId || null;
+                    creatorId = eventData?.creatorId || null;
 
-                    // If event doesn't have stripeAccountId, try to get it from the creator's profile
-                    if (!connectedAccountId && eventData?.creatorId) {
-                        const userDoc = await db.collection('users').doc(eventData.creatorId).get();
-                        if (userDoc.exists) {
-                            connectedAccountId = userDoc.data()?.stripeAccountId || null;
+                    if (bankingProvider === 'stripe') {
+                        connectedAccountId = eventData?.stripeAccountId || null;
+                        if (!connectedAccountId && creatorId) {
+                            const userDoc = await db.collection('users').doc(creatorId).get();
+                            if (userDoc.exists) {
+                                connectedAccountId = userDoc.data()?.stripeAccountId || null;
+                            }
                         }
                     }
                 }
@@ -56,12 +68,11 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Convert to cents
         const giftAmountInCents = Math.round(amount * 100);
-        const platformFeeInCents = Math.round(giftAmountInCents * 0.03); // 3% fee to CreditKid
+        const feeRate = Number(process.env.PLATFORM_FEE_RATE || 0.03);
+        const platformFeeInCents = Math.round(giftAmountInCents * feeRate);
         const totalChargeInCents = giftAmountInCents + platformFeeInCents;
 
-        // Build PaymentIntent options
         const paymentIntentOptions: Stripe.PaymentIntentCreateParams = {
             amount: totalChargeInCents,
             currency: 'usd',
@@ -71,30 +82,28 @@ export async function POST(request: NextRequest) {
                 guestId: guestId || '',
                 guestName: guestName || '',
                 hostName: hostName || '',
+                creatorId: creatorId || '',
                 giftAmount: amount.toString(),
                 feeAmount: (platformFeeInCents / 100).toFixed(2),
                 blessing: blessing?.substring(0, 500) || '',
                 templateId: templateId || '',
                 type: 'creditkid_gift',
+                paymentsProvider: 'stripe',
+                bankingProvider,
             },
         };
 
-        // If we have a connected account, use Stripe Connect with application fee
-        // The gift amount goes to the connected account, fee goes to CreditKid
-        if (connectedAccountId) {
+        // Stripe Connect destination only when banking stays on Stripe
+        if (bankingProvider === 'stripe' && connectedAccountId) {
             paymentIntentOptions.application_fee_amount = platformFeeInCents;
             paymentIntentOptions.transfer_data = {
                 destination: connectedAccountId,
             };
-
             console.log(`Creating payment with Connect: $${amount} gift + $${platformFeeInCents / 100} fee → ${connectedAccountId}`);
         } else {
-            // No connected account - full amount goes to CreditKid (platform)
-            // This handles cases where event creator hasn't set up Stripe yet
-            console.log(`Creating payment without Connect: $${totalChargeInCents / 100} to platform`);
+            console.log(`Creating platform payment: $${totalChargeInCents / 100} (bankingProvider=${bankingProvider})`);
         }
 
-        // Create the PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
 
         return NextResponse.json({
@@ -103,7 +112,9 @@ export async function POST(request: NextRequest) {
             amount: amount,
             fee: platformFeeInCents / 100,
             total: totalChargeInCents / 100,
-            hasConnectedAccount: !!connectedAccountId,
+            hasConnectedAccount: bankingProvider === 'stripe' && !!connectedAccountId,
+            paymentsProvider: 'stripe',
+            bankingProvider,
         });
 
     } catch (error: any) {
@@ -114,4 +125,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-

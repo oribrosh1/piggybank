@@ -21,7 +21,7 @@ export default function BankingPendingSection({ onRefresh }: BankingPendingSecti
           </View>
           <Text style={{ fontSize: 22, fontWeight: "900", color: "#111827", marginBottom: 8, textAlign: "center" }}>Verification in progress</Text>
           <Text style={{ fontSize: 14, color: "#6B7280", fontWeight: "600", textAlign: "center", lineHeight: 20, marginBottom: 16 }}>
-            Stripe is verifying your account. Pull to refresh to check status.
+            We're verifying your banking account. Pull to refresh to check status.
           </Text>
           <TouchableOpacity onPress={onRefresh} style={{ paddingVertical: 12, paddingHorizontal: 24, backgroundColor: "#10B981", borderRadius: 12 }}>
             <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>Check status</Text>
@@ -80,7 +80,7 @@ export default function BankingPendingSection({ onRefresh }: BankingPendingSecti
             <View style={{ gap: 8 }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={{ fontSize: 16, marginRight: 8 }}>✅</Text>
-                <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>Secure Stripe verification</Text>
+                <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.9)", fontWeight: "600" }}>Secure identity verification</Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={{ fontSize: 16, marginRight: 8 }}>🔒</Text>

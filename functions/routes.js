@@ -5,15 +5,13 @@ const childInviteController = require("./controllers/childInviteController");
 const childCardController = require("./controllers/childCardController");
 const { sensitiveEndpointLimiter, generalLimiter, inviteLimiter } = require("./middleware/rateLimit");
 const { verifyAppCheck, warnAppCheck } = require("./middleware/appCheck");
-
-const isTestMode = () => (process.env.STRIPE_SECRET_KEY || "").startsWith("sk_test_");
+const { isSandbox } = require("./config/providerConfig");
 
 /**
- * App Check: skipped entirely when STRIPE_SECRET_KEY is sk_test_ (Stripe test mode on Functions).
- * With sk_live_: strict verifyAppCheck, unless APPCHECK_RELAXED=1 (warn-only for staging).
+ * App Check: relaxed in sandbox (Stripe test / Unit sandbox).
  */
 function applyAppCheckMiddleware(app) {
-    if (isTestMode()) {
+    if (isSandbox()) {
         return;
     }
     if (process.env.APPCHECK_RELAXED === "1") {
@@ -24,40 +22,51 @@ function applyAppCheckMiddleware(app) {
 }
 
 function registerRoutes(app, opts) {
-    const { verifyFirebaseToken, stripeController, posterController, PUBLIC_BASE_URL } = opts;
+    const { verifyFirebaseToken, bankingController, posterController } = opts;
 
     app.use(generalLimiter);
     applyAppCheckMiddleware(app);
 
-    // ----- Stripe Connect (protected) -----
+    // ----- Provider config (public to authenticated clients) -----
+    app.get("/getProviderConfig", verifyFirebaseToken, bankingController.getProviderConfig);
+
+    // ----- Banking / cards (provider-neutral; Stripe or Unit via BANKING_PROVIDER) -----
     // createCustomConnectAccount is registered in index.js with a larger body limit
-    app.post("/createOnboardingLink", verifyFirebaseToken, stripeController.createOnboardingLink);
-    app.get("/getAccountStatus", verifyFirebaseToken, stripeController.getAccountStatus);
-    app.post("/updateAccountCapabilities", verifyFirebaseToken, stripeController.updateAccountCapabilities);
-    app.get("/getFinancialAccountBalance", verifyFirebaseToken, stripeController.getFinancialAccountBalance);
-    app.post("/retryProvisioning", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.retryProvisioning);
-    app.post("/createIssuingCardholder", verifyFirebaseToken, stripeController.createIssuingCardholder);
-    app.post("/createVirtualCard", verifyFirebaseToken, stripeController.createVirtualCard);
-    app.get("/getCardDetails", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.getCardDetails);
-    app.get("/getCardDetailsWithWallet", verifyFirebaseToken, stripeController.getCardDetailsWithWallet);
-    app.post("/createPushProvisioningEphemeralKey", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.createPushProvisioningEphemeralKey);
-    app.post("/createTestAuthorization", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.createTestAuthorization);
+    app.post("/createOnboardingLink", verifyFirebaseToken, bankingController.createOnboardingLink);
+    app.get("/getAccountStatus", verifyFirebaseToken, bankingController.getAccountStatus);
+    app.post("/updateAccountCapabilities", verifyFirebaseToken, bankingController.updateAccountCapabilities);
+    app.get("/getFinancialAccountBalance", verifyFirebaseToken, bankingController.getFinancialAccountBalance);
+    app.post("/retryProvisioning", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.retryProvisioning);
+    app.post("/createIssuingCardholder", verifyFirebaseToken, bankingController.createIssuingCardholder);
+    app.post("/createVirtualCard", verifyFirebaseToken, bankingController.createVirtualCard);
+    app.get("/getCardDetails", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.getCardDetails);
+    app.get("/getCardDetailsWithWallet", verifyFirebaseToken, bankingController.getCardDetailsWithWallet);
+    app.post("/createPushProvisioningEphemeralKey", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.createPushProvisioningEphemeralKey);
+    app.post("/createTestAuthorization", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.createTestAuthorization);
 
     // ----- Balance, Transactions, Account Details, Payouts -----
-    app.get("/getBalance", verifyFirebaseToken, stripeController.getBalance);
-    app.get("/getTransactions", verifyFirebaseToken, stripeController.getTransactions);
-    app.get("/getAccountDetails", verifyFirebaseToken, stripeController.getAccountDetails);
-    app.get("/getPayouts", verifyFirebaseToken, stripeController.getPayouts);
-    app.post("/createPayout", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.createPayout);
-    app.post("/addBankAccount", verifyFirebaseToken, sensitiveEndpointLimiter, stripeController.addBankAccount);
-    app.post("/updateAccountInfo", verifyFirebaseToken, stripeController.updateAccountInfo);
-    app.post("/acceptTermsOfService", verifyFirebaseToken, stripeController.acceptTermsOfService);
+    app.get("/getBalance", verifyFirebaseToken, bankingController.getBalance);
+    app.get("/getTransactions", verifyFirebaseToken, bankingController.getTransactions);
+    app.get("/getAccountDetails", verifyFirebaseToken, bankingController.getAccountDetails);
+    app.get("/getPayouts", verifyFirebaseToken, bankingController.getPayouts);
+    app.post("/createPayout", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.createPayout);
+    app.post("/addBankAccount", verifyFirebaseToken, sensitiveEndpointLimiter, bankingController.addBankAccount);
+    app.post("/updateAccountInfo", verifyFirebaseToken, bankingController.updateAccountInfo);
+    app.post("/acceptTermsOfService", verifyFirebaseToken, bankingController.acceptTermsOfService);
+
+    // ----- Neutral aliases (new routes) -----
+    app.post("/banking/account", verifyFirebaseToken, bankingController.createCustomConnectAccount);
+    app.post("/banking/onboarding-link", verifyFirebaseToken, bankingController.createOnboardingLink);
+    app.get("/banking/status", verifyFirebaseToken, bankingController.getAccountStatus);
+    app.get("/banking/balance", verifyFirebaseToken, bankingController.getBalance);
+    app.get("/banking/transactions", verifyFirebaseToken, bankingController.getTransactions);
+    app.post("/cards/virtual", verifyFirebaseToken, bankingController.createVirtualCard);
 
     // ----- Test mode only (blocked in production) -----
-    if (isTestMode()) {
-        app.post("/testVerifyAccount", verifyFirebaseToken, stripeController.testVerifyAccount);
-        app.post("/testCreateTransaction", verifyFirebaseToken, stripeController.testCreateTransaction);
-        app.post("/testAddBalance", verifyFirebaseToken, stripeController.testAddBalance);
+    if (isSandbox()) {
+        app.post("/testVerifyAccount", verifyFirebaseToken, bankingController.testVerifyAccount);
+        app.post("/testCreateTransaction", verifyFirebaseToken, bankingController.testCreateTransaction);
+        app.post("/testAddBalance", verifyFirebaseToken, bankingController.testAddBalance);
         app.post("/testLinkChildAccount", verifyFirebaseToken, childCardController.testLinkChildAccount);
     }
 
@@ -70,7 +79,7 @@ function registerRoutes(app, opts) {
     app.post("/revokeChildInvite", verifyFirebaseToken, childInviteController.revokeChildInvite);
     app.get("/getPendingInvite", verifyFirebaseToken, childInviteController.getPendingInvite);
 
-    // ----- Child card management (parent controls child's Issuing card) -----
+    // ----- Child card management -----
     app.get("/getChildCard", verifyFirebaseToken, childCardController.getChildCard);
     app.post("/freezeChildCard", verifyFirebaseToken, childCardController.freezeChildCard);
     app.post("/unfreezeChildCard", verifyFirebaseToken, childCardController.unfreezeChildCard);
@@ -78,7 +87,6 @@ function registerRoutes(app, opts) {
     app.post("/updateChildBlockedCategories", verifyFirebaseToken, childCardController.updateChildBlockedCategories);
     app.get("/getChildTransactions", verifyFirebaseToken, childCardController.getChildTransactions);
     app.get("/getChildSpendingSummary", verifyFirebaseToken, childCardController.getChildSpendingSummary);
-
 }
 
 module.exports = { registerRoutes };

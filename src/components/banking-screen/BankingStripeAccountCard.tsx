@@ -26,9 +26,9 @@ export default function BankingStripeAccountCard(props: Props) {
     <View style={{ backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 20, padding: 20, marginBottom: 20, borderWidth: 2, borderColor: "rgba(255,255,255,0.2)" }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
         <Wallet size={22} color="#FFFFFF" strokeWidth={2.5} />
-        <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginLeft: 10 }}>Stripe Connected Account</Text>
+        <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFFFFF", marginLeft: 10 }}>Banking Account</Text>
       </View>
-      <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginBottom: 16, marginLeft: 32 }}>Balance and activity for your connected account</Text>
+      <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginBottom: 16, marginLeft: 32 }}>Balance and activity for your account</Text>
       <View style={{ backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 }}>
         <Text style={{ fontSize: 13, fontWeight: "800", color: "#6B3AA0", marginBottom: 12 }}>Balance</Text>
         <View style={{ flexDirection: "row", alignItems: "baseline", gap: 24 }}>

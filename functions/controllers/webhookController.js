@@ -1,5 +1,7 @@
 const admin = require("firebase-admin");
 const { PROVISIONING_COLLECTION } = require("../services/provisioningService");
+const { recordGiftPaymentForSettlement } = require("../services/giftSettlementService");
+const { getBankingProvider } = require("../config/providerConfig");
 
 function createStripeWebhookHandler(stripe, stripeConnectService, provisioningService) {
     const db = admin.firestore();
@@ -31,12 +33,19 @@ function createStripeWebhookHandler(stripe, stripeConnectService, provisioningSe
                     amount: paymentIntent.amount,
                     currency: paymentIntent.currency,
                     status: paymentIntent.status,
+                    metadata: paymentIntent.metadata || {},
                     created: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                await recordGiftPaymentForSettlement(paymentIntent).catch((e) => {
+                    console.warn(`[webhook] gift settlement record failed: ${e.message}`);
                 });
                 console.log(`[webhook] payment saved paymentIntentId=${paymentIntent.id}`);
             }
 
-            if (event.type === "treasury.financial_account.features_status_updated") {
+            if (
+                getBankingProvider() === "stripe" &&
+                event.type === "treasury.financial_account.features_status_updated"
+            ) {
                 await handleFAFeaturesUpdated(db, provisioningService, event.data.object);
             }
         } catch (err) {

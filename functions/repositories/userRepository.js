@@ -26,4 +26,18 @@ async function setStripeAccount(uid, stripeAccountId, stripeAccountStatus) {
     return update(uid, { stripeAccountId, stripeAccountStatus: stripeAccountStatus || "pending" });
 }
 
-module.exports = { getById, update, setProfileSlug, setStripeAccount };
+/**
+ * Provider-neutral banking fields (Stripe + Unit).
+ */
+async function setBankingAccount(uid, data) {
+    const patch = { ...data };
+    if (patch.bankingAccountStatus && !patch.stripeAccountStatus) {
+        patch.stripeAccountStatus = patch.bankingAccountStatus;
+    }
+    if (patch.bankingAccountId && !patch.stripeAccountId && data.bankingProvider === "stripe") {
+        patch.stripeAccountId = patch.bankingAccountId;
+    }
+    return update(uid, patch);
+}
+
+module.exports = { getById, update, setProfileSlug, setStripeAccount, setBankingAccount };

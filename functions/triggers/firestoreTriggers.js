@@ -9,6 +9,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+const { getBankingProvider, getPaymentsProvider } = require("../config/providerConfig");
 
 exports.onEventCreated = onDocumentCreated("events/{eventId}", async (event) => {
     const snapshot = event.data;
@@ -18,22 +19,49 @@ exports.onEventCreated = onDocumentCreated("events/{eventId}", async (event) => 
     const creatorId = eventData.creatorId;
     console.log("New event created:", eventId, "by user:", creatorId);
     try {
+        const bankingDoc = await db.collection("bankingAccounts").doc(creatorId).get();
         const stripeAccountDoc = await db.collection("stripeAccounts").doc(creatorId).get();
-        let accountId = stripeAccountDoc.exists ? stripeAccountDoc.data()?.accountId : null;
-        if (!accountId) {
-            const userDoc = await db.collection("users").doc(creatorId).get();
-            if (userDoc.exists) accountId = userDoc.data()?.stripeAccountId || null;
-        }
-        if (accountId) {
-            await snapshot.ref.update({
-                stripeAccountId: accountId,
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-            return { success: true, accountId };
-        }
-        await snapshot.ref.update({
-            needsBankingSetup: true,
+        const userDoc = await db.collection("users").doc(creatorId).get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+
+        let stripeAccountId =
+            stripeAccountDoc.exists ? stripeAccountDoc.data()?.accountId : null;
+        if (!stripeAccountId) stripeAccountId = userData.stripeAccountId || null;
+
+        const bankingAccountId =
+            bankingDoc.exists
+                ? (bankingDoc.data()?.depositAccountId || bankingDoc.data()?.accountId)
+                : (userData.bankingAccountId || null);
+
+        const paymentProvider = getPaymentsProvider();
+        const bankingProvider = getBankingProvider();
+
+        const patch = {
+            paymentProvider,
             updatedAt: FieldValue.serverTimestamp(),
+        };
+
+        if (stripeAccountId) patch.stripeAccountId = stripeAccountId;
+        if (bankingAccountId) patch.bankingAccountId = bankingAccountId;
+        if (bankingProvider === "unit" && bankingAccountId) {
+            patch.paymentAccountId = bankingAccountId;
+        } else if (stripeAccountId) {
+            patch.paymentAccountId = stripeAccountId;
+        }
+
+        const hasBanking =
+            bankingProvider === "unit"
+                ? !!bankingAccountId
+                : !!stripeAccountId;
+
+        if (hasBanking || (paymentProvider === "stripe" && stripeAccountId)) {
+            await snapshot.ref.update(patch);
+            return { success: true, stripeAccountId, bankingAccountId };
+        }
+
+        await snapshot.ref.update({
+            ...patch,
+            needsBankingSetup: true,
         });
         return null;
     } catch (error) {

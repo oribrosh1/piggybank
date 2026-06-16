@@ -6260,3 +6260,1231 @@ INFO: Detected non-HTTP/2 connection.
 [debug] [2026-06-16T13:16:18.355Z] Jun 16, 2026 4:16:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected non-HTTP/2 connection.
  {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:16:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:17:04.342Z] Jun 16, 2026 4:17:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:17:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:18:04.358Z] Jun 16, 2026 4:18:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:18:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:19:04.371Z] Jun 16, 2026 4:19:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:19:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:20:04.383Z] Jun 16, 2026 4:20:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:20:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:21:04.388Z] Jun 16, 2026 4:21:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:21:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:22:04.396Z] Jun 16, 2026 4:22:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:22:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:23:04.404Z] Jun 16, 2026 4:23:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:23:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:23:50.347Z] Jun 16, 2026 4:23:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:23:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:24:50.384Z] Jun 16, 2026 4:24:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:24:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:25:36.405Z] Jun 16, 2026 4:25:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:25:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:26:36.413Z] Jun 16, 2026 4:26:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:26:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:27:36.419Z] Jun 16, 2026 4:27:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:27:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:28:36.429Z] Jun 16, 2026 4:28:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:28:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:29:36.436Z] Jun 16, 2026 4:29:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:29:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:30:36.446Z] Jun 16, 2026 4:30:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:30:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:31:22.386Z] Jun 16, 2026 4:31:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:31:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:32:22.398Z] Jun 16, 2026 4:32:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:32:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:33:08.386Z] Jun 16, 2026 4:33:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:33:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:34:24.391Z] Jun 16, 2026 4:34:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:34:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:35:24.408Z] Jun 16, 2026 4:35:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:35:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:36:40.390Z] Jun 16, 2026 4:36:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:36:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:37:40.398Z] Jun 16, 2026 4:37:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:37:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:38:26.393Z] Jun 16, 2026 4:38:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:38:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:39:26.403Z] Jun 16, 2026 4:39:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:39:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:40:12.400Z] Jun 16, 2026 4:40:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:40:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:41:12.427Z] Jun 16, 2026 4:41:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:41:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:41:58.417Z] Jun 16, 2026 4:41:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:41:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:42:58.431Z] Jun 16, 2026 4:42:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:42:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:43:58.439Z] Jun 16, 2026 4:43:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:43:58 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:44:44.420Z] Jun 16, 2026 4:44:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:44:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:45:44.428Z] Jun 16, 2026 4:45:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:45:44 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:46:30.422Z] Jun 16, 2026 4:46:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:46:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:47:30.430Z] Jun 16, 2026 4:47:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:47:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:48:16.424Z] Jun 16, 2026 4:48:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:48:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:49:16.436Z] Jun 16, 2026 4:49:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:49:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:50:16.445Z] Jun 16, 2026 4:50:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:50:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:51:02.430Z] Jun 16, 2026 4:51:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:51:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:52:18.430Z] Jun 16, 2026 4:52:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:52:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:53:18.441Z] Jun 16, 2026 4:53:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:53:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:54:04.431Z] Jun 16, 2026 4:54:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:54:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:55:04.438Z] Jun 16, 2026 4:55:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:55:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:55:50.434Z] Jun 16, 2026 4:55:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:55:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:56:36.433Z] Jun 16, 2026 4:56:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:56:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:57:36.441Z] Jun 16, 2026 4:57:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:57:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:58:22.416Z] Jun 16, 2026 4:58:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:58:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T13:59:22.426Z] Jun 16, 2026 4:59:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 4:59:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:00:22.434Z] Jun 16, 2026 5:00:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:00:22 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:01:08.423Z] Jun 16, 2026 5:01:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:01:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:02:08.441Z] Jun 16, 2026 5:02:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:02:08 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:02:54.421Z] Jun 16, 2026 5:02:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:02:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:03:54.432Z] Jun 16, 2026 5:03:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:03:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:04:54.440Z] Jun 16, 2026 5:04:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:04:54 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:05:40.431Z] Jun 16, 2026 5:05:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:05:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:06:40.444Z] Jun 16, 2026 5:06:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:06:40 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:07:26.428Z] Jun 16, 2026 5:07:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:07:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:08:26.440Z] Jun 16, 2026 5:08:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:08:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:09:26.449Z] Jun 16, 2026 5:09:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:09:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:10:26.458Z] Jun 16, 2026 5:10:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:10:26 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:11:12.432Z] Jun 16, 2026 5:11:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:11:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:12:12.438Z] Jun 16, 2026 5:12:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:12:12 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:13:28.412Z] Jun 16, 2026 5:13:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:13:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:14:28.421Z] Jun 16, 2026 5:14:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:14:28 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:15:14.412Z] Jun 16, 2026 5:15:14 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:15:14 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:16:30.418Z] Jun 16, 2026 5:16:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:16:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:17:30.430Z] Jun 16, 2026 5:17:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:17:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:18:30.439Z] Jun 16, 2026 5:18:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:18:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:19:30.448Z] Jun 16, 2026 5:19:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:19:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:20:30.460Z] Jun 16, 2026 5:20:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:20:30 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:21:16.417Z] Jun 16, 2026 5:21:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:21:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:22:16.436Z] Jun 16, 2026 5:22:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:22:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:23:16.450Z] Jun 16, 2026 5:23:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:23:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:24:16.460Z] Jun 16, 2026 5:24:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:24:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:25:16.469Z] Jun 16, 2026 5:25:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:25:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:26:16.478Z] Jun 16, 2026 5:26:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:26:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:27:02.426Z] Jun 16, 2026 5:27:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:27:02 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:28:18.416Z] Jun 16, 2026 5:28:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:28:18 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:29:04.404Z] Jun 16, 2026 5:29:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:29:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:29:22.674Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookController.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:29:23.681Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:29:24.547Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:29:24.547Z] Building nodejs source
+[debug] [2026-06-16T14:29:24.547Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:29:24.550Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:29:24.553Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8289
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[debug] [2026-06-16T14:29:25.053Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookController.js changed, reloading triggers"}}
+[error] (node:51007) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:29:25.149Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2026-06-16T14:29:26.055Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:29:26.512Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:29:26.512Z] Building nodejs source
+[debug] [2026-06-16T14:29:26.512Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:29:26.513Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:29:26.515Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8462
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[error] (node:51050) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:29:26.817Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2026-06-16T14:29:27.828Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/repositories/userRepository.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/repositories/userRepository.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:29:28.829Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:29:29.437Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:29:29.437Z] Building nodejs source
+[debug] [2026-06-16T14:29:29.437Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:29:29.438Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:29:29.439Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:29:29.448Z] [worker-pool] Shutting down IDLE worker (us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-api)"}}
+[debug] [2026-06-16T14:29:29.448Z] [worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: FINISHING"}}
+[debug] [2026-06-16T14:29:29.448Z] [worker-pool] Shutting down IDLE worker (us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-api)"}}
+[debug] [2026-06-16T14:29:29.448Z] [worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: FINISHING"}}
+[debug] [2026-06-16T14:29:29.459Z] [worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: exited"}}
+[debug] [2026-06-16T14:29:29.459Z] [worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-b977279d-f97f-43a1-8c36-9b524c318cbe]: FINISHED"}}
+[debug] [2026-06-16T14:29:29.459Z] [worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: exited"}}
+[debug] [2026-06-16T14:29:29.459Z] [worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-7a127a9c-aedf-41ac-a519-9494a28f0a6a]: FINISHED"}}
+[info] Serving at port 8396
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[error] (node:51091) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:29:29.719Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:29:37.105Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:29:38.106Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:29:38.485Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:29:38.485Z] Building nodejs source
+[debug] [2026-06-16T14:29:38.485Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:29:38.486Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:29:38.486Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8320
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+
+[error] (node:51224) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[error] TypeError: Cannot read properties of undefined (reading 'createOnboardingLink')
+    at Object.registerRoutes (/Users/oribrosh1/Documents/creditkid/piggybank/functions/routes.js:34:77)
+    at Object.<anonymous> (/Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js:92:21)
+    at Module._compile (node:internal/modules/cjs/loader:1803:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1934:10)
+    at Module.load (node:internal/modules/cjs/loader:1524:32)
+    at Module._load (node:internal/modules/cjs/loader:1326:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.require (node:internal/modules/cjs/loader:1547:12)
+    at require (node:internal/modules/helpers:152:16)
+
+[debug] [2026-06-16T14:29:38.748Z] Got response code 400; body Failed to generate manifest from function source: Cannot read properties of undefined (reading 'createOnboardingLink')
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2026-06-16T14:29:46.963Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/routes.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/routes.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:29:47.965Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:29:48.555Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:29:48.555Z] Building nodejs source
+[debug] [2026-06-16T14:29:48.556Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:29:48.556Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:29:48.557Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8279
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: ⚙️  enable debug logging with { debug: true }
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:51369) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:29:48.930Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:30:04.423Z] Jun 16, 2026 5:30:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:30:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:30:24.393Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:30:25.396Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:30:26.044Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:30:26.044Z] Building nodejs source
+[debug] [2026-06-16T14:30:26.044Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:30:26.045Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:30:26.046Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8372
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: ⚙️  override existing env vars with { override: true }
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:51882) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[error] /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js:6
+async function onEventCreatedHandler(event) {
+                                             
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1734:18)
+    at Module._compile (node:internal/modules/cjs/loader:1777:20)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1934:10)
+    at Module.load (node:internal/modules/cjs/loader:1524:32)
+    at Module._load (node:internal/modules/cjs/loader:1326:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at Module.require (node:internal/modules/cjs/loader:1547:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (/Users/oribrosh1/Documents/creditkid/piggybank/functions/index.js:107:26)
+
+[debug] [2026-06-16T14:30:26.447Z] Got response code 400; body Failed to generate manifest from function source: Unexpected end of input
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2026-06-16T14:30:30.889Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:30:31.890Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:30:32.299Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:30:32.299Z] Building nodejs source
+[debug] [2026-06-16T14:30:32.299Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:30:32.300Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:30:32.301Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8073
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52007) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:30:32.709Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:30:45.913Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/firestoreTriggers.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:30:46.822Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/provisioningWatchdog.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/provisioningWatchdog.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:30:47.630Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/provisioningWatchdog.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/triggers/provisioningWatchdog.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:30:48.631Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:30:49.163Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:30:49.163Z] Building nodejs source
+[debug] [2026-06-16T14:30:49.163Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:30:49.163Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:30:49.164Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8688
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52248) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:30:49.601Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:31:03.688Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:31:04.438Z] Jun 16, 2026 5:31:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:31:04 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:31:04.689Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:31:05.201Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:31:05.201Z] Building nodejs source
+[debug] [2026-06-16T14:31:05.201Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:31:05.202Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:31:05.203Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8068
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52453) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:31:05.625Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2026-06-16T14:31:08.530Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:31:09.531Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:31:09.908Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:31:09.908Z] Building nodejs source
+[debug] [2026-06-16T14:31:09.908Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:31:09.908Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:31:09.909Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[info] Serving at port 8876
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52529) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:31:10.234Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2026-06-16T14:31:11.419Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:31:12.421Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:31:12.878Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:31:12.878Z] Building nodejs source
+[debug] [2026-06-16T14:31:12.878Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:31:12.878Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:31:12.879Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8916
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52566) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:31:13.120Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:31:14.291Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/childCardController.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:31:15.292Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:31:15.834Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:31:15.834Z] Building nodejs source
+[debug] [2026-06-16T14:31:15.834Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:31:15.835Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:31:15.835Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8041
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:52614) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:31:16.103Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:31:50.406Z] Jun 16, 2026 5:31:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:31:50 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:32:18.851Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/providers/unit/unitBankingProvider.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/providers/unit/unitBankingProvider.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:32:19.355Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/providers/unit/unitBankingProvider.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/providers/unit/unitBankingProvider.js changed, reloading triggers"}}
+[debug] [2026-06-16T14:32:20.357Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:32:20.828Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:32:20.828Z] Building nodejs source
+[debug] [2026-06-16T14:32:20.828Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:32:20.830Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:32:20.831Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8324
+
+[debug] [2026-06-16T14:32:21.031Z] File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookRouter.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/oribrosh1/Documents/creditkid/piggybank/functions/controllers/webhookRouter.js changed, reloading triggers"}}
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:53530) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:32:21.309Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2026-06-16T14:32:22.033Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-06-16T14:32:22.528Z] > [functions] package.json contents: {
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore,auth,storage --project dev",
+    "serve:default": "cd .. && npx firebase-tools emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "generate-poster": "node scripts/generate-poster.js",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "keywords": [
+    "stripe",
+    "connect",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.7.0",
+    "@google-cloud/vertexai": "^1.12.0",
+    "@google-cloud/vision": "^4.3.3",
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "openai": "^6.36.0",
+    "sharp": "^0.33.5",
+    "stripe": "^20.0.0",
+    "together-ai": "^0.39.0",
+    "twilio": "^5.0.0"
+  }
+}
+[debug] [2026-06-16T14:32:22.528Z] Building nodejs source
+[debug] [2026-06-16T14:32:22.528Z] Failed to find version of module node: reached end of search path /Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "25". Using node@25 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-06-16T14:32:22.529Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-16T14:32:22.530Z] Found firebase-functions binary at '/Users/oribrosh1/Documents/creditkid/piggybank/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8539
+
+[info] [dotenv@17.2.3] injecting env (16) from ../.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+
+[info] [dotenv@17.2.3] injecting env (12) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+[info] [api] bankingProvider=stripe sandbox=true
+
+[error] (node:53562) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-16T14:32:22.852Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"},"onEventCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"events/{eventId}"},"retry":false},"entryPoint":"onEventCreated"},"onTransactionCreated":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"transactions/{transactionId}"},"retry":false},"entryPoint":"onTransactionCreated"},"sendEventReminderSMS":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 9 * * *","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"sendEventReminderSMS"},"provisioningWatchdog":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every 5 minutes","retryConfig":{},"timeZone":"America/Los_Angeles"},"entryPoint":"provisioningWatchdog"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[info] ✔  functions: Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api, onEventCreated, onTransactionCreated, sendEventReminderSMS, provisioningWatchdog."}}
+[debug] [2026-06-16T14:33:06.411Z] Jun 16, 2026 5:33:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:33:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:34:06.430Z] Jun 16, 2026 5:34:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:34:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:34:52.406Z] Jun 16, 2026 5:34:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:34:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:35:38.407Z] Jun 16, 2026 5:35:38 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:35:38 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:36:38.414Z] Jun 16, 2026 5:36:38 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:36:38 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:37:24.408Z] Jun 16, 2026 5:37:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:37:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:38:24.427Z] Jun 16, 2026 5:38:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:38:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:39:24.437Z] Jun 16, 2026 5:39:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:39:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:40:10.414Z] Jun 16, 2026 5:40:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:40:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:41:10.422Z] Jun 16, 2026 5:41:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:41:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2026-06-16T14:42:10.431Z] Jun 16, 2026 5:42:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Jun 16, 2026 5:42:10 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}

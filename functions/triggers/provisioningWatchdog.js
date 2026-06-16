@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { getBankingProvider } = require("../config/providerConfig");
 
 const db = admin.firestore();
 const PROVISIONING_COLLECTION = "provisioningTasks";
@@ -9,6 +10,10 @@ const MAX_RETRIES = 3;
 exports.provisioningWatchdog = onSchedule(
     { schedule: "every 5 minutes", timeZone: "America/Los_Angeles" },
     async () => {
+        if (getBankingProvider() !== "stripe") {
+            return;
+        }
+
         const cutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
 
         let snapshot;
