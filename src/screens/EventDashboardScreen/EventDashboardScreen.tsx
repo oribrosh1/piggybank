@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -9,6 +9,7 @@ import {
     Share,
     Platform,
     Modal,
+    Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -49,8 +50,12 @@ import {
 } from "@/src/components/events/eventDashboard/EventDashboardTopSection";
 import CelebrationToolsModal from "@/src/components/events/eventDashboard/CelebrationToolsModal";
 import GuestStatsModal from "@/src/components/events/eventDashboard/GuestStatsModal";
-import ReminderScheduleModal from "@/src/components/events/eventDashboard/ReminderScheduleModal";
+import ReminderScheduleModal, {
+    type ReminderAudienceSettings,
+    type ReminderSlot,
+} from "@/src/components/events/eventDashboard/ReminderScheduleModal";
 import AppTabFooter from "@/src/components/AppTabFooter";
+import DigitalGiftsBlessingPreviewSection from "@/src/components/home/DigitalGiftsBlessingPreviewSection";
 
 export function EventDashboardScreen({
     eventId,
@@ -71,15 +76,47 @@ export function EventDashboardScreen({
     const [showFeaturesModal, setShowFeaturesModal] = useState(false);
     const [showNotificationsModal, setShowNotificationsModal] = useState(false);
     const [showReminderScheduleModal, setShowReminderScheduleModal] = useState(false);
+    const [preselectGiftReminderAudience, setPreselectGiftReminderAudience] = useState(false);
     const [showGuestGuideModal, setShowGuestGuideModal] = useState(false);
     const [childLinkLoading, setChildLinkLoading] = useState(false);
     const [childLinkOpen, setChildLinkOpen] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [bankingReady, setBankingReady] = useState(false);
     const [childLinked, setChildLinked] = useState(false);
+    const [showDelayedPayoutBanner, setShowDelayedPayoutBanner] = useState(false);
     const posterRef = useRef<AIPosterGeneratorRef | null>(null);
     const previewRef = useRef<InvitationPreviewRef | null>(null);
     const smsPreviewRef = useRef<SmsInvitePreviewModalRef | null>(null);
+    const payoutBannerSlideY = useRef(new Animated.Value(36)).current;
+    const payoutBannerOpacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (loading || bankingReady) {
+            setShowDelayedPayoutBanner(false);
+            return;
+        }
+        setShowDelayedPayoutBanner(false);
+        const timer = setTimeout(() => setShowDelayedPayoutBanner(true), 2000);
+        return () => clearTimeout(timer);
+    }, [loading, bankingReady]);
+
+    useEffect(() => {
+        if (!showDelayedPayoutBanner) return;
+        payoutBannerSlideY.setValue(36);
+        payoutBannerOpacity.setValue(0);
+        Animated.parallel([
+            Animated.timing(payoutBannerSlideY, {
+                toValue: 0,
+                duration: 360,
+                useNativeDriver: true,
+            }),
+            Animated.timing(payoutBannerOpacity, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [payoutBannerOpacity, payoutBannerSlideY, showDelayedPayoutBanner]);
 
     const closeGuestStats = useCallback(() => {
         setShowGuestStatsModal(false);
@@ -109,6 +146,11 @@ export function EventDashboardScreen({
         items.sort((a, b) => b.date.getTime() - a.date.getTime());
         return items;
     }, [event]);
+
+    const attendingWithoutGiftCount = useMemo(
+        () => event?.guests.filter((g) => g.status === "confirmed").length ?? 0,
+        [event?.guests],
+    );
 
     useFocusEffect(
         useCallback(() => {
@@ -244,6 +286,10 @@ export function EventDashboardScreen({
         }
     };
 
+    const handleVerifyBanking = useCallback(() => {
+        navigateToStripeConnectOrPersonalInfo(router).catch(() => {});
+    }, [router]);
+
     const handleDeleteEvent = () => {
         if (!id) return;
         Alert.alert(
@@ -276,6 +322,32 @@ export function EventDashboardScreen({
         );
     };
 
+    const handleSaveReminderSettings = useCallback(
+        async (slots: ReminderSlot[], audienceSettings: ReminderAudienceSettings) => {
+            void slots;
+            if (!id) return;
+
+            try {
+                await firestore().collection("events").doc(id).update({
+                    reminderGiftNudgeEnabled: audienceSettings.remindAttendingWithoutGift,
+                    updatedAt: firestore.FieldValue.serverTimestamp(),
+                });
+                setEvent((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              reminderGiftNudgeEnabled: audienceSettings.remindAttendingWithoutGift,
+                          }
+                        : prev,
+                );
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Could not save reminder settings.";
+                Alert.alert("Reminder settings not saved", message);
+            }
+        },
+        [id],
+    );
+
     if (loading) {
         return (
             <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
@@ -302,7 +374,7 @@ export function EventDashboardScreen({
                     <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
                     <Text style={{ fontSize: 20, fontWeight: "700", color: "#111827", marginBottom: 8 }}>Event Not Found</Text>
                     <Text style={{ fontSize: 15, color: "#6B7280", textAlign: "center", marginBottom: 24 }}>
-                        We couldn't find this event. It may have been deleted.
+                        We could not find this event. It may have been deleted.
                     </Text>
                     <TouchableOpacity
                         onPress={() => router.push(routes.tabs.myEvent)}
@@ -355,8 +427,24 @@ export function EventDashboardScreen({
 
                 {/* <LiveStatusBanner /> */}
 
-                <PayoutSetupBanner event={event} />
+             
 
+                {showDelayedPayoutBanner ? (
+                    <Animated.View
+                        style={{
+                            opacity: payoutBannerOpacity,
+                            transform: [{ translateY: payoutBannerSlideY }],
+                        }}
+                    >
+                        <PayoutSetupBanner event={event} showBlessingPreview={false} />
+                    </Animated.View>
+                ) : null}
+
+                {!loading && !bankingReady ? (
+                    <View style={{ marginHorizontal: 16, marginBottom: 0, marginTop: 12 }}>
+                        <DigitalGiftsBlessingPreviewSection onVerifyPress={handleVerifyBanking} />
+                    </View>
+                ) : null}
                 {/* <InvolveChildCard
                     name={childFirst}
                     onLinkAccount={() => setChildLinkOpen(true)}
@@ -534,6 +622,10 @@ export function EventDashboardScreen({
                     setGuestModalInitialFilter(null);
                     setShowGuestModal(true);
                 }}
+                onAddGuests={() => {
+                    closeGuestStats();
+                    handleAddGuests();
+                }}
                 onFixInvalidPhones={() => {
                     closeGuestStats();
                     setGuestModalInitialFilter("invalid_phone");
@@ -543,14 +635,25 @@ export function EventDashboardScreen({
                     closeGuestStats();
                     setShowNotificationsModal(true);
                 }}
+                onScheduleGiftReminders={() => {
+                    closeGuestStats();
+                    setPreselectGiftReminderAudience(true);
+                    setShowReminderScheduleModal(true);
+                }}
             />
 
             <ReminderScheduleModal
                 visible={showReminderScheduleModal}
-                onClose={() => setShowReminderScheduleModal(false)}
-                onSave={() => {
-                    /* Persist reminder slots to event doc when backend field exists */
+                onClose={() => {
+                    setShowReminderScheduleModal(false);
+                    setPreselectGiftReminderAudience(false);
                 }}
+                initialAudienceSettings={{
+                    remindAttendingWithoutGift:
+                        preselectGiftReminderAudience || event.reminderGiftNudgeEnabled === true,
+                }}
+                giftReminderGuestCount={attendingWithoutGiftCount}
+                onSave={handleSaveReminderSettings}
             />
 
             <CelebrationToolsModal
@@ -592,7 +695,7 @@ export function EventDashboardScreen({
                                 No activity yet
                             </Text>
                             <Text style={{ fontSize: 14, fontWeight: "500", color: "#9CA3AF", textAlign: "center", lineHeight: 20 }}>
-                                When guests RSVP or send gifts, you'll see it here in real time.
+                                When guests RSVP or send gifts, you will see it here in real time.
                             </Text>
                         </View>
                     ) : (

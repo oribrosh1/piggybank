@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Image,
   Platform,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -35,6 +36,9 @@ const PREVIEW_SPENT = 243.5;
 const BAR_HEIGHTS = [0.46, 0.63, 1, 0.57, 0.73, 0.44, 0.55];
 const BAR_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 const MINI_BAR_HEIGHTS = [0.3, 0.55, 0.42, 0.72, 0.86, 1];
+const CHILD_PAGE_BANKING_CARD_TITLE = "Verify Identity to Unlock";
+const CHILD_PAGE_BANKING_CARD_SUBTITLE =
+  "Verify your identity to unlock your child's real-time activity, controls, and spending insights.";
 
 const PREVIEW_TRANSACTIONS = [
   { id: "1", merchant: "Nike Store", meta: "Today, 3:45 PM  •  Shopping", color: "#777B84", Icon: ShoppingBag },
@@ -103,8 +107,7 @@ function LockedFooter({ compact = false }: { compact?: boolean }) {
     <View style={[styles.lockedFooter, compact && styles.lockedFooterCompact]}>
       <Lock size={12} color={colors.muted} strokeWidth={2.2} />
       <View>
-        <Text style={styles.lockedFooterTitle}>Locked</Text>
-        <Text style={styles.lockedFooterText}>Verify to unlock</Text>
+        <Text style={styles.lockedFooterTitle}>Locked - Verify to unlock</Text>
       </View>
     </View>
   );
@@ -173,6 +176,33 @@ export default function KidsPreviewDashboard({
   onLinkChild,
   insets,
 }: Props) {
+  const [showBankingSetupCard, setShowBankingSetupCard] = useState(false);
+  const bankingCardSlideY = useRef(new Animated.Value(36)).current;
+  const bankingCardOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowBankingSetupCard(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!showBankingSetupCard) return;
+    bankingCardSlideY.setValue(36);
+    bankingCardOpacity.setValue(0);
+    Animated.parallel([
+      Animated.timing(bankingCardSlideY, {
+        toValue: 0,
+        duration: 360,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bankingCardOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [bankingCardOpacity, bankingCardSlideY, showBankingSetupCard]);
+
   const displayName = childName.trim();
   const childFirst = firstName(displayName);
   const photoUrl = childPhotoUrl?.trim() || undefined;
@@ -242,7 +272,7 @@ export default function KidsPreviewDashboard({
           </View>
           ) : null}
         </View>
-
+        
         <LinearGradient
           colors={["#8B6BDF", "#5F39C5", "#4B2AA4"]}
           start={{ x: 0, y: 0 }}
@@ -298,6 +328,22 @@ export default function KidsPreviewDashboard({
           </View>
         </LinearGradient>
 
+        {showBankingSetupCard ? (
+          <Animated.View
+            style={{
+              marginBottom: 12,
+              opacity: bankingCardOpacity,
+              transform: [{ translateY: bankingCardSlideY }],
+            }}
+          >
+            <BankingSetupRequiredCard
+              onCompleteSetup={onVerify}
+              showBlessingPreview={false}
+              title={CHILD_PAGE_BANKING_CARD_TITLE}
+              subtitle={CHILD_PAGE_BANKING_CARD_SUBTITLE}
+            />
+          </Animated.View>
+        ) : null}
         <View style={styles.habitsCard}>
           <View style={styles.habitsIconWrap}>
             <Shield size={20} color={colors.onPrimary} strokeWidth={2.2} />
@@ -324,10 +370,12 @@ export default function KidsPreviewDashboard({
                 <View style={styles.cardLockIconSmall}>
                   <Lock size={12} color={colors.muted} strokeWidth={2.3} />
                 </View>
-                <View style={[styles.featureIconWrap, { backgroundColor: feature.bg }]}>
-                  <Icon size={18} color={feature.color} strokeWidth={2.2} />
+                <View style={styles.featureHeaderRow}>
+                  <View style={[styles.featureIconWrap, { backgroundColor: feature.bg }]}>
+                    <Icon size={18} color={feature.color} strokeWidth={2.2} />
+                  </View>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
                 </View>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
                 <Text style={styles.featureDescription}>{feature.description}</Text>
                 <LockedFooter compact />
                 {index === 0 ? <MiniBars /> : null}
@@ -370,7 +418,12 @@ export default function KidsPreviewDashboard({
           </TouchableOpacity>
         </View>
 
-        <BankingSetupRequiredCard onCompleteSetup={onVerify} showBlessingPreview={false} />
+        <BankingSetupRequiredCard
+          onCompleteSetup={onVerify}
+          showBlessingPreview={false}
+          title={CHILD_PAGE_BANKING_CARD_TITLE}
+          subtitle={CHILD_PAGE_BANKING_CARD_SUBTITLE}
+        />
 
       </ScrollView>
     </View>
@@ -724,7 +777,7 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
   },
   habitsGraphWrap: {
-    width: 100,
+    width: 80,
     height: 50,
     flexShrink: 0,
     position: "relative",
@@ -759,8 +812,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     overflow: "hidden",
-    minHeight: 126,
+    height: 110,
     position: "relative",
+  },
+  featureHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
   },
   featureIconWrap: {
     width: 30,
@@ -768,14 +827,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
   },
   featureTitle: {
     fontFamily: fontFamily.headline,
     fontSize: 15,
     fontWeight: "900",
     color: colors.onSurface,
-    marginBottom: 3,
+    flexShrink: 1,
   },
   featureDescription: {
     fontFamily: fontFamily.body,
@@ -800,6 +858,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.onSurfaceVariant,
     lineHeight: 10,
+    paddingTop: 2,
   },
   lockedFooterText: {
     fontFamily: fontFamily.label,
@@ -817,7 +876,7 @@ const styles = StyleSheet.create({
   miniBars: {
     position: "absolute",
     right: 12,
-    bottom: 18,
+    bottom: 30,
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 3,
@@ -831,7 +890,7 @@ const styles = StyleSheet.create({
   vennWrap: {
     position: "absolute",
     right: 10,
-    bottom: 22,
+    bottom: 30,
     width: 46,
     height: 34,
   },
@@ -860,7 +919,7 @@ const styles = StyleSheet.create({
   controlsGhost: {
     position: "absolute",
     right: 12,
-    bottom: 22,
+    bottom: 30,
     width: 52,
     opacity: 0.22,
   },
@@ -899,7 +958,7 @@ const styles = StyleSheet.create({
   activityGhost: {
     position: "absolute",
     right: 14,
-    bottom: 22,
+    bottom: 30,
     width: 58,
     opacity: 0.16,
   },

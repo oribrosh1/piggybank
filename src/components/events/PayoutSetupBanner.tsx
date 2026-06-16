@@ -9,13 +9,17 @@ import { colors, spacing } from "@/src/theme";
 
 type Props = {
   event: Pick<Event, "stripeAccountId">;
+  showBlessingPreview?: boolean;
 };
 
 /**
  * Shown when guest gifts should route to Connect but payouts are not fully enabled yet.
  * Uses the home banking setup card; Complete Setup opens Stripe hosted onboarding (or personal-info).
  */
-export default function PayoutSetupBanner({ event }: Props) {
+export default function PayoutSetupBanner({
+  event,
+  showBlessingPreview = true,
+}: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [payoutsReady, setPayoutsReady] = useState(false);
@@ -73,7 +77,10 @@ export default function PayoutSetupBanner({ event }: Props) {
 
   return (
     <View style={styles.bannerWrap}>
-      <BankingSetupRequiredCard onCompleteSetup={onCompleteSetup} />
+      <BankingSetupRequiredCard
+        onCompleteSetup={onCompleteSetup}
+        showBlessingPreview={showBlessingPreview}
+      />
     </View>
   );
 }
@@ -89,6 +96,6 @@ const styles = StyleSheet.create({
   bannerWrap: {
     marginHorizontal: spacing[4],
     marginTop: spacing[2],
-    marginBottom: spacing[4],
+    marginBottom: spacing[1],
   },
 });

@@ -40,6 +40,10 @@ import {
   ambientShadow,
 } from "@/src/theme";
 
+const GIFTS_PAGE_BANKING_CARD_TITLE = "Verify to Unlock Gift Payouts";
+const GIFTS_PAGE_BANKING_CARD_SUBTITLE =
+  "Verify your identity to unlock gift payouts, blessings, and full gifts activity for this event.";
+
 function centsToUsd(cents: number): number {
   return (cents || 0) / 100;
 }
@@ -314,6 +318,8 @@ export default function GiftsTabScreen() {
                 <BankingSetupRequiredCard
                   onCompleteSetup={onCompleteBankingSetup}
                   showBlessingPreview={false}
+                  title={GIFTS_PAGE_BANKING_CARD_TITLE}
+                  subtitle={GIFTS_PAGE_BANKING_CARD_SUBTITLE}
                 />
               </View>
             )

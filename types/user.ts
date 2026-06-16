@@ -78,6 +78,8 @@ export interface UserProfile {
     // Settings
     notificationsEnabled: boolean;
     biometricEnabled: boolean;
+    /** Parent preference: whether gift totals are visible before the event day. */
+    showGiftAmountsBeforeEvent?: boolean;
 
     // Stats
     eventsCreated: number;
@@ -214,6 +216,7 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
         if (userProfile.totalSpent !== undefined) data.totalSpent = userProfile.totalSpent;
         if (userProfile.spendingLimitDaily !== undefined) data.spendingLimitDaily = userProfile.spendingLimitDaily;
         if (userProfile.spendingLimitMonthly !== undefined) data.spendingLimitMonthly = userProfile.spendingLimitMonthly;
+        if (userProfile.showGiftAmountsBeforeEvent !== undefined) data.showGiftAmountsBeforeEvent = userProfile.showGiftAmountsBeforeEvent;
         if (userProfile.legalFirstName) data.legalFirstName = userProfile.legalFirstName;
         if (userProfile.legalLastName) data.legalLastName = userProfile.legalLastName;
         if (userProfile.profileSlug) data.profileSlug = userProfile.profileSlug;
@@ -259,6 +262,7 @@ export const userProfileConverter: FirestoreDataConverter<UserProfile> = {
             totalSpent: data.totalSpent,
             spendingLimitDaily: data.spendingLimitDaily,
             spendingLimitMonthly: data.spendingLimitMonthly,
+            showGiftAmountsBeforeEvent: data.showGiftAmountsBeforeEvent !== false,
             legalFirstName: data.legalFirstName,
             legalLastName: data.legalLastName,
             profileSlug: data.profileSlug,

@@ -3,7 +3,7 @@ import { Alert, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import firebase from "@/src/firebase";
-import { getUserProfile } from "@/src/lib/userService";
+import { getUserProfile, updateUserProfile } from "@/src/lib/userService";
 import { getUserEventsStats } from "@/src/lib/eventService";
 import { getAccountDetails } from "@/src/lib/api";
 import type { EventSummary } from "@/types/events";
@@ -110,6 +110,57 @@ export function useProfileScreen() {
     return "Set on your child's card";
   };
 
+  const goToEditChildName = () => {
+    if (!primaryEvent?.id) {
+      Alert.alert("No active event", "Create an event first, then you can update your child's display name.");
+      return;
+    }
+    router.push(routes.editEvent(primaryEvent.id));
+  };
+
+  const unlinkChildProfile = () => {
+    if (!userProfile?.childIds?.length) {
+      Alert.alert("No linked child", "There is no linked child profile to unlink yet.");
+      return;
+    }
+
+    Alert.alert(
+      "Unlink child profile?",
+      "This removes the child profile connection from your parent account. You can link them again later.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unlink",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await updateUserProfile(userProfile.uid, { childIds: [] });
+              setUserProfile((prev) => prev ? { ...prev, childIds: [] } : prev);
+              Alert.alert("Child unlinked", "The child profile was unlinked from your account.");
+            } catch {
+              Alert.alert("Could not unlink", "Please try again.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const setShowGiftAmountsBeforeEvent = async (enabled: boolean) => {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    const previous = userProfile?.showGiftAmountsBeforeEvent !== false;
+    setUserProfile((prev) => prev ? { ...prev, showGiftAmountsBeforeEvent: enabled } : prev);
+
+    try {
+      await updateUserProfile(user.uid, { showGiftAmountsBeforeEvent: enabled });
+    } catch {
+      setUserProfile((prev) => prev ? { ...prev, showGiftAmountsBeforeEvent: previous } : prev);
+      Alert.alert("Could not save", "Please try again.");
+    }
+  };
+
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
@@ -151,6 +202,7 @@ export function useProfileScreen() {
     bankLabel,
     bankVerified,
     spendingLimitLabel: spendingLimitLabel(),
+    showGiftAmountsBeforeEvent: userProfile?.showGiftAmountsBeforeEvent !== false,
     refresh: () => load(true),
     handleSignOut,
     openFaq: () => openUrl(FAQ_URL),
@@ -168,5 +220,8 @@ export function useProfileScreen() {
       });
     },
     goToKids: () => router.push(routes.tabs.kids),
+    goToEditChildName,
+    unlinkChildProfile,
+    setShowGiftAmountsBeforeEvent,
   };
 }

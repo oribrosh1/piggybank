@@ -150,6 +150,8 @@ interface Props {
   onCompleteSetup: () => void;
   /** When false, omits the bundled blessing preview (e.g. when shown separately above). */
   showBlessingPreview?: boolean;
+  title?: string;
+  subtitle?: string;
 }
 
 /**
@@ -159,6 +161,8 @@ interface Props {
 export default function BankingSetupRequiredCard({
   onCompleteSetup,
   showBlessingPreview = true,
+  title = "Verify & Get A CreditKid Card",
+  subtitle = "To send SMS invitations and start collecting digital gifts, you need to verify your identity.",
 }: Props) {
   const useNativeLottie = useMemo(() => canUseNativeLottie(), []);
   const goldMotion = useGoldSphereFloat();
@@ -241,10 +245,10 @@ export default function BankingSetupRequiredCard({
           <AlertTriangle size={14} color={colors.primary} strokeWidth={2.4} />
           <Text style={styles.actionBadgeText}>Action Required</Text>
         </View> */}
-        <Text style={styles.title}>Verify & Get A CreditKid Card</Text>
+        <Text style={styles.title}>{title}</Text>
       </View>
       <Text style={[styles.body, styles.bodyBelowCopy]}>
-        To send SMS invitations and start collecting digital gifts, you need to verify your identity.
+        {subtitle}
       </Text>
 
       <View style={styles.setupProgressWithCtaRow}>

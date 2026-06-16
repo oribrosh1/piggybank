@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, ChevronDown, Clock, Plus } from "lucide-react-native";
+import { X, ChevronDown, Clock, Plus, Gift } from "lucide-react-native";
 
 const MAX_SLOTS = 5;
 
@@ -39,12 +39,18 @@ export type ReminderSlot = {
   timeLabel: string;
 };
 
+export type ReminderAudienceSettings = {
+  remindAttendingWithoutGift: boolean;
+};
+
 export interface ReminderScheduleModalProps {
   visible: boolean;
   onClose: () => void;
   /** Persisted slots from parent (optional) */
   initialSlots?: ReminderSlot[];
-  onSave?: (slots: ReminderSlot[]) => void;
+  initialAudienceSettings?: Partial<ReminderAudienceSettings>;
+  giftReminderGuestCount?: number;
+  onSave?: (slots: ReminderSlot[], audienceSettings: ReminderAudienceSettings) => void;
 }
 
 function createSlot(
@@ -83,17 +89,23 @@ export default function ReminderScheduleModal({
   visible,
   onClose,
   initialSlots,
+  initialAudienceSettings,
+  giftReminderGuestCount = 0,
   onSave,
 }: ReminderScheduleModalProps) {
   const insets = useSafeAreaInsets();
   const { height: windowH } = useWindowDimensions();
   const [slots, setSlots] = useState<ReminderSlot[]>(initialSlots ?? defaultSlots);
+  const [remindAttendingWithoutGift, setRemindAttendingWithoutGift] = useState(
+    initialAudienceSettings?.remindAttendingWithoutGift ?? false
+  );
 
   useEffect(() => {
     if (visible) {
       setSlots(initialSlots ?? defaultSlots);
+      setRemindAttendingWithoutGift(initialAudienceSettings?.remindAttendingWithoutGift ?? false);
     }
-  }, [visible, initialSlots]);
+  }, [visible, initialSlots, initialAudienceSettings]);
 
   const cycleDay = useCallback((index: number) => {
     setSlots((prev) => {
@@ -139,15 +151,15 @@ export default function ReminderScheduleModal({
 
   const handleDiscard = () => {
     setSlots(initialSlots ?? defaultSlots);
+    setRemindAttendingWithoutGift(initialAudienceSettings?.remindAttendingWithoutGift ?? false);
     onClose();
   };
 
   const handleSave = () => {
-    onSave?.(slots);
+    onSave?.(slots, { remindAttendingWithoutGift });
     onClose();
   };
 
-  const activeCount = slots.filter((s) => s.enabled).length;
   const remaining = MAX_SLOTS - slots.length;
 
   return (
@@ -231,6 +243,50 @@ export default function ReminderScheduleModal({
           >
             {`Automate your follow-ups and never miss a prep milestone. Pick up to ${MAX_SLOTS} separate times to automatically nudge guests who haven't responded yet.`}
           </Text>
+
+          <View
+            style={{
+              marginHorizontal: 20,
+              marginBottom: 16,
+              padding: 14,
+              borderRadius: 18,
+              backgroundColor: remindAttendingWithoutGift ? "#F5F3FF" : "#FAFAFA",
+              borderWidth: 1.5,
+              borderColor: remindAttendingWithoutGift ? "#DDD6FE" : "#E5E7EB",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <View
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
+                  backgroundColor: remindAttendingWithoutGift ? "#EDE9FE" : "#F3F4F6",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Gift size={18} color={remindAttendingWithoutGift ? "#7C3AED" : "#9CA3AF"} strokeWidth={2.4} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "900", color: "#111827", marginBottom: 3 }}>
+                  Remind guests who RSVP yes but have not sent a gift
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: "600", color: "#6B7280", lineHeight: 17 }}>
+                  {giftReminderGuestCount > 0
+                    ? `${giftReminderGuestCount} attending guest${giftReminderGuestCount === 1 ? "" : "s"} will get gift nudges.`
+                    : "No attending guests are waiting on a gift right now."}
+                </Text>
+              </View>
+              <Switch
+                value={remindAttendingWithoutGift}
+                onValueChange={setRemindAttendingWithoutGift}
+                trackColor={{ false: "#D1D5DB", true: "#C4B5FD" }}
+                thumbColor={remindAttendingWithoutGift ? "#7C3AED" : "#F3F4F6"}
+                ios_backgroundColor="#D1D5DB"
+              />
+            </View>
+          </View>
 
           <ScrollView
             style={{ maxHeight: windowH * 0.48 }}

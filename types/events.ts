@@ -329,6 +329,8 @@ export interface Event {
   needsBankingSetup?: boolean;
   /** When false, scheduled reminder SMS cron skips this event (default: reminders on) */
   reminderSmsEnabled?: boolean;
+  /** When true, scheduled reminders also nudge confirmed guests who have not sent a gift yet */
+  reminderGiftNudgeEnabled?: boolean;
   /** Parent-authored guest invite SMS body; falls back to the default template when unset */
   customInviteSmsBody?: string;
 
@@ -510,6 +512,8 @@ export const eventConverter: FirestoreDataConverter<Event> = {
     if (event.posterThemeId) data.posterThemeId = event.posterThemeId;
     if (event.needsBankingSetup === true) data.needsBankingSetup = true;
     if (event.reminderSmsEnabled === false) data.reminderSmsEnabled = false;
+    if (event.reminderGiftNudgeEnabled === true)
+      data.reminderGiftNudgeEnabled = true;
     if (event.customInviteSmsBody?.trim())
       data.customInviteSmsBody = event.customInviteSmsBody.trim();
 
@@ -601,6 +605,7 @@ export const eventConverter: FirestoreDataConverter<Event> = {
       stripeAccountId: data.stripeAccountId,
       needsBankingSetup: data.needsBankingSetup === true,
       reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
+      reminderGiftNudgeEnabled: data.reminderGiftNudgeEnabled === true,
       customInviteSmsBody: data.customInviteSmsBody?.trim() || undefined,
       status: data.status ?? "active",
       createdAt: data.createdAt?.toDate?.() ?? new Date(),
@@ -702,6 +707,7 @@ export const eventSummaryConverter: FirestoreDataConverter<EventSummary> = {
       stripeAccountId: data.stripeAccountId,
       needsBankingSetup: data.needsBankingSetup === true,
       reminderSmsEnabled: data.reminderSmsEnabled === false ? false : true,
+      reminderGiftNudgeEnabled: data.reminderGiftNudgeEnabled === true,
       status: data.status ?? "active",
       createdAt: data.createdAt?.toDate?.() ?? new Date(),
       updatedAt: data.updatedAt?.toDate?.() ?? new Date(),

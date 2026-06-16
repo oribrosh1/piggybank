@@ -23,6 +23,20 @@ function toYYYYMMDD(d) {
     return `${y}-${m}-${day}`;
 }
 
+function uniqueGuestPhones(guests, predicate) {
+    const seen = new Set();
+    return guests
+        .filter((guest) => guest && predicate(guest))
+        .map((guest) => guest.phone)
+        .filter((phone) => typeof phone === "string" && phone.trim())
+        .map((phone) => phone.trim())
+        .filter((phone) => {
+            if (seen.has(phone)) return false;
+            seen.add(phone);
+            return true;
+        });
+}
+
 exports.sendEventReminderSMS = onSchedule(
     { schedule: "0 9 * * *", timeZone: "America/Los_Angeles" },
     async () => {
@@ -66,17 +80,30 @@ exports.sendEventReminderSMS = onSchedule(
             const dayLabel = isToday ? "today" : "in 2 days";
             const childName = event.eventName || event.childName || "Your child";
             const eventLink = `${baseUrl}/event/${eventId}`;
-            const body = `Reminder: ${childName}'s birthday party is ${dayLabel}! Don't forget to accept invitation ${eventLink}`;
+            const rsvpBody = `Reminder: ${childName}'s birthday party is ${dayLabel}! Don't forget to RSVP ${eventLink}`;
+            const giftBody = `Reminder: ${childName}'s birthday party is ${dayLabel}! You can still send a gift here: ${eventLink}`;
 
-            let phones = [];
-            if (Array.isArray(event.invitedGuests)) {
-                phones = event.invitedGuests.filter((p) => typeof p === "string" && p.trim());
-            }
-            if (phones.length === 0 && Array.isArray(event.guests)) {
-                phones = event.guests.map((g) => (g && g.phone) ? g.phone : null).filter(Boolean);
+            const messages = [];
+            if (Array.isArray(event.guests)) {
+                const pendingRsvpPhones = uniqueGuestPhones(
+                    event.guests,
+                    (guest) => guest.status === "added" || guest.status === "invited",
+                );
+                messages.push(...pendingRsvpPhones.map((phone) => ({ phone, body: rsvpBody })));
+
+                if (event.reminderGiftNudgeEnabled === true) {
+                    const giftReminderPhones = uniqueGuestPhones(
+                        event.guests,
+                        (guest) => guest.status === "confirmed",
+                    );
+                    messages.push(...giftReminderPhones.map((phone) => ({ phone, body: giftBody })));
+                }
+            } else if (Array.isArray(event.invitedGuests)) {
+                const phones = event.invitedGuests.filter((p) => typeof p === "string" && p.trim());
+                messages.push(...phones.map((phone) => ({ phone, body: rsvpBody })));
             }
 
-            for (const phone of phones) {
+            for (const { phone, body } of messages) {
                 try {
                     await client.messages.create({
                         body,
